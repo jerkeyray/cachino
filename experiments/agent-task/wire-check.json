@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "status": "direct_transport_and_cpu_reconstruction_validated",
+  "purpose": "validate the pinned agent loop with a direct stdlib HTTP text model adapter",
+  "harness_revision": "04d809ceab9df28f9adaed044884180159172930",
+  "model_class": "direct_model.DirectTextModel",
+  "model_config": {
+    "model_name": "wire-fixture",
+    "api_base": "http://127.0.0.1:18082/v1",
+    "api_key": "wire-fixture-placeholder",
+    "max_tokens": 64,
+    "temperature": 0,
+    "timeout": 10
+  },
+  "agent_bounds": {
+    "step_limit": 2,
+    "wall_time_limit_seconds": 30,
+    "cost_limit": 0
+  },
+  "environment": {
+    "class": "nonexecuting fixture environment, not LocalEnvironment or DockerEnvironment",
+    "commands_executed": false,
+    "observation": "wire fixture: action recorded but not executed"
+  },
+  "process_environment": {
+    "MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT": "1",
+    "dotenv_loaded": false,
+    "host_credentials_inherited": false,
+    "PYTHON_DOTENV_DISABLED": "1",
+    "MSWEA_GLOBAL_CONFIG_DIR": "new empty private run-directory config path",
+    "network": "agent child audit hook permits only the owned loopback proxy; not an OS sandbox"
+  },
+  "proxy": {
+    "listen": "127.0.0.1:18082",
+    "upstream": "http://127.0.0.1:18083",
+    "session_protocol": "openai",
+    "session_model": "wire-fixture",
+    "session_request_limit": 2,
+    "session_input_bytes": 131072,
+    "session_output_tokens": 64,
+    "session": "mini-wire"
+  },
+  "fixture": {
+    "inference_performed": false,
+    "cache_usage": null,
+    "model_token_usage": null,
+    "response": "fixed text action for parsing; command is never executed",
+    "upstream_port": "allocated at runtime and recorded in effective-spec.json"
+  },
+  "expected_checks": [
+    "exactly two direct HTTP calls reach the fixture, followed by a direct third-call quota probe returning HTTP 403",
+    "system and initial task strings remain stable between calls; later assistant/observation messages append",
+    "internal extra metadata is absent from transmitted messages",
+    "only supported explicit text fields are transmitted; strict renderer accepts both agent requests",
+    "no LiteLLM or OpenAI SDK modules are imported during the agent run",
+    "no shell action, task edit, credential loading, real inference or GPU work occurs"
+  ],
+  "remaining_setup": {
+    "harness_checkout_approved": true,
+    "dependency_install_approved": true,
+    "proposed_checkout": ".project/checkouts/mini-swe-agent",
+    "proposed_venv": ".project/envs/mini-wire",
+    "dependency_lock": "wire-requirements.lock",
+    "dependency_inventory": "13 exact names/versions; unused provider SDKs removed from the isolated environment"
+  },
+  "runner": "wire_check.py",
+  "setup": {
+    "approved_on": "2026-11-03",
+    "python": "CPython 3.12.13, existing standalone installation",
+    "packages_installed": 13,
+    "lock_sha256": "1168744528bfd90dc049c3533439090a0596e575282153c9f5fea28077a37cf0",
+    "sdk_executed": true,
+    "direct_adapter_executed": true,
+    "previous_dependency_packages": 79
+  },
+  "observed_litellm_run": {
+    "result": "artifacts/mini-wire-20261103-02/result.json",
+    "sdk_validated": true,
+    "strict_renderer_support": [
+      true,
+      false
+    ],
+    "unsupported_assistant_field": {
+      "provider_specific_fields": {
+        "refusal": null
+      }
+    },
+    "engine_validated": false,
+    "inference_performed": false
+  },
+  "observed": {
+    "validated_on": "2026-11-05",
+    "result": "artifacts/mini-direct-20261105-05/result.json",
+    "capture": "artifacts/mini-direct-20261105-05/capture",
+    "reconstruction": "artifacts/mini-direct-20261105-05/reconstructed/summary.json",
+    "history": "artifacts/mini-direct-20261105-05/history/summary.json",
+    "cpu_evidence": "artifacts/mini-direct-20261105-05/cpu-evidence.json",
+    "transport_validated": true,
+    "provider_sdk_imports": [],
+    "blocked_network_attempts": 0,
+    "strict_renderer_support": [
+      true,
+      true
+    ],
+    "agent_prompt_tokens": [
+      45,
+      91
+    ],
+    "agent_adjacent_lcp_tokens": 41,
+    "engine_validated": false,
+    "inference_performed": false
+  }
+}

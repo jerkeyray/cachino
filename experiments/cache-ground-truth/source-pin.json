@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "repository": "https://github.com/vllm-project/vllm",
+  "commit": "2173d7121fc6e8d756c884f46691546c61b60c57",
+  "inspected_on": "2026-11-03",
+  "status": "read_only_source_inspection_not_runtime_validation",
+  "engine_installed": false,
+  "files": [
+    {
+      "path": "vllm/renderers/online_renderer.py",
+      "git_blob_sha": "941d173bd1d5cb2ad2c6e3f07f8d052c54770739",
+      "line_count": 878,
+      "url": "https://github.com/vllm-project/vllm/blob/2173d7121fc6e8d756c884f46691546c61b60c57/vllm/renderers/online_renderer.py"
+    },
+    {
+      "path": "vllm/entrypoints/openai/chat_completion/serving.py",
+      "git_blob_sha": "3abcffdd0b1566d87c320ca4f36e6e4985856acc",
+      "line_count": 1289,
+      "url": "https://github.com/vllm-project/vllm/blob/2173d7121fc6e8d756c884f46691546c61b60c57/vllm/entrypoints/openai/chat_completion/serving.py"
+    },
+    {
+      "path": "vllm/entrypoints/openai/chat_completion/protocol.py",
+      "git_blob_sha": "ca9e8a01a07bd75a4cae52abb9df90dc7da65fe4",
+      "line_count": 1272,
+      "url": "https://github.com/vllm-project/vllm/blob/2173d7121fc6e8d756c884f46691546c61b60c57/vllm/entrypoints/openai/chat_completion/protocol.py"
+    },
+    {
+      "path": "vllm/entrypoints/serve/engine/serving.py",
+      "git_blob_sha": "15f6adc37744f1e72bb25cc7712074a0ae37c603",
+      "line_count": 214,
+      "url": "https://github.com/vllm-project/vllm/blob/2173d7121fc6e8d756c884f46691546c61b60c57/vllm/entrypoints/serve/engine/serving.py"
+    },
+    {
+      "path": "vllm/entrypoints/generate/base/serving.py",
+      "git_blob_sha": "31d37180512794b762936d5e984c7d502f88527e",
+      "line_count": 394,
+      "url": "https://github.com/vllm-project/vllm/blob/2173d7121fc6e8d756c884f46691546c61b60c57/vllm/entrypoints/generate/base/serving.py"
+    },
+    {
+      "path": "vllm/entrypoints/generate/base/protocol.py",
+      "git_blob_sha": "a0122cadf5b2f5f9caf9f8deaaa19bbbf64f6bbf",
+      "line_count": 368,
+      "url": "https://github.com/vllm-project/vllm/blob/2173d7121fc6e8d756c884f46691546c61b60c57/vllm/entrypoints/generate/base/protocol.py"
+    },
+    {
+      "path": "vllm/v1/request.py",
+      "git_blob_sha": "78bd38430e33b15c43432934e21116d6ee826b0e",
+      "line_count": 442,
+      "url": "https://github.com/vllm-project/vllm/blob/2173d7121fc6e8d756c884f46691546c61b60c57/vllm/v1/request.py"
+    },
+    {
+      "path": "vllm/v1/core/kv_cache_utils.py",
+      "git_blob_sha": "e3a6eac0996cb7641bdb52222e13b4ae8aa6013b",
+      "line_count": 1288,
+      "url": "https://github.com/vllm-project/vllm/blob/2173d7121fc6e8d756c884f46691546c61b60c57/vllm/v1/core/kv_cache_utils.py"
+    },
+    {
+      "path": "vllm/v1/core/kv_cache_manager.py",
+      "git_blob_sha": "fd0781de14aafadc325f755166d6c52e1c4a9f28",
+      "line_count": 926,
+      "url": "https://github.com/vllm-project/vllm/blob/2173d7121fc6e8d756c884f46691546c61b60c57/vllm/v1/core/kv_cache_manager.py"
+    },
+    {
+      "path": "vllm/v1/core/kv_cache_coordinator.py",
+      "git_blob_sha": "4914fa04dbf008046df1a99613b04b289f336542",
+      "line_count": 1053,
+      "url": "https://github.com/vllm-project/vllm/blob/2173d7121fc6e8d756c884f46691546c61b60c57/vllm/v1/core/kv_cache_coordinator.py"
+    },
+    {
+      "path": "vllm/v1/core/single_type_kv_cache_manager.py",
+      "git_blob_sha": "6bce870265bed7ce66733280f3e7529d658e8315",
+      "line_count": 2752,
+      "url": "https://github.com/vllm-project/vllm/blob/2173d7121fc6e8d756c884f46691546c61b60c57/vllm/v1/core/single_type_kv_cache_manager.py"
+    },
+    {
+      "path": "vllm/v1/core/block_pool.py",
+      "git_blob_sha": "23693950cf91c1979d2a8bafc0c481831c36ac35",
+      "line_count": 948,
+      "url": "https://github.com/vllm-project/vllm/blob/2173d7121fc6e8d756c884f46691546c61b60c57/vllm/v1/core/block_pool.py"
+    },
+    {
+      "path": "vllm/v1/core/sched/scheduler.py",
+      "git_blob_sha": "b6deee421fa13c44ec9da6c96258d0cc27561d36",
+      "line_count": 3785,
+      "url": "https://github.com/vllm-project/vllm/blob/2173d7121fc6e8d756c884f46691546c61b60c57/vllm/v1/core/sched/scheduler.py"
+    },
+    {
+      "path": "vllm/v1/metrics/stats.py",
+      "git_blob_sha": "20c754be34ba1c65b567e4dfc82bd0c607759854",
+      "line_count": 709,
+      "url": "https://github.com/vllm-project/vllm/blob/2173d7121fc6e8d756c884f46691546c61b60c57/vllm/v1/metrics/stats.py"
+    },
+    {
+      "path": "vllm/v1/metrics/loggers.py",
+      "git_blob_sha": "65acc49ac0e03bd3fe5fdc8bd4e2b8f929f3d094",
+      "line_count": 1454,
+      "url": "https://github.com/vllm-project/vllm/blob/2173d7121fc6e8d756c884f46691546c61b60c57/vllm/v1/metrics/loggers.py"
+    },
+    {
+      "path": "vllm/distributed/kv_events.py",
+      "git_blob_sha": "95fc8548bff6c20b0afb7e4c829777b3d97918e7",
+      "line_count": 611,
+      "url": "https://github.com/vllm-project/vllm/blob/2173d7121fc6e8d756c884f46691546c61b60c57/vllm/distributed/kv_events.py"
+    },
+    {
+      "path": "vllm/outputs.py",
+      "git_blob_sha": "2149cf7df5e5447270d08e0f1d0561899647de04",
+      "line_count": 488,
+      "url": "https://github.com/vllm-project/vllm/blob/2173d7121fc6e8d756c884f46691546c61b60c57/vllm/outputs.py"
+    }
+  ]
+}

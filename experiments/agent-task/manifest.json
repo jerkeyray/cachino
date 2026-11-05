@@ -1,0 +1,311 @@
+{
+  "schema_version": 1,
+  "prepared_on": "2026-11-03",
+  "task_id": "more-itertools-658",
+  "status": "task_evaluator_direct_transport_and_local_reconstruction_validated",
+  "harness": {
+    "repository": "https://github.com/SWE-agent/mini-swe-agent",
+    "revision": "04d809ceab9df28f9adaed044884180159172930",
+    "license": "MIT",
+    "selection": "DefaultAgent with Suez DirectTextModel, upstream text-action parser and observation formatter",
+    "role": "controlled append-only agent loop with a custom model adapter; not stock default harness behavior",
+    "installed": true,
+    "dependency_lock": "wire-requirements.lock",
+    "source_files": [
+      {
+        "path": "src/minisweagent/agents/default.py",
+        "git_blob_sha": "ca310e37d7c61888c576f73f5e1790ac769407b1",
+        "url": "https://github.com/SWE-agent/mini-swe-agent/blob/04d809ceab9df28f9adaed044884180159172930/src/minisweagent/agents/default.py"
+      },
+      {
+        "path": "pyproject.toml",
+        "git_blob_sha": "0bd3e1329252af4399805959d78d5984f2bbf2b0",
+        "url": "https://github.com/SWE-agent/mini-swe-agent/blob/04d809ceab9df28f9adaed044884180159172930/pyproject.toml"
+      },
+      {
+        "path": "src/minisweagent/config/default.yaml",
+        "git_blob_sha": "7753df3e42e7c9e792da9d063311221b299ba4d6",
+        "url": "https://github.com/SWE-agent/mini-swe-agent/blob/04d809ceab9df28f9adaed044884180159172930/src/minisweagent/config/default.yaml"
+      },
+      {
+        "path": "src/minisweagent/models/litellm_model.py",
+        "git_blob_sha": "84b5d548df0e10cbe820862399379bbde69a6fa8",
+        "url": "https://github.com/SWE-agent/mini-swe-agent/blob/04d809ceab9df28f9adaed044884180159172930/src/minisweagent/models/litellm_model.py"
+      },
+      {
+        "path": "src/minisweagent/models/litellm_textbased_model.py",
+        "git_blob_sha": "db7e042a9ad146321d4d3e7d5864e6a149f65b36",
+        "url": "https://github.com/SWE-agent/mini-swe-agent/blob/04d809ceab9df28f9adaed044884180159172930/src/minisweagent/models/litellm_textbased_model.py"
+      },
+      {
+        "path": "src/minisweagent/environments/local.py",
+        "git_blob_sha": "2b12d33ec90c8db7bb8a36002ba09706be6e7f45",
+        "url": "https://github.com/SWE-agent/mini-swe-agent/blob/04d809ceab9df28f9adaed044884180159172930/src/minisweagent/environments/local.py"
+      },
+      {
+        "path": "src/minisweagent/environments/docker.py",
+        "git_blob_sha": "42e65e35a9af9e126d7e6846060922f8c95b2d5a",
+        "url": "https://github.com/SWE-agent/mini-swe-agent/blob/04d809ceab9df28f9adaed044884180159172930/src/minisweagent/environments/docker.py"
+      },
+      {
+        "path": "src/minisweagent/models/utils/cache_control.py",
+        "git_blob_sha": "9c50ee0ca8e57035fc85c2cba080f8770891c5bc",
+        "url": "https://github.com/SWE-agent/mini-swe-agent/blob/04d809ceab9df28f9adaed044884180159172930/src/minisweagent/models/utils/cache_control.py"
+      },
+      {
+        "path": "src/minisweagent/models/utils/retry.py",
+        "git_blob_sha": "055d4b6fd4f57c1420dfa7622a8fe24148354548",
+        "url": "https://github.com/SWE-agent/mini-swe-agent/blob/04d809ceab9df28f9adaed044884180159172930/src/minisweagent/models/utils/retry.py"
+      },
+      {
+        "path": "src/minisweagent/models/utils/actions_text.py",
+        "git_blob_sha": "3129a1db46afc26b5ebd3d2af8170c57d1821fcd",
+        "url": "https://github.com/SWE-agent/mini-swe-agent/blob/04d809ceab9df28f9adaed044884180159172930/src/minisweagent/models/utils/actions_text.py"
+      },
+      {
+        "path": "src/minisweagent/models/__init__.py",
+        "git_blob_sha": "408dbf531ce7e1e1cf1b950fccf30b496ab67c05",
+        "url": "https://github.com/SWE-agent/mini-swe-agent/blob/04d809ceab9df28f9adaed044884180159172930/src/minisweagent/models/__init__.py"
+      },
+      {
+        "path": "src/minisweagent/run/hello_world.py",
+        "git_blob_sha": "3ef987f59f949a7e406b87df63b44626936e82f0",
+        "url": "https://github.com/SWE-agent/mini-swe-agent/blob/04d809ceab9df28f9adaed044884180159172930/src/minisweagent/run/hello_world.py"
+      },
+      {
+        "path": "src/minisweagent/models/utils/anthropic_utils.py",
+        "git_blob_sha": "6636df2ebddc71aa5e8e97677101909e707b2a1b",
+        "url": "https://github.com/SWE-agent/mini-swe-agent/blob/04d809ceab9df28f9adaed044884180159172930/src/minisweagent/models/utils/anthropic_utils.py"
+      },
+      {
+        "path": "LICENSE.md",
+        "git_blob_sha": "503821c9dbe06f13a48e54088eb6cd203adb407f",
+        "url": "https://github.com/SWE-agent/mini-swe-agent/blob/04d809ceab9df28f9adaed044884180159172930/LICENSE.md"
+      },
+      {
+        "path": "src/minisweagent/__init__.py",
+        "git_blob_sha": "8dbc904c36c3ed31b3c7d9697e44dbf0cf6c0e87",
+        "url": "https://github.com/SWE-agent/mini-swe-agent/blob/04d809ceab9df28f9adaed044884180159172930/src/minisweagent/__init__.py"
+      },
+      {
+        "path": "src/minisweagent/exceptions.py",
+        "git_blob_sha": "b11e404c98f62ace8c5c75b9a683105d49984a6c",
+        "url": "https://github.com/SWE-agent/mini-swe-agent/blob/04d809ceab9df28f9adaed044884180159172930/src/minisweagent/exceptions.py"
+      },
+      {
+        "path": "src/minisweagent/models/utils/openai_multimodal.py",
+        "git_blob_sha": "4f76fa50db5bed0db7c8301e3b6a504833c22cee",
+        "url": "https://github.com/SWE-agent/mini-swe-agent/blob/04d809ceab9df28f9adaed044884180159172930/src/minisweagent/models/utils/openai_multimodal.py"
+      },
+      {
+        "path": "src/minisweagent/utils/serialize.py",
+        "git_blob_sha": "ccd5947bc9dbea7795555ca72670ccf6860d219f",
+        "url": "https://github.com/SWE-agent/mini-swe-agent/blob/04d809ceab9df28f9adaed044884180159172930/src/minisweagent/utils/serialize.py"
+      }
+    ],
+    "installation_mode": "clean pinned source checkout with isolated hash-locked dependencies; imported directly, no editable package install",
+    "dependency_versions": {
+      "python": "3.12.13",
+      "jinja2": "3.1.6",
+      "pydantic": "2.14.2",
+      "rich": "15.0.0",
+      "python-dotenv": "1.2.4",
+      "platformdirs": "4.14.3"
+    },
+    "previous_backend": "LitellmTextbasedModel remains documented in the 2026-11-03 source snapshots",
+    "previous_dependency_versions": {
+      "litellm": "1.106.6",
+      "openai": "2.54.0",
+      "python-dotenv": "1.2.4",
+      "python": "3.12.13"
+    },
+    "active_dependency_packages": 13,
+    "dependency_lock_sha256": "1168744528bfd90dc049c3533439090a0596e575282153c9f5fea28077a37cf0"
+  },
+  "task": {
+    "repository": "https://github.com/more-itertools/more-itertools",
+    "issue_url": "https://github.com/more-itertools/more-itertools/issues/658",
+    "reference_pr_url": "https://github.com/more-itertools/more-itertools/pull/659",
+    "baseline_revision": "6793bd3e4ed15318746ed2511733f12a9932eb64",
+    "reference_revision": "fc1f9acf1b7e11bbc64b54f8385f2e87ecd87452",
+    "license": "MIT",
+    "historical": true,
+    "capability_generalization_claim": false,
+    "agent_prompt": "prompt.txt",
+    "editable_paths": [
+      "more_itertools/more.py",
+      "tests/test_more.py"
+    ],
+    "evaluator": "evaluate.py",
+    "baseline_files": [
+      {
+        "path": "more_itertools/more.py",
+        "git_blob_sha": "7f73d6ed22f3b31808423ba320d6a3e3693118c4"
+      },
+      {
+        "path": "tests/test_more.py",
+        "git_blob_sha": "6b78ca53bfef61282a236eaea75fdf2cd78dc733"
+      },
+      {
+        "path": "more_itertools/__init__.py",
+        "git_blob_sha": "557bfc206fd5f36c56d9abedc72b3f786d2e1cb2"
+      },
+      {
+        "path": "more_itertools/recipes.py",
+        "git_blob_sha": "bb00ceed0f58ea25bfe37d1aab17506314246b88"
+      },
+      {
+        "path": "tests/__init__.py",
+        "git_blob_sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+      },
+      {
+        "path": "LICENSE",
+        "git_blob_sha": "0a523bece3e50519653c4d7a38399baa487fefa1"
+      }
+    ],
+    "reference_files": [
+      {
+        "path": "more_itertools/more.py",
+        "git_blob_sha": "c9c95a1374f48be85b81c79b8fe755f8870da24e"
+      },
+      {
+        "path": "tests/test_more.py",
+        "git_blob_sha": "4673109d3bb9a4d808c8bee9bb2cb9d86a874785"
+      }
+    ],
+    "expected_baseline": "The six specified behavioral cases fail and the four sealed original test methods pass.",
+    "expected_reference": "All 21 behavioral cases and four sealed original test methods pass.",
+    "baseline_validated": true,
+    "reference_validated": true,
+    "workspace_export": "Export baseline without .git; reference, evaluator and manifests remain outside agent mount.",
+    "validated_on": "2026-11-03",
+    "validation": {
+      "baseline": {
+        "behavioral_passes": 15,
+        "behavioral_total": 21,
+        "targeted_failures": 6,
+        "upstream_methods_passed": 4,
+        "expected_failure_verified": true,
+        "regressions_passed": false,
+        "result": "artifacts/task-658-baseline/evaluation.json"
+      },
+      "reference": {
+        "behavioral_passes": 21,
+        "behavioral_total": 21,
+        "targeted_failures": 0,
+        "upstream_methods_passed": 4,
+        "regressions_passed": true,
+        "result": "artifacts/task-658-reference/evaluation.json"
+      },
+      "execution_snapshot": "artifacts/task-658-preflight/",
+      "exports_unchanged": true,
+      "execution_provenance_verified": true,
+      "interpreter": "/opt/homebrew/bin/python3.12",
+      "agent_executed": false
+    }
+  },
+  "proposed_capture": {
+    "status": "cpu_transport_validated_engine_and_command_isolation_pending",
+    "model_id": "Qwen/Qwen3-8B",
+    "model_revision": "b968826d9c46dd6066d109eabc6255188de91218",
+    "api": "OpenAI chat completions through Suez",
+    "model_backend": "direct_model.DirectTextModel",
+    "max_agent_steps": 12,
+    "max_output_tokens_per_call": 1024,
+    "wall_time_seconds": 300,
+    "command_timeout_seconds": 20,
+    "model_retry_attempts": 1,
+    "stream": false,
+    "upstream_hard_request_quota": 12,
+    "quota_limitation": "Default limited protocol is Messages. OpenAI capture must explicitly use -session-protocol openai; buffering affects timing and this is not a general billing cap.",
+    "execution": "Model-generated commands require an isolated task container. LocalEnvironment is not a sandbox.",
+    "required_checks": [
+      "Verify the selected harness-module dependency hash lock and installed inventory",
+      "Direct HTTP fixture validates transmitted text fields and dispatch count; completed for the fixed local run",
+      "Agent task export excludes reference/evaluator/.git/credentials",
+      "Pin task container digest and bound network/resources",
+      "Validate model template/token parity on local engine",
+      "Independent controller bounds and request counting before live execution"
+    ],
+    "quota_status": "implemented and tested offline; must be explicitly enabled for the live proxy instance",
+    "wire_check_spec": "wire-check.json",
+    "wire_check_runner": "wire_check.py",
+    "transport_retries": 0
+  },
+  "setup": {
+    "approved": true,
+    "repository_checkout_created": true,
+    "packages_installed": false,
+    "proposed_checkout": ".project/checkouts/more-itertools-task",
+    "proposed_baseline_export": ".project/task-workspaces/more-itertools-658-baseline",
+    "proposed_reference_export": ".project/task-controls/more-itertools-658-reference",
+    "next_authorization": "Harness setup and local wire execution were approved and completed. Container startup and inference remain separate boundaries.",
+    "approved_on": "2026-11-03",
+    "approval_scope": "One isolated more-itertools study checkout, two pinned exports, sealed original tests and stdlib baseline/reference evaluation. No package installation, model calls or container startup.",
+    "exports_created": true,
+    "frozen_tests_created": true
+  },
+  "transport_preflight": {
+    "status": "synthetic_http_admission_validated_sdk_pending",
+    "capture": "traces/openai-admission-20261103",
+    "http_statuses": [
+      200,
+      200,
+      403
+    ],
+    "fixture_upstream_requests": 2,
+    "fully_verified_captures": 3,
+    "sse_done": true,
+    "sdk_validated": false,
+    "engine_validated": false
+  },
+  "harness_wire_preflight": {
+    "status": "sdk_transport_validated_renderer_metadata_pending",
+    "validated_on": "2026-11-03",
+    "capture": "artifacts/mini-wire-20261103-02/capture",
+    "result": "artifacts/mini-wire-20261103-02/result.json",
+    "http_statuses": [
+      200,
+      200,
+      403
+    ],
+    "upstream_fixture_requests": 2,
+    "verified_captures": 3,
+    "agent_commands_executed": false,
+    "sdk_validated": true,
+    "engine_validated": false,
+    "inference_performed": false,
+    "blocked_network_attempts": 0,
+    "strict_renderer_support": [
+      true,
+      false
+    ],
+    "unsupported_assistant_field": {
+      "provider_specific_fields": {
+        "refusal": null
+      }
+    }
+  },
+  "direct_wire_preflight": {
+    "validated_on": "2026-11-05",
+    "result": "artifacts/mini-direct-20261105-05/result.json",
+    "capture": "artifacts/mini-direct-20261105-05/capture",
+    "reconstruction": "artifacts/mini-direct-20261105-05/reconstructed/summary.json",
+    "history": "artifacts/mini-direct-20261105-05/history/summary.json",
+    "cpu_evidence": "artifacts/mini-direct-20261105-05/cpu-evidence.json",
+    "transport_validated": true,
+    "provider_sdk_imports": [],
+    "blocked_network_attempts": 0,
+    "strict_renderer_support": [
+      true,
+      true
+    ],
+    "agent_prompt_tokens": [
+      45,
+      91
+    ],
+    "agent_adjacent_lcp_tokens": 41,
+    "engine_validated": false,
+    "inference_performed": false
+  }
+}

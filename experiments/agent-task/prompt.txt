@@ -1,0 +1,15 @@
+Fix split_after's handling of an exhausted iterator when a positive maxsplit
+limit is reached at the end of the input.
+
+For example, collecting split_after([1], lambda value: value == 1, maxsplit=1)
+currently produces [[1], []]. It should produce [[1]], consistent with its
+behavior when the split limit is not exhausted at that position.
+
+Preserve the remaining tail when it is nonempty, the behavior of maxsplit=0,
+the unlimited default, and support for one-shot iterators. Add regression tests
+and run the existing split_after tests. Keep the public function signature.
+
+The repository working directory is /task. You may change
+more_itertools/more.py and tests/test_more.py. Keep other existing files
+unchanged. Temporary reproduction scripts are allowed but must not be left in
+the final patch. Do not install dependencies or use the network.
