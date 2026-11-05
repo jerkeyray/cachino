@@ -67,8 +67,8 @@ them as missing values to be read from the actual server, not from documentation
 
 ## Local expectations from the first build
 
-Built offline with the pinned tokenizer (`artifacts/m4-probes-20261105-01/`,
-private and regenerable). These are local predictions only.
+Built offline with the pinned tokenizer (`artifacts/m4-probes-20261105-02/`, private and
+regenerable; the -01 build predates the structured checks). These are local predictions only.
 
 | Probe | Local prompt tokens |
 | --- | --- |
@@ -85,12 +85,45 @@ private and regenerable). These are local predictions only.
 The probes use a fixed assistant reply, not the model's generated output, so
 the history probe tests the rendering boundary, not real agent cache state.
 
+## Calibration client
+
+[`calibrate.py`](../../experiments/cache-ground-truth/calibrate.py) runs the
+sequence once. It is stdlib only and needs no tokenizer: it reads the built
+bodies and expected IDs, rechecking every hash against the build summary and
+the spec hash.
+
+- Default is a dry run that prints the plan and the manifest's open gates.
+  `--run` refuses to start until `check_manifest.py` reports no missing values or
+  conflicts, the manifest names this spec's hash, and the served model name
+  equals the probe model.
+- Endpoints must be `http://127.0.0.1:PORT`. A remote GPU host is reached by an
+  SSH port forward, so probe traffic never goes to a non-loopback address.
+- Each request is one exchange with no retries, redirects or environment
+  proxies, an 8 MiB response cap and an `X-Request-Id` of
+  `suez-m4-<run_id>-<step>`. The record notes whether the returned ID equals
+  `chatcmpl-` plus that value.
+- Raw response bytes are written before parsing. Each step record is appended to
+  `steps.jsonl` and synced before the next request, so an interrupted run leaves
+  an exact prefix of what happened.
+- Stops: parity mismatch, reset failure, non-200 status, transport failure, or
+  absent cache details or per-request metrics. Other check failures are
+  recorded and the run continues, ending as `completed_with_failures`.
+- Engine timing keeps source names (`engine_schedule_to_first_token_ms`,
+  `engine_queue_ms`, `engine_first_to_last_token_ms`). `client_round_trip_ms`
+  includes network and proxy time and is not engine time.
+
+Tests drive the client against a local test double that returns configured IDs
+and block-aligned hit counts. The double checks client behavior only; its
+numbers say nothing about vLLM. Suez capture integrity for the proxy step is
+checked afterwards with `analysis/report.py`.
+
 ## Remaining before a run
 
-1. A small stdlib calibration client that sends the built bodies byte for byte
-   with an `X-Request-Id` header, follows the sequence and stop rules, stores
-   raw responses and compares returned IDs and counts. Not yet written.
-2. Actual hardware and access: a CUDA GPU with memory for Qwen3-8B, a vLLM install
-   matching the source pin, and the model weights. These need your approval for
-   the access method, time and spending ceiling before anything is rented,
-   installed or downloaded.
+A CUDA GPU with memory for Qwen3-8B, a vLLM install matching the source pin,
+and the model weights. These need your approval for the access method, time
+and spending ceiling before anything is rented, installed or downloaded. The
+launch must set `--enable-prompt-tokens-details`,
+`--enable-per-request-metrics` and `VLLM_SERVER_DEV_MODE=1` on a private
+loopback server, with one worker and no offload connector. Block size, hash
+settings and prefix-caching state are read from the running server into the
+manifest.

@@ -9,53 +9,265 @@
     "n": 1,
     "stream": false,
     "return_token_ids": true,
-    "chat_template_kwargs": {"enable_thinking": false},
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    },
     "add_generation_prompt": true
   },
   "text": {
     "rule_count": 48,
     "rule_line": "Rule {index:02d}: describe each change, keep unrelated files untouched, and report test results exactly as observed.",
-    "early_mutation": {"rule_index": 2, "find": "describe", "replace": "summarize"},
+    "early_mutation": {
+      "rule_index": 2,
+      "find": "describe",
+      "replace": "summarize"
+    },
     "base_question": "List the three files you would read first to fix a failing unit test, and why.",
     "late_question": "List the three files you would read first to fix a failing unit test, and when.",
     "assistant_reply": "README.md, the failing test file, and the module it imports.",
     "followup": "Now name the first command you would run."
   },
   "probes": {
-    "parity-short": {"messages": [{"role": "user", "content": "hello"}]},
-    "base": {"messages": [{"role": "system", "content": "{rules}"}, {"role": "user", "content": "{base_question}"}]},
-    "early-mutation": {"messages": [{"role": "system", "content": "{rules_early}"}, {"role": "user", "content": "{base_question}"}]},
-    "late-mutation": {"messages": [{"role": "system", "content": "{rules}"}, {"role": "user", "content": "{late_question}"}]},
-    "turn-2": {"messages": [{"role": "system", "content": "{rules}"}, {"role": "user", "content": "{base_question}"}, {"role": "assistant", "content": "{assistant_reply}"}, {"role": "user", "content": "{followup}"}]}
+    "parity-short": {
+      "messages": [
+        {
+          "role": "user",
+          "content": "hello"
+        }
+      ]
+    },
+    "base": {
+      "messages": [
+        {
+          "role": "system",
+          "content": "{rules}"
+        },
+        {
+          "role": "user",
+          "content": "{base_question}"
+        }
+      ]
+    },
+    "early-mutation": {
+      "messages": [
+        {
+          "role": "system",
+          "content": "{rules_early}"
+        },
+        {
+          "role": "user",
+          "content": "{base_question}"
+        }
+      ]
+    },
+    "late-mutation": {
+      "messages": [
+        {
+          "role": "system",
+          "content": "{rules}"
+        },
+        {
+          "role": "user",
+          "content": "{late_question}"
+        }
+      ]
+    },
+    "turn-2": {
+      "messages": [
+        {
+          "role": "system",
+          "content": "{rules}"
+        },
+        {
+          "role": "user",
+          "content": "{base_question}"
+        },
+        {
+          "role": "assistant",
+          "content": "{assistant_reply}"
+        },
+        {
+          "role": "user",
+          "content": "{followup}"
+        }
+      ]
+    }
   },
   "comparisons": [
-    ["base", "early-mutation"],
-    ["base", "late-mutation"],
-    ["base", "turn-2"]
+    [
+      "base",
+      "early-mutation"
+    ],
+    [
+      "base",
+      "late-mutation"
+    ],
+    [
+      "base",
+      "turn-2"
+    ]
   ],
   "sequence": [
-    {"step": "preflight", "action": "get_models", "accept": "served model name recorded in the run manifest"},
-    {"step": "reset-1", "action": "reset_prefix_cache", "accept": "HTTP 200 and success true; otherwise stop"},
-    {"step": "parity-short", "action": "send", "probe": "parity-short", "route": "direct", "accept": "returned prompt_token_ids equal local IDs element by element"},
-    {"step": "reset-2", "action": "reset_prefix_cache", "accept": "success true"},
-    {"step": "cold-base", "action": "send", "probe": "base", "route": "direct", "accept": "ID parity; cached_tokens reported and 0. Missing details block every hit claim"},
-    {"step": "warm-base", "action": "send", "probe": "base", "route": "direct", "accept": "ID parity; cached_tokens positive and at most prompt_tokens - 1. Record the exact value; do not predict it from block size"},
-    {"step": "early-after-warm", "action": "send", "probe": "early-mutation", "route": "direct", "accept": "cached_tokens at most the local LCP with base; record the gap to LCP and the block geometry that explains it"},
-    {"step": "reset-3", "action": "reset_prefix_cache", "accept": "success true"},
-    {"step": "late-warmup", "action": "send", "probe": "base", "route": "direct", "accept": "ID parity; cached_tokens 0"},
-    {"step": "late-after-warm", "action": "send", "probe": "late-mutation", "route": "direct", "accept": "cached_tokens positive and at most the local LCP with base"},
-    {"step": "reset-4", "action": "reset_prefix_cache", "accept": "success true"},
-    {"step": "history-turn-1", "action": "send", "probe": "base", "route": "direct", "accept": "ID parity; record returned generated token IDs"},
-    {"step": "history-turn-2", "action": "send", "probe": "turn-2", "route": "direct", "accept": "ID parity; cached_tokens at most the local LCP with base. The empty thinking cue in base is replaced by the fixed assistant reply, so a hit beyond that boundary would contradict the local model. The fixed reply is not the generated output, so this probe does not reproduce real agent cache state"},
-    {"step": "reset-5", "action": "reset_prefix_cache", "accept": "success true"},
-    {"step": "direct-cold", "action": "send", "probe": "base", "route": "direct", "accept": "ID parity; cached_tokens 0"},
-    {"step": "reset-6", "action": "reset_prefix_cache", "accept": "success true"},
-    {"step": "proxy-cold", "action": "send", "probe": "base", "route": "suez", "accept": "returned prompt_token_ids equal direct-cold; cached_tokens 0; Suez capture integrity verified. Timing comparison needs repeated pairs and is not decided by one request"}
+    {
+      "step": "preflight",
+      "action": "get_models",
+      "accept": "served model name recorded in the run manifest"
+    },
+    {
+      "step": "reset-1",
+      "action": "reset_prefix_cache",
+      "accept": "HTTP 200 and success true; otherwise stop"
+    },
+    {
+      "step": "parity-short",
+      "action": "send",
+      "probe": "parity-short",
+      "route": "direct",
+      "accept": "returned prompt_token_ids equal local IDs element by element",
+      "checks": [
+        "parity"
+      ]
+    },
+    {
+      "step": "reset-2",
+      "action": "reset_prefix_cache",
+      "accept": "success true"
+    },
+    {
+      "step": "cold-base",
+      "action": "send",
+      "probe": "base",
+      "route": "direct",
+      "accept": "ID parity; cached_tokens reported and 0. Missing details block every hit claim",
+      "checks": [
+        "parity",
+        "cached_zero"
+      ]
+    },
+    {
+      "step": "warm-base",
+      "action": "send",
+      "probe": "base",
+      "route": "direct",
+      "accept": "ID parity; cached_tokens positive and at most prompt_tokens - 1. Record the exact value; do not predict it from block size",
+      "checks": [
+        "parity",
+        "cached_positive",
+        "cached_within_eligible"
+      ]
+    },
+    {
+      "step": "early-after-warm",
+      "action": "send",
+      "probe": "early-mutation",
+      "route": "direct",
+      "accept": "cached_tokens at most the local LCP with base; record the gap to LCP and the block geometry that explains it",
+      "checks": [
+        "parity",
+        "cached_within_lcp:base"
+      ]
+    },
+    {
+      "step": "reset-3",
+      "action": "reset_prefix_cache",
+      "accept": "success true"
+    },
+    {
+      "step": "late-warmup",
+      "action": "send",
+      "probe": "base",
+      "route": "direct",
+      "accept": "ID parity; cached_tokens 0",
+      "checks": [
+        "parity",
+        "cached_zero"
+      ]
+    },
+    {
+      "step": "late-after-warm",
+      "action": "send",
+      "probe": "late-mutation",
+      "route": "direct",
+      "accept": "cached_tokens positive and at most the local LCP with base",
+      "checks": [
+        "parity",
+        "cached_positive",
+        "cached_within_lcp:base"
+      ]
+    },
+    {
+      "step": "reset-4",
+      "action": "reset_prefix_cache",
+      "accept": "success true"
+    },
+    {
+      "step": "history-turn-1",
+      "action": "send",
+      "probe": "base",
+      "route": "direct",
+      "accept": "ID parity; record returned generated token IDs",
+      "checks": [
+        "parity"
+      ]
+    },
+    {
+      "step": "history-turn-2",
+      "action": "send",
+      "probe": "turn-2",
+      "route": "direct",
+      "accept": "ID parity; cached_tokens at most the local LCP with base. The empty thinking cue in base is replaced by the fixed assistant reply, so a hit beyond that boundary would contradict the local model. The fixed reply is not the generated output, so this probe does not reproduce real agent cache state",
+      "checks": [
+        "parity",
+        "cached_within_lcp:base"
+      ]
+    },
+    {
+      "step": "reset-5",
+      "action": "reset_prefix_cache",
+      "accept": "success true"
+    },
+    {
+      "step": "direct-cold",
+      "action": "send",
+      "probe": "base",
+      "route": "direct",
+      "accept": "ID parity; cached_tokens 0",
+      "checks": [
+        "parity",
+        "cached_zero"
+      ]
+    },
+    {
+      "step": "reset-6",
+      "action": "reset_prefix_cache",
+      "accept": "success true"
+    },
+    {
+      "step": "proxy-cold",
+      "action": "send",
+      "probe": "base",
+      "route": "suez",
+      "accept": "returned prompt_token_ids equal direct-cold; cached_tokens 0; Suez capture integrity verified. Timing comparison needs repeated pairs and is not decided by one request",
+      "checks": [
+        "parity",
+        "cached_zero",
+        "same_prompt_ids_as:direct-cold"
+      ]
+    }
   ],
   "stop_rules": [
     "Stop at the first ID parity mismatch and keep the mismatching request and response bodies.",
     "Stop if a reset returns success false or a non-200 status.",
     "Stop if prompt_tokens_details or per-request metrics are absent; record them as unavailable, never as zero.",
-    "No retries. A transport failure ends the run with the failed step recorded."
-  ]
+    "No retries. A transport failure ends the run with the failed step recorded.",
+    "Other check failures are recorded and the sequence continues, so one run shows every control's outcome."
+  ],
+  "check_definitions": {
+    "parity": "returned prompt_token_ids equal local IDs element by element, and usage.prompt_tokens equals their count when reported",
+    "cached_zero": "usage.prompt_tokens_details.cached_tokens is reported and equals 0",
+    "cached_positive": "cached_tokens is reported and greater than 0",
+    "cached_within_eligible": "cached_tokens is at most local prompt length minus one",
+    "cached_within_lcp:P": "cached_tokens is at most the local exact-ID LCP between this probe and probe P",
+    "same_prompt_ids_as:S": "returned prompt_token_ids equal those returned at step S"
+  }
 }
