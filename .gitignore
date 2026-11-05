@@ -1,0 +1,26 @@
+# Local agent instructions and project memory.
+/AGENTS.md
+/.project/
+
+# Private runtime data and credentials.
+.env
+.env.*
+!.env.example
+/traces/
+/artifacts/
+/experiments/**/raw/
+/experiments/**/artifacts/
+
+# Python environments and caches.
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local build output.
+/bin/
+/suez
+/dist/
+.DS_Store
