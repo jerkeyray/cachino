@@ -126,4 +126,5 @@ launch must set `--enable-prompt-tokens-details`,
 `--enable-per-request-metrics` and `VLLM_SERVER_DEV_MODE=1` on a private
 loopback server, with one worker and no offload connector. Block size, hash
 settings and prefix-caching state are read from the running server into the
-manifest.
+manifest. The concrete RunPod procedure is in the
+[M4 RunPod runbook](m4-runpod-runbook.md).
