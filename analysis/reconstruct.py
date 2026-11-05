@@ -17,6 +17,44 @@ class UnsupportedRequest(ValueError):
     """A request needs prompt normalization this renderer has not validated."""
 
 
+# Calibration requests ask vLLM to return its prompt/generated token IDs. At the
+# inspected pin (experiments/cache-ground-truth/source-pin.json) this flag only
+# adds response fields and does not enter chat rendering, so it is accepted as
+# observational. Other vLLM extras (cache_salt, chat_template, echo, documents,
+# continue_final_message, ...) can change rendering or cache identity and stay
+# rejected until each has its own validation.
+OBSERVATION_FIELDS = {"return_token_ids"}
+
+# Explicit server-side template controls. The server does not see the local pin,
+# so a calibration request must state the thinking setting itself.
+TEMPLATE_CONTROL_FIELDS = {"chat_template_kwargs", "add_generation_prompt"}
+
+
+def template_controls(request, pin):
+    """Check request template controls against the pin; return what was explicit.
+
+    At the inspected vLLM pin the server merges template kwargs as launch
+    defaults, then request chat_template_kwargs, then the add_generation_prompt
+    field, so the field overrides a same-named kwarg. To keep one unambiguous
+    meaning, chat_template_kwargs may contain only enable_thinking, and both
+    values must equal the pin. A conflicting value raises UnsupportedRequest
+    instead of being rendered under the local setting.
+
+    The returned flags record whether the request itself carried each setting.
+    A request without them renders locally under the pin, but the server would
+    use its own defaults; parity then also depends on recorded launch defaults.
+    """
+    kwargs = request.get("chat_template_kwargs")
+    if kwargs is not None and (not isinstance(kwargs, dict) or set(kwargs) - {"enable_thinking"}):
+        raise UnsupportedRequest("chat_template_kwargs may contain only enable_thinking")
+    if kwargs and kwargs.get("enable_thinking") is not pin["enable_thinking"]:
+        raise UnsupportedRequest("enable_thinking differs from the pinned template setting")
+    if "add_generation_prompt" in request and request["add_generation_prompt"] is not pin["add_generation_prompt"]:
+        raise UnsupportedRequest("add_generation_prompt differs from the pinned template setting")
+    return {"enable_thinking_explicit": bool(kwargs) and "enable_thinking" in kwargs,
+            "add_generation_prompt_explicit": "add_generation_prompt" in request}
+
+
 def prompt_inputs(request, model_id, remap=False):
     """Accept an explicit text/chat/tool subset; reject unknown prompt controls.
 
@@ -25,8 +63,11 @@ def prompt_inputs(request, model_id, remap=False):
     rather than silently being dropped. Source request bytes remain untouched.
     """
     generation_fields = {"stream", "stream_options", "temperature", "top_p", "top_k", "min_p", "max_tokens", "max_completion_tokens", "seed", "stop", "presence_penalty", "frequency_penalty", "repetition_penalty", "n", "logprobs", "top_logprobs"}
-    if not isinstance(request, dict) or set(request) - generation_fields - {"model", "messages", "tools"}:
+    allowed = generation_fields | OBSERVATION_FIELDS | TEMPLATE_CONTROL_FIELDS | {"model", "messages", "tools"}
+    if not isinstance(request, dict) or set(request) - allowed:
         raise UnsupportedRequest("unknown request fields or non-object request")
+    if "return_token_ids" in request and not isinstance(request["return_token_ids"], bool):
+        raise UnsupportedRequest("return_token_ids must be a boolean")
     if not isinstance(request.get("model"), str) or not request["model"]:
         raise UnsupportedRequest("an explicit source model is required")
     if request.get("model") != model_id and not remap:
@@ -88,6 +129,7 @@ def render(tokenizer, request, pin, remap=False):
     Agreement here checks the local library paths, not engine token identity.
     """
     messages, tools = prompt_inputs(request, pin["model_id"], remap)
+    template_controls(request, pin)
     options = {"add_generation_prompt": pin["add_generation_prompt"], "enable_thinking": pin["enable_thinking"]}
     if tools is not None:
         options["tools"] = tools
@@ -155,7 +197,9 @@ def reconstruct(root, assets, out, pin, remap=False):
         (out / (prefix + ".tokens.json")).write_text(json.dumps(ids) + "\n")
         row.update(status="rendered", prompt_tokens=len(ids), token_ids_sha256=digest,
                    request_sha256=record["request"]["sha256_observed"],
-                   source_model=request.get("model"), model_remapped=request.get("model") != pin["model_id"])
+                   source_model=request.get("model"), model_remapped=request.get("model") != pin["model_id"],
+                   return_token_ids_requested=request.get("return_token_ids") is True,
+                   **template_controls(request, pin))
         if predecessor is not None:
             row["previous_request_id"] = predecessor[0]
             row["adjacent_lcp_tokens"] = lcp(predecessor[1], ids)

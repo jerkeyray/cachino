@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from reconstruct import UnsupportedRequest, lcp, prompt_inputs
+from reconstruct import UnsupportedRequest, lcp, prompt_inputs, template_controls
 from tokenizer_assets import FILES, fetch, load_pin, verify_assets
 
 
@@ -31,10 +31,37 @@ class PromptTests(unittest.TestCase):
         self.assertEqual(self.request, original)
 
     def test_unknown_rendering_controls_are_rejected(self):
-        for key in ("chat_template_kwargs", "response_format", "tool_choice", "unknown_field"):
+        for key in ("response_format", "tool_choice", "cache_salt", "chat_template", "echo", "continue_final_message", "unknown_field"):
             request = dict(self.request, **{key: {}})
             with self.assertRaises(UnsupportedRequest):
                 prompt_inputs(request, self.pin["model_id"])
+
+    def test_return_token_ids_is_observational(self):
+        request = dict(self.request, return_token_ids=True)
+        messages, _ = prompt_inputs(request, self.pin["model_id"])
+        self.assertEqual(messages, self.request["messages"])
+        for value in ("true", 1, None):
+            with self.assertRaisesRegex(UnsupportedRequest, "boolean"):
+                prompt_inputs(dict(self.request, return_token_ids=value), self.pin["model_id"])
+
+    def test_template_controls_must_match_pin(self):
+        # A request that states the pinned settings is explicit; one that omits
+        # them depends on server launch defaults, which the flags must expose.
+        self.assertEqual(template_controls(self.request, self.pin),
+                         {"enable_thinking_explicit": False, "add_generation_prompt_explicit": False})
+        request = dict(self.request, chat_template_kwargs={"enable_thinking": self.pin["enable_thinking"]},
+                       add_generation_prompt=self.pin["add_generation_prompt"])
+        prompt_inputs(request, self.pin["model_id"])
+        self.assertEqual(template_controls(request, self.pin),
+                         {"enable_thinking_explicit": True, "add_generation_prompt_explicit": True})
+        for bad in ({"chat_template_kwargs": {"enable_thinking": not self.pin["enable_thinking"]}},
+                    {"chat_template_kwargs": {"enable_thinking": 0}},
+                    {"chat_template_kwargs": {"enable_thinking": False, "add_generation_prompt": True}},
+                    {"chat_template_kwargs": []},
+                    {"add_generation_prompt": not self.pin["add_generation_prompt"]},
+                    {"add_generation_prompt": 1}):
+            with self.assertRaises(UnsupportedRequest):
+                template_controls(dict(self.request, **bad), self.pin)
 
     def test_unsupported_messages_are_rejected(self):
         for message in ({"role": "user", "content": [{"type": "image_url"}]},
