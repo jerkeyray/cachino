@@ -66,8 +66,9 @@ returns `prompt_token_ids` in JSON or the first streaming chunk, and generated
 decoded text. SSE chunk boundaries, finish errors and metadata suppression
 matter. Token metadata increases capture volume and may affect overhead.
 
-The local renderer currently rejects unknown fields, including the calibration
-flag. Before using it, explicitly support and validate observational fields.
+The local renderer accepts `return_token_ids` as an observational boolean and
+the pinned template settings only (see [the M4 calibration plan](m4-calibration-plan.md)).
+Other unknown fields remain rejected.
 Do not silently strip arbitrary fields such as cache salts, tool choices or
 template overrides. `enable_thinking=false` must be configured on both sides;
 the local pin alone does not configure the server's renderer.

@@ -13,8 +13,9 @@ against the eventual GPU environment before it becomes an execution pin.
   validates tool parsing/template options, converts tool models to dictionaries
   and delegates to preprocessing. Request JSON is not the final token sequence.
 - [`ChatCompletionRequest`, lines 413-447](https://github.com/vllm-project/vllm/blob/2173d7121fc6e8d756c884f46691546c61b60c57/vllm/entrypoints/openai/chat_completion/protocol.py#L413)
-  defines caller request ID and `return_token_ids`. These are candidate calibration
-  fields; Suez's strict local renderer does not yet accept them.
+  defines caller request ID and `return_token_ids`. The local renderer now accepts
+  `return_token_ids` as observational; see [the M4 calibration plan](m4-calibration-plan.md)
+  for the template-control and launch-flag checks added on 2026-11-05.
 - [`OpenAIServingChat`, lines 608-621 and 1147-1162](https://github.com/vllm-project/vllm/blob/2173d7121fc6e8d756c884f46691546c61b60c57/vllm/entrypoints/openai/chat_completion/serving.py#L608)
   returns prompt IDs on the first stream chunk, or in the JSON response. Generated
   IDs are available in choices; verify stop/parser behavior in runtime controls.

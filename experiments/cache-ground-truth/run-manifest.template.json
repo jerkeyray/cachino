@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "status": "template_no_runtime_values",
+  "note": "Copy per run. Every null is a missing gate; fill from the actual machine, install and server log, never from documented defaults. check_manifest.py lists remaining gates.",
+  "run": {
+    "run_id": null,
+    "operator_started_at_utc": null,
+    "suez_commit": null,
+    "probe_spec_sha256": null
+  },
+  "hardware": {
+    "gpu_model": null,
+    "gpu_count_visible": null,
+    "gpu_memory_mib": null,
+    "driver_version": null,
+    "cuda_runtime_version": null,
+    "host_os": null
+  },
+  "engine": {
+    "name": "vllm",
+    "source_pin_commit": "2173d7121fc6e8d756c884f46691546c61b60c57",
+    "installed_version": null,
+    "installed_commit": null,
+    "install_method": null,
+    "installed_matches_source_pin": null
+  },
+  "model": {
+    "model_id": "Qwen/Qwen3-8B",
+    "weights_revision": null,
+    "tokenizer_revision": null,
+    "local_tokenizer_revision": "b968826d9c46dd6066d109eabc6255188de91218",
+    "served_model_name": null,
+    "dtype": null,
+    "max_model_len": null,
+    "chat_template_sha256": null
+  },
+  "rendering": {
+    "default_chat_template_kwargs": null,
+    "request_states_enable_thinking": true,
+    "request_states_add_generation_prompt": true
+  },
+  "topology": {
+    "tensor_parallel_size": null,
+    "pipeline_parallel_size": null,
+    "data_parallel_size": null,
+    "required_single_worker": true
+  },
+  "cache": {
+    "prefix_caching_enabled": null,
+    "block_size_tokens": null,
+    "hash_block_size_tokens": null,
+    "num_gpu_blocks": null,
+    "gpu_memory_utilization": null,
+    "prefix_caching_hash_algo": null,
+    "kv_cache_dtype": null,
+    "cpu_offload_or_external_connector": null
+  },
+  "scheduling": {
+    "max_num_seqs": null,
+    "max_num_batched_tokens": null,
+    "chunked_prefill_enabled": null,
+    "speculative_decoding": null
+  },
+  "telemetry": {
+    "enable_prompt_tokens_details": null,
+    "enable_per_request_metrics": null,
+    "vllm_server_dev_mode": null,
+    "kv_events_config": null
+  },
+  "access": {
+    "server_base_url": null,
+    "suez_proxy_base_url": null,
+    "paid_resource": null,
+    "time_ceiling_minutes": null,
+    "spend_ceiling": null,
+    "user_authorization_reference": null
+  }
+}

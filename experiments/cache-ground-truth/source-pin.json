@@ -107,6 +107,48 @@
       "git_blob_sha": "2149cf7df5e5447270d08e0f1d0561899647de04",
       "line_count": 488,
       "url": "https://github.com/vllm-project/vllm/blob/2173d7121fc6e8d756c884f46691546c61b60c57/vllm/outputs.py"
+    },
+    {
+      "path": "vllm/entrypoints/common/cli_args.py",
+      "git_blob_sha": "9340a3f945fb69fa7bff1bbe0d5d33ec3f70266f",
+      "line_count": 640,
+      "url": "https://github.com/vllm-project/vllm/blob/2173d7121fc6e8d756c884f46691546c61b60c57/vllm/entrypoints/common/cli_args.py",
+      "inspected_on": "2026-11-05"
+    },
+    {
+      "path": "vllm/renderers/params.py",
+      "git_blob_sha": "380605c60420a69f84658c2b67ba1bb416d0d7e0",
+      "line_count": 613,
+      "url": "https://github.com/vllm-project/vllm/blob/2173d7121fc6e8d756c884f46691546c61b60c57/vllm/renderers/params.py",
+      "inspected_on": "2026-11-05"
+    },
+    {
+      "path": "vllm/entrypoints/serve/__init__.py",
+      "git_blob_sha": "d8254cb335488f2e3fe876aa049feb569076b53b",
+      "line_count": 65,
+      "url": "https://github.com/vllm-project/vllm/blob/2173d7121fc6e8d756c884f46691546c61b60c57/vllm/entrypoints/serve/__init__.py",
+      "inspected_on": "2026-11-05"
+    },
+    {
+      "path": "vllm/entrypoints/serve/dev/cache/api_router.py",
+      "git_blob_sha": "81ec91a8666ae587f4875556f83b025b07a9c102",
+      "line_count": 68,
+      "url": "https://github.com/vllm-project/vllm/blob/2173d7121fc6e8d756c884f46691546c61b60c57/vllm/entrypoints/serve/dev/cache/api_router.py",
+      "inspected_on": "2026-11-05"
+    },
+    {
+      "path": "vllm/entrypoints/launchers/api_server/routers.py",
+      "git_blob_sha": "55eb70111498ac1b7754034de75a0b08c41037ae",
+      "line_count": 97,
+      "url": "https://github.com/vllm-project/vllm/blob/2173d7121fc6e8d756c884f46691546c61b60c57/vllm/entrypoints/launchers/api_server/routers.py",
+      "inspected_on": "2026-11-05"
+    },
+    {
+      "path": "vllm/envs.py",
+      "git_blob_sha": "e8e26be26ce90c909b0bb7762c4f2c7759b8c5b9",
+      "line_count": 2603,
+      "url": "https://github.com/vllm-project/vllm/blob/2173d7121fc6e8d756c884f46691546c61b60c57/vllm/envs.py",
+      "inspected_on": "2026-11-05"
     }
   ]
 }
