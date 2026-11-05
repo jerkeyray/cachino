@@ -1,0 +1,7 @@
+{
+  "model_id": "Qwen/Qwen3-8B",
+  "revision": "b968826d9c46dd6066d109eabc6255188de91218",
+  "add_generation_prompt": true,
+  "enable_thinking": false,
+  "domain": "local_reconstruction_unvalidated_against_engine"
+}

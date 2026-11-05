@@ -1,0 +1,9 @@
+[project]
+name = "suez-analysis"
+version = "0.1.0"
+description = "Offline inspection and derived SQLite indexing of Suez captures"
+requires-python = ">=3.9"
+dependencies = []
+
+[tool.uv]
+package = false

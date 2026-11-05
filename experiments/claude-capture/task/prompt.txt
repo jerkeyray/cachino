@@ -1,0 +1,1 @@
+Read fixture.py using the Read tool. Do not edit files, run commands, search the web, or delegate. In at most 150 words, explain why cache_ratio is misleading when a cache count is missing or null, how its denominator should be chosen, and what should be returned when there are no paired known counts. This is code inspection only; do not implement a fix.
