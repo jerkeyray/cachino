@@ -80,6 +80,7 @@ def attribute(rows, tokenizer, pin, num_blocks, block, generated=True):
     """Return per-request attribution rows; generated=False models prompt-only traffic."""
     model = FreeQueuePredictor(num_blocks, block)
     earlier, out = [], []
+    previous_reply = None  # (content, completion_tokens) of the previous response
     for index, (request, response) in enumerate(rows):
         ids = render(tokenizer, request, pin)[1]
         seen = details(response)
@@ -99,6 +100,21 @@ def attribute(rows, tokenizer, pin, num_blocks, block, generated=True):
             row["divergence"] = {"position": adjacent,
                                  "previous_next": tokenizer.decode(prev[adjacent:adjacent + 6], skip_special_tokens=False),
                                  "this_next": tokenizer.decode(ids[adjacent:adjacent + 6], skip_special_tokens=False)}
+        # Split the recomputed tokens. The previous reply counts as re-prefilled
+        # when it is the last assistant message here; its size is the reply's
+        # completion_tokens, which equals its re-rendered length only if the
+        # re-tokenized text matches the generated IDs (true where checked).
+        assistants = [m["content"] for m in request["messages"] if m["role"] == "assistant"]
+        reply_tokens = previous_reply[1] if previous_reply and assistants and assistants[-1] == previous_reply[0] else 0
+        row["split"] = {"recomputed": len(ids) - (seen["cached_tokens"] or 0),
+                        "previous_reply": reply_tokens,
+                        "new_content": len(ids) - best - reply_tokens,
+                        # Includes the final prompt token, which is never served from cache.
+                        "block_rounding": best - bound,
+                        "eviction": bound - predicted["cached_tokens"]}
+        choice = (response.get("choices") or [{}])[0]
+        content = (choice.get("message") or {}).get("content")
+        previous_reply = (content, seen["completion_tokens"] or 0) if content is not None else None
         row["parity_count"] = seen["prompt_tokens"] == len(ids) if seen["prompt_tokens"] is not None else None
         row["matches_prediction"] = (seen["cached_tokens"] == predicted["cached_tokens"]) if seen["cached_tokens"] is not None else None
         out.append(row)
