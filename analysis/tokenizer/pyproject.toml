@@ -1,7 +1,7 @@
 [project]
-name = "suez-tokenizer"
+name = "cachino-tokenizer"
 version = "0.1.0"
-description = "CPU-only pinned prompt reconstruction for Suez"
+description = "CPU-only pinned prompt reconstruction for Cachino"
 requires-python = ">=3.12"
 dependencies = ["transformers==4.57.6", "Jinja2==3.1.6"]
 

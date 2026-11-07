@@ -1,7 +1,7 @@
 [project]
-name = "suez-analysis"
+name = "cachino-analysis"
 version = "0.1.0"
-description = "Offline inspection and derived SQLite indexing of Suez captures"
+description = "Offline inspection and derived SQLite indexing of Cachino captures"
 requires-python = ">=3.9"
 dependencies = []
 
