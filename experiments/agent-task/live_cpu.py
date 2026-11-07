@@ -164,7 +164,9 @@ def worker(checkout, out):
         from direct_model import DirectTextModel
 
         text = (checkout / TEMPLATE_FILE).read_text()
-        model = DirectTextModel(**spec["model_config"])
+        # Use the pinned config's observation template, which truncates outputs
+        # over 10,000 characters, as the stock text-based setup does.
+        model = DirectTextModel(**spec["model_config"], observation_template=block_scalar(text, "observation_template"))
         agent = DefaultAgent(model, env, system_template=block_scalar(text, "system_template"),
                              instance_template=block_scalar(text, "instance_template"),
                              **spec["agent_bounds"], output_path=out / "trajectory.json")
