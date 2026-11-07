@@ -151,9 +151,11 @@ def main():
     parser.add_argument("--block-size", type=int, required=True)
     parser.add_argument("--replay", help="engine origin, http://127.0.0.1:PORT")
     parser.add_argument("--out", type=Path, required=True)
+    parser.add_argument("--pin", type=Path, default=PIN, help="tokenizer pin naming the session's model")
+    parser.add_argument("--assets", type=Path, default=ASSETS, help="tokenizer snapshot for that pin")
     args = parser.parse_args()
-    pin = load_pin(PIN)
-    tokenizer = _load_tokenizer(ASSETS, pin)[0]
+    pin = load_pin(args.pin)
+    tokenizer = _load_tokenizer(args.assets, pin)[0]
     rows = load_session(args.capture)
     args.out.mkdir(mode=0o700, parents=True)
     live = attribute(rows, tokenizer, pin, args.num_blocks, args.block_size, generated=True)
