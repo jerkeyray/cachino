@@ -5,7 +5,7 @@
   "run": {
     "run_id": null,
     "operator_started_at_utc": null,
-    "suez_commit": null,
+    "code_commit": null,
     "probe_spec_sha256": null
   },
   "hardware": {
@@ -69,7 +69,7 @@
   },
   "access": {
     "server_base_url": null,
-    "suez_proxy_base_url": null,
+    "proxy_base_url": null,
     "paid_resource": null,
     "time_ceiling_minutes": null,
     "spend_ceiling": null,

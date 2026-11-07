@@ -1,4 +1,4 @@
-"""Capture a real mini-swe-agent session against the local CPU vLLM through Suez.
+"""Capture a real mini-swe-agent session against the local CPU vLLM through Cachino.
 
 The pinned DefaultAgent loop, its text-based templates and the direct HTTP
 adapter build every request; Qwen3-0.6B on the vLLM CPU backend answers. The
@@ -8,7 +8,7 @@ therefore carry real harness serialization of real model output, which is what
 prefix reuse depends on. Task success is not measured.
 
 The vLLM server must already be listening on --engine. This script builds and
-owns only the Suez proxy and the agent child. The child gets no inherited
+owns only the Cachino proxy and the agent child. The child gets no inherited
 credentials and an audit hook that allows connections only to the proxy.
 """
 
@@ -115,7 +115,7 @@ def worker(checkout, out):
 
 
 def run(checkout, python, out, engine, spec_path):
-    """Verify pins, start Suez in front of the running engine and run one session."""
+    """Verify pins, start Cachino in front of the running engine and run one session."""
     manifest = json.loads((HERE / "manifest.json").read_text())
     harness_hashes = verify_checkout(checkout, manifest)
     spec = json.loads(spec_path.read_text())
@@ -137,7 +137,7 @@ def run(checkout, python, out, engine, spec_path):
     write_json(out / "provenance.json", {
         "harness_revision": manifest["harness"]["revision"], "harness_source_sha256": harness_hashes,
         "template_git_blob_sha": template_blob, "binary_sha256": hashlib.sha256(binary.read_bytes()).hexdigest(),
-        "suez_commit": subprocess.check_output(["git", "-C", str(ROOT), "rev-parse", "HEAD"], text=True).strip(),
+        "code_commit": subprocess.check_output(["git", "-C", str(ROOT), "rev-parse", "HEAD"], text=True).strip(),
         "served_models": served, "commands_executed": False})
     proxy_spec = spec["proxy"]
     host, port = proxy_spec["listen"].split(":")

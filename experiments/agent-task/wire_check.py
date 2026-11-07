@@ -1,7 +1,7 @@
 """Check the pinned harness/direct HTTP adapter without model inference.
 
 The default prints a plan and imports no harness. --run uses an already prepared
-checkout and interpreter; it never clones, installs packages or loads Suez's env.
+checkout and interpreter; it never clones, installs packages or loads Cachino's env.
 Only the agent child imports the harness. Its environment and network guard keep
 this compatibility check separate from credentials and agent shell execution.
 """
@@ -259,7 +259,7 @@ def stop(process):
 
 
 def run(checkout, python, out):
-    """Build Suez, run owned local fixtures and verify captured agent exchanges.
+    """Build Cachino, run owned local fixtures and verify captured agent exchanges.
 
     Existing paths are never reused. A failure leaves private logs and source
     snapshots for inspection and stops owned processes in all exit paths.
@@ -292,7 +292,7 @@ def run(checkout, python, out):
     subprocess.run(["go", "build", "-o", str(binary), "./cmd/cachino"], cwd=ROOT,
                    env=build_env, check=True, timeout=60)
     if any(hashlib.sha256((ROOT / name).read_bytes()).hexdigest() != digest for name, digest in source_hashes.items()):
-        raise ValueError("Suez source changed during build")
+        raise ValueError("Cachino source changed during build")
     exchanges = []
     server = HTTPServer(("127.0.0.1", 0), fixture_handler(exchanges))
     thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -310,7 +310,7 @@ def run(checkout, python, out):
         write_json(out / "effective-spec.json", spec)
         write_json(out / "provenance.json", {
             "harness_revision": manifest["harness"]["revision"], "harness_source_sha256": harness_hashes,
-            "suez_source_sha256": source_hashes, "python": str(python),
+            "source_sha256": source_hashes, "python": str(python),
             "binary_sha256": hashlib.sha256(binary.read_bytes()).hexdigest(),
             "inference_performed": False, "engine_validated": False,
         })
@@ -386,7 +386,7 @@ def run(checkout, python, out):
         if verify_checkout(checkout, manifest) != harness_hashes:
             raise ValueError("harness changed during wire check")
         if any(hashlib.sha256((ROOT / name).read_bytes()).hexdigest() != digest for name, digest in source_hashes.items()):
-            raise ValueError("Suez/adapter source changed during wire check")
+            raise ValueError("Cachino/adapter source changed during wire check")
         result.update(status="wire_validated", transport_validated=True, sdk_validated=False, engine_validated=False,
                       inference_performed=False, commands_executed=False, upstream_requests=2,
                       quota_probe_status=quota_status, strict_renderer_support=render_support,

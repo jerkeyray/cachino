@@ -1,6 +1,6 @@
 """Run one opt-in, bounded Claude Code capture against a frozen read-only task.
 
-The default prints bounds only. --send loads the local key, builds Suez, starts
+The default prints bounds only. --send loads the local key, builds Cachino, starts
 its limited proxy, runs Claude with only Read, and closes owned child processes.
 Raw CLI logs and traces remain private; neither credentials nor raw logs print.
 """

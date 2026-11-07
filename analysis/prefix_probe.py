@@ -67,7 +67,7 @@ def build_cases(pin, lines=128):
     history = copy.deepcopy(tool_base)
     history["messages"].extend([
         {"role": "assistant", "content": "", "tool_calls": [{"id": "call-1", "type": "function", "function": {"name": "read_file", "arguments": '{"path":"README.md"}'}}]},
-        {"role": "tool", "tool_call_id": "call-1", "content": "Suez measures prompt structure."}])
+        {"role": "tool", "tool_call_id": "call-1", "content": "Cachino measures prompt structure."}])
     add("tool_history_base", history)
     spaced_arguments = copy.deepcopy(history)
     spaced_arguments["messages"][2]["tool_calls"][0]["function"]["arguments"] = '{ "path" : "README.md" }'

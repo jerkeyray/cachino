@@ -120,7 +120,7 @@ class CalibrateTests(unittest.TestCase):
         self.engine = Engine(ids_by_body)
         # Two listeners share one engine, standing in for direct and proxied routes.
         self.servers = [serve(self.engine), serve(self.engine)]
-        self.direct, self.suez = (f"http://127.0.0.1:{s.server_address[1]}" for s in self.servers)
+        self.direct, self.proxy_origin = (f"http://127.0.0.1:{s.server_address[1]}" for s in self.servers)
         self.manifest = filled_manifest()
         self.manifest["run"]["run_id"] = "t1"
         self.manifest["cache"]["block_size_tokens"] = BLOCK
@@ -132,7 +132,7 @@ class CalibrateTests(unittest.TestCase):
         self.tmp.cleanup()
 
     def execute(self, out="out"):
-        result = run(*self.inputs, self.manifest, self.direct, self.suez, self.root / out, timeout=5)
+        result = run(*self.inputs, self.manifest, self.direct, self.proxy_origin, self.root / out, timeout=5)
         steps = [json.loads(line) for line in (self.root / out / "steps.jsonl").read_text().splitlines()]
         return result, steps
 
@@ -144,7 +144,7 @@ class CalibrateTests(unittest.TestCase):
         self.assertGreater(warm["cached_tokens"], 0)
         self.assertTrue(all(s.get("response_id_matches", True) for s in steps))
         proxy = next(s for s in steps if s["step"] == "proxy-cold")
-        self.assertEqual(proxy["route"], "suez")
+        self.assertEqual(proxy["route"], "proxy")
         self.assertTrue((self.root / "out/raw/00-preflight.response.body").exists())
         late = next(s for s in steps if s["step"] == "late-after-warm")
         self.assertTrue(all(c["passed"] for c in late["checks"]))

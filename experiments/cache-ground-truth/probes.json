@@ -250,8 +250,8 @@
       "step": "proxy-cold",
       "action": "send",
       "probe": "base",
-      "route": "suez",
-      "accept": "returned prompt_token_ids equal direct-cold; cached_tokens 0; Suez capture integrity verified. Timing comparison needs repeated pairs and is not decided by one request",
+      "route": "proxy",
+      "accept": "returned prompt_token_ids equal direct-cold; cached_tokens 0; proxy capture integrity verified. Timing comparison needs repeated pairs and is not decided by one request",
       "checks": [
         "parity",
         "cached_zero",

@@ -248,7 +248,7 @@ def plan(spec):
              "route": s.get("route"), "checks": s.get("checks", [])} for i, s in enumerate(spec["sequence"])]
 
 
-def run(spec, spec_sha, bodies, tokens, manifest, direct, suez, out, timeout=120.0, predictions=None):
+def run(spec, spec_sha, bodies, tokens, manifest, direct, proxy, out, timeout=120.0, predictions=None):
     """Execute the sequence once and return the result summary.
 
     Each step record is appended to steps.jsonl and synced before the next
@@ -266,7 +266,7 @@ def run(spec, spec_sha, bodies, tokens, manifest, direct, suez, out, timeout=120
         for index, step in enumerate(spec["sequence"]):
             record = {"index": index, "step": step["step"], "action": step["action"]}
             try:
-                _step(client, step, index, run_id, direct, suez, bodies, tokens, returned, out, record,
+                _step(client, step, index, run_id, direct, proxy, bodies, tokens, returned, out, record,
                       block=manifest["cache"]["block_size_tokens"],
                       predicted=(predictions or {}).get(step["step"]))
                 failures.extend(f"{step['step']}: {c['check']}" for c in record.get("checks", []) if not c["passed"])
@@ -280,8 +280,8 @@ def run(spec, spec_sha, bodies, tokens, manifest, direct, suez, out, timeout=120
                 break
     status = "stopped" if stop else ("completed_with_failures" if failures else "completed")
     result = {"schema_version": 1, "run_id": run_id, "status": status, "stop": stop, "failed_checks": failures,
-              "spec_sha256": spec_sha, "direct": direct, "suez": suez,
-              "note": "Suez capture integrity for the proxy step is checked separately with analysis/report.py."}
+              "spec_sha256": spec_sha, "direct": direct, "proxy": proxy,
+              "note": "Proxy capture integrity for the proxy step is checked separately with analysis/report.py."}
     (out / "result.json").write_text(json.dumps(result, indent=2) + "\n")
     return result
 
@@ -294,7 +294,7 @@ def _json(body, what):
         raise StopRun(what + " response is not JSON") from error
 
 
-def _step(client, step, index, run_id, direct, suez, bodies, tokens, returned, out, record, block=None,
+def _step(client, step, index, run_id, direct, proxy, bodies, tokens, returned, out, record, block=None,
           predicted=None):
     """Perform one action, filling record in place; raise StopRun on a stop rule.
 
@@ -322,17 +322,17 @@ def _step(client, step, index, run_id, direct, suez, bodies, tokens, returned, o
     if action != "send":
         raise InputError("unknown action " + action)
     probe = step["probe"]
-    request_id = f"suez-m4-{run_id}-{index:02d}"
+    request_id = f"cachino-m4-{run_id}-{index:02d}"
     headers = {"Content-Type": "application/json", "X-Request-Id": request_id}
     base = direct
-    if step["route"] == "suez":
-        base = suez
+    if step["route"] == "proxy":
+        base = proxy
         headers.update({"X-Cachino-Session": "m4-" + run_id, "X-Cachino-Turn": str(index)})
     status, response_headers, body, elapsed = client.exchange("POST", base + "/v1/chat/completions", data=bodies[probe], headers=headers)
     prefix.with_suffix(".response.body").write_bytes(body)
     prefix.with_suffix(".response.headers.json").write_text(json.dumps(response_headers, indent=2) + "\n")
     record.update(probe=probe, route=step["route"], status=status, x_request_id=request_id,
-                  suez_request_id=response_headers.get("X-Cachino-Request-ID"), client_round_trip_ms=elapsed)
+                  proxy_request_id=response_headers.get("X-Cachino-Request-ID"), client_round_trip_ms=elapsed)
     if status != 200:
         raise StopRun(f"chat status {status}")
     _json(body, "chat")
@@ -361,14 +361,14 @@ def main():
     parser.add_argument("--probes", required=True, type=Path, help="directory written by build_probes.py")
     parser.add_argument("--manifest", required=True, type=Path)
     parser.add_argument("--direct", required=True, help="vLLM origin, http://127.0.0.1:PORT")
-    parser.add_argument("--suez", required=True, help="Suez proxy origin forwarding to the same server")
+    parser.add_argument("--proxy", required=True, help="Cachino proxy origin forwarding to the same server")
     parser.add_argument("--out", required=True, type=Path)
     parser.add_argument("--timeout", default=120.0, type=float)
     parser.add_argument("--run", action="store_true", help="send requests; default is a dry run")
     args = parser.parse_args()
-    direct, suez = origin(args.direct), origin(args.suez)
-    if direct == suez:
-        raise InputError("direct and Suez endpoints must differ")
+    direct, proxy = origin(args.direct), origin(args.proxy)
+    if direct == proxy:
+        raise InputError("direct and proxy endpoints must differ")
     spec, spec_sha, bodies, tokens = load_inputs(args.spec, args.probes)
     manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
     if not args.run:
@@ -379,7 +379,7 @@ def main():
     check_ready(manifest, spec, spec_sha, args.probes)
     if args.out.exists():
         raise InputError("output directory already exists")
-    result = run(spec, spec_sha, bodies, tokens, manifest, direct, suez, args.out, args.timeout,
+    result = run(spec, spec_sha, bodies, tokens, manifest, direct, proxy, args.out, args.timeout,
                  predictions=load_predictions(args.probes))
     print(json.dumps(result, indent=2))
     return 0 if result["status"] == "completed" else 1

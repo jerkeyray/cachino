@@ -1,7 +1,7 @@
-"""Send two bounded synthetic DeepSeek requests through a local Suez proxy.
+"""Send two bounded synthetic DeepSeek requests through a local Cachino proxy.
 
 Default execution prints the plan without reading credentials or opening a
-connection. Raw evidence belongs to Suez capture; stdout contains only status
+connection. Raw evidence belongs to Cachino capture; stdout contains only status
 and normalized usage. This is a protocol smoke test, not a cache experiment.
 """
 

@@ -1,5 +1,5 @@
 # Dependencies imported by the pinned DefaultAgent and text-action helpers.
-# The Suez direct model adapter uses the Python standard library.
+# The Cachino direct model adapter uses the Python standard library.
 # CPython 3.12 / macOS arm64; retain already installed versions.
 jinja2==3.1.6
 pydantic==2.14.2

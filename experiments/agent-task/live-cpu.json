@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "purpose": "real pinned mini-swe-agent session against Qwen3-0.6B on the vLLM CPU backend, captured by Suez, for per-turn prefix-reuse attribution",
+  "purpose": "real pinned mini-swe-agent session against Qwen3-0.6B on the vLLM CPU backend, captured by Cachino, for per-turn prefix-reuse attribution",
   "harness_revision": "04d809ceab9df28f9adaed044884180159172930",
   "template_file": "src/minisweagent/config/mini_textbased.yaml",
   "template_git_blob_sha": "f4e5acb179b6951c4711aa1328662c7598f58165",

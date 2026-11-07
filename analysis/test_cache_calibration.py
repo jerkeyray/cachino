@@ -93,7 +93,7 @@ class ProbeTests(unittest.TestCase):
         for step in self.spec["sequence"]:
             if step["action"] == "send":
                 self.assertIn(step["probe"], names)
-                self.assertIn(step["route"], {"direct", "suez"})
+                self.assertIn(step["route"], {"direct", "proxy"})
             else:
                 self.assertIn(step["action"], {"get_models", "reset_prefix_cache"})
         cold = [i for i, s in enumerate(self.spec["sequence"]) if s["step"] in {"cold-base", "direct-cold", "proxy-cold", "late-warmup", "history-turn-1"}]

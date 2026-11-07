@@ -1,4 +1,4 @@
-"""Inspect immutable Suez trace runs; no tokenizer or cache inference is performed."""
+"""Inspect immutable Cachino trace runs; no tokenizer or cache inference is performed."""
 import argparse
 import hashlib
 import json
