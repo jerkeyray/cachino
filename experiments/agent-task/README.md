@@ -290,6 +290,14 @@ HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 uv run --project analysis/tokenizer --fr
   --replay http://127.0.0.1:18000 --out artifacts/live-cpu-NEW/attribution
 ```
 
+For observations that depend on the command, use the read-only spec, which
+answers commands from the task's baseline tree without executing anything:
+
+```sh
+python3.14 -B experiments/agent-task/live_cpu.py --run \
+  --spec experiments/agent-task/live-cpu-readonly.json --out artifacts/live-cpu-readonly-NEW
+```
+
 `cue_counterfactual.py` replays the same prompts with and without the thinking
 cue kept in assistant history. Results:
 [live session](../../docs/notes/live-cpu-results-20261107.md) and
