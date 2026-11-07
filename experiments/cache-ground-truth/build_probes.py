@@ -27,7 +27,7 @@ sys.path.insert(0, str(ROOT / "analysis"))
 from reconstruct import _load_tokenizer, lcp, render  # noqa: E402
 from tokenizer_assets import load_pin  # noqa: E402
 
-# M4 runs on the CPU backend with Qwen3-0.6B (docs/notes/m4-cpu-build-plan.md).
+# M4 runs on the CPU backend with Qwen3-0.6B (docs/archive/m4-cpu-build-plan.md).
 DEFAULT_PIN = ROOT / "experiments/tokenizer/qwen3-0.6b.json"
 DEFAULT_ASSETS = ROOT / "artifacts/qwen3-0.6b-tokenizer"
 

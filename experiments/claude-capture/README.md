@@ -49,7 +49,7 @@ python3.14 analysis/audit.py traces/YOUR-RUN/capture --out artifacts/YOUR-AUDIT
 ```
 
 For the legacy 2026-10-29 run only, add `--response-encoding-override zstd`.
-See [observations and limits](../../docs/notes/claude-capture-audit.md).
+See [observations and limits](../../docs/archive/claude-capture-audit.md).
 
 ## Request flow
 

@@ -1,6 +1,6 @@
 // Package trace observes HTTP body reads/writes and persists bounded raw copies
 // with lifecycle events. Offline analysis consumes these files; forwarding does
-// not wait for a complete body to be collected. See docs/notes/trace-format.md.
+// not wait for a complete body to be collected. See docs/archive/trace-format.md.
 package trace
 
 import (

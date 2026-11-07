@@ -81,7 +81,7 @@ the saved raw capture. Original/repeated/streaming Hello prompts each contain
 shares 3 leading tokens with Hello. The invalid JSON request remains unsupported.
 
 Evidence: artifacts/tokenizer-20261027T174615Z/reconstructed/summary.json.
-See [the measured CPU observations](../../docs/notes/cpu-prefix-observations.md)
+See [the measured CPU observations](../../docs/archive/cpu-prefix-observations.md)
 and [the longer controlled mutation experiment](../prefix-mutations/README.md).
 
 The warning about missing PyTorch/TensorFlow/Flax is expected. No weights or

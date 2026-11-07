@@ -5,7 +5,7 @@ labels, so a capped-cache experiment can be predicted before it runs. It models
 one worker, one KV cache group, one request in flight at a time, and prompts
 whose length is not a multiple of the block size, so the single generated token
 cannot change the block count. Source lines are cited in
-docs/notes/e4-eviction-plan.md:
+docs/archive/e4-eviction-plan.md:
 
 - Block 0 is a null placeholder; the other num_blocks - 1 blocks start free in
   index order.

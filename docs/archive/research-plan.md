@@ -433,8 +433,8 @@ These are overlap and mechanism references, not a claim of completed reproductio
   Our plan does not claim those relationships are new.
 - [mini-swe-agent README](https://github.com/SWE-agent/mini-swe-agent): inspected
   read-only on 2026-11-03; candidate baseline with documented linear history.
-- Local evidence: `docs/notes/cpu-prefix-observations.md`,
-  `docs/notes/claude-capture-audit.md`, existing experiment manifests and tests.
+- Local evidence: `docs/archive/cpu-prefix-observations.md`,
+  `docs/archive/claude-capture-audit.md`, existing experiment manifests and tests.
   Older literature notes contain provisional leads; verify identities before use.
 
 The LMCache load-versus-recompute discussion is a separate deferred direction.
