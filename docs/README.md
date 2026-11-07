@@ -10,6 +10,7 @@ supersedes an earlier plan; each plan's status line says when it ran.
 | [M4 CPU calibration](notes/m4-cpu-results-20261107.md) | Exact token parity, working cache reset, and reuse equal to the block rule on vLLM's CPU backend |
 | [E4 eviction](notes/e4-cpu-results-20261107.md) | A free-queue model of the pinned build predicts reuse under a capped cache exactly; eviction is tail first |
 | [Live agent session](notes/live-cpu-results-20261107.md) | Per-turn attribution of a real mini-swe-agent session; reuse stops at the template's thinking cue |
+| [30-turn session](notes/live-readonly-results-20261107.md) | Read-only observations; cache served 95% of prompt tokens; recompute split 68% new content, 16% reply, 16% rounding |
 | [Cue counterfactual](notes/cue-counterfactual-20261107.md) | Keeping the cue lets the engine reuse each reply's KV, but changed the model's behavior |
 | [Proxy overhead](notes/proxy-overhead-20261107.md) | Forwarding adds under 0.5 ms; capture adds about 15 ms per request from durability syncs |
 
