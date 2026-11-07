@@ -21,6 +21,8 @@ supersedes an earlier plan; each plan's status line says when it ran.
 
 ## Plans and procedures
 
+- [Findings and claims](notes/findings-20261108.md): the main claim, its evidence and when it would be withdrawn.
+
 - [Research plan](notes/research-plan.md): question, milestones and gates.
 - [Next stages plan](notes/next-stages-plan.md): the remaining stages, from novelty check to write-up.
 - [Prefill measurement contract](notes/prefill-measurement-contract.md): which numbers mean what.

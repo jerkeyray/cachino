@@ -8,6 +8,11 @@ and a derived SQLite index. A deterministic fake endpoint supports development.
 
 ## Findings so far
 
+Main claim: from a raw capture, Cachino predicts how much prefix reuse each
+request gets on a pinned vLLM build and attributes each request's lost reuse to
+prompt change, block rounding, eviction or sharing with other sessions
+([findings and claims](docs/notes/findings-20261108.md)).
+
 All engine results below come from vLLM at commit `2173d712`, built for the Mac
 CPU, serving Qwen3-0.6B with 32-token blocks. They concern cache accounting,
 not GPU latency.

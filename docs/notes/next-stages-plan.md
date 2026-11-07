@@ -70,6 +70,10 @@ and absent. Needs: approval for the control model download.
 
 ## Stage 3: choose the finding
 
+Done 2026-11-08: see [findings and claims](findings-20261108.md). Main claim:
+Cachino predicts per-request prefix reuse from a capture and attributes each
+loss to its cause.
+
 Question: which result is the contribution?
 
 Apply the research plan's stopping table to Stage 1 and 2 results. The leading
@@ -80,6 +84,16 @@ Done: one main claim, its evidence table and the conditions under which it
 would be withdrawn. Needs: nothing.
 
 ## Stage 4: one intervention
+
+Chosen 2026-11-08: **capture-guided session scheduling.** On a captured
+multi-session trace that evicts (the seed 2, four-session run), compare the
+recorded interleaving with schedules that change only the order in which
+session turns are served: finish a session before admitting the next, or pick
+the next turn that minimizes predicted eviction. The prompts, and so model
+behavior, are unchanged. Measure on the engine, by replay, the recomputed
+tokens saved and the cost in turns delayed. CacheWise's prefix-aware
+scheduling is the closest published approach; this evaluates the idea on our
+traces, without claiming a new policy.
 
 Question: does acting on the diagnosis reduce recomputation?
 
