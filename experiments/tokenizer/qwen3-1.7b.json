@@ -1,0 +1,7 @@
+{
+  "model_id": "Qwen/Qwen3-1.7B",
+  "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+  "add_generation_prompt": true,
+  "enable_thinking": false,
+  "domain": "cpu_live_session_model"
+}
