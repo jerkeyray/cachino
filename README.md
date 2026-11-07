@@ -22,9 +22,10 @@ not GPU latency.
 - **Real agent traffic.** In a mini-swe-agent session, every turn's reuse stops
   where the template's empty thinking cue is replaced by the previous reply, so
   each reply is prefilled again ([live session](docs/notes/live-cpu-results-20261107.md)).
-- **Shared load causes eviction.** Three concurrent sessions on a cache sized
-  for about one lost 25% of their recomputed tokens to each other's traffic,
-  while single sessions lost none ([concurrent sessions](docs/notes/concurrent-results-20261107.md)).
+- **Shared load causes eviction.** When three concurrent sessions outgrew a
+  cache sized for about one, 25% of their recomputed tokens were lost to each
+  other's traffic; a run whose sessions stayed smaller lost none, and single
+  sessions never did ([concurrent sessions](docs/notes/concurrent-results-20261107.md)).
 - **One intervention, with a cost.** Keeping the cue in history let the engine
   reuse each reply and cut recomputation by about half, but changed the model's
   next action ([counterfactual](docs/notes/cue-counterfactual-20261107.md)).
