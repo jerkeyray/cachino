@@ -15,6 +15,7 @@ supersedes an earlier plan; each plan's status line says when it ran.
 | [Concurrent sessions](notes/concurrent-results-20261107.md) | Three sessions sharing one cache evicted each other; eviction was 25% of recompute |
 | [Cache size sweep](notes/cache-sweep-20261107.md) | Fixed three-session traffic: no eviction at 16k tokens or more, 21% of recompute at 14k, 43% at 12k |
 | [Stage 2 repetitions and threshold](notes/stage2-results-20261108.md) | Nine seeded runs: eviction predicted from the capture for every run; threshold confirmed to the block |
+| [Control template](notes/control-template-20261108.md) | Qwen2.5's template keeps history aligned; the engine reused a 442-token reply's KV |
 | [Cue counterfactual](notes/cue-counterfactual-20261107.md) | Keeping the cue lets the engine reuse each reply's KV, but changed the model's behavior |
 | [Proxy overhead](notes/proxy-overhead-20261107.md) | Forwarding adds under 0.5 ms; capture adds about 15 ms per request from durability syncs |
 
