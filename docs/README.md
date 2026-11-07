@@ -11,6 +11,7 @@ supersedes an earlier plan; each plan's status line says when it ran.
 | [E4 eviction](notes/e4-cpu-results-20261107.md) | A free-queue model of the pinned build predicts reuse under a capped cache exactly; eviction is tail first |
 | [Live agent session](notes/live-cpu-results-20261107.md) | Per-turn attribution of a real mini-swe-agent session; reuse stops at the template's thinking cue |
 | [Cue counterfactual](notes/cue-counterfactual-20261107.md) | Keeping the cue lets the engine reuse each reply's KV, but changed the model's behavior |
+| [Proxy overhead](notes/proxy-overhead-20261107.md) | Forwarding adds under 0.5 ms; capture adds about 15 ms per request from durability syncs |
 
 ## Plans and procedures
 

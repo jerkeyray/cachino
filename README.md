@@ -227,8 +227,10 @@ The default body storage cap is 16 MiB per direction, adjustable using
 `-trace-body-limit`. Larger bodies continue through the proxy; stored copies
 are explicitly truncated. Authorization headers and query strings are excluded
 from metadata, but body text remains raw and may contain private content.
-Raw traces stay gitignored. Capture writes can add latency and have not been
-calibrated for inference performance measurements.
+Raw traces stay gitignored. Capture adds about 15 ms per request on macOS,
+mostly from durability syncs; forwarding alone adds under 0.5 ms. See
+[proxy overhead](docs/notes/proxy-overhead-20261107.md), and keep capture off
+for latency passes.
 
 After requests complete, generate a report and a new SQLite index:
 
