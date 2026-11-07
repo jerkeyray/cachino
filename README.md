@@ -65,6 +65,7 @@ Forwarding, capture and session limits are described in the
 | `experiments/cache-eviction/` | Cache predictor and eviction probes ([README](experiments/cache-eviction/README.md)) |
 | `experiments/agent-task/` | Frozen task, agent sessions, attribution, sweeps and scheduling ([README](experiments/agent-task/README.md)) |
 | `experiments/proxy-overhead/` | Paired latency measurement ([README](experiments/proxy-overhead/README.md)) |
+| `experiments/gpu-confirmation/` | Token-ID bundle and GPU replay ([README](experiments/gpu-confirmation/README.md)) |
 | `docs/` | Results, method, related work, plan and the dated archive |
 
 ## Verify
