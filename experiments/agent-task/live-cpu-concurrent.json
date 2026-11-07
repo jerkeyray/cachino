@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "purpose": "base spec for concurrent pinned mini-swe-agent sessions with read-only snapshot observations, Qwen3-1.7B at temperature 0.7, sharing one vLLM CPU cache; live_concurrent.py derives each session's proxy port and label",
+  "harness_revision": "04d809ceab9df28f9adaed044884180159172930",
+  "template_file": "src/minisweagent/config/mini_textbased.yaml",
+  "template_git_blob_sha": "f4e5acb179b6951c4711aa1328662c7598f58165",
+  "task": "experiments/agent-task/prompt.txt",
+  "model_config": {
+    "model_name": "Qwen/Qwen3-1.7B",
+    "api_base": "http://127.0.0.1:18084/v1",
+    "api_key": "local-cpu-placeholder",
+    "max_tokens": 768,
+    "temperature": 0.7,
+    "timeout": 600
+  },
+  "agent_bounds": {
+    "step_limit": 10,
+    "wall_time_limit_seconds": 3600,
+    "cost_limit": 0
+  },
+  "environment": {
+    "class": "SnapshotEnvironment",
+    "commands_executed": false,
+    "task_checkout": ".project/checkouts/more-itertools-task",
+    "observation": "read-only commands answered from the baseline tree (experiments/agent-task/readonly_env.py); other commands get a fixed not-available reply",
+    "template_vars": {
+      "system": "Linux",
+      "release": "6.8.0",
+      "version": "#1 SMP PREEMPT_DYNAMIC",
+      "machine": "x86_64"
+    },
+    "template_vars_note": "stated task-container values for the instance template's uname fields; not read from the capture host"
+  },
+  "proxy": {
+    "listen": "127.0.0.1:18084",
+    "session": "concurrent",
+    "session_request_limit": 10,
+    "session_input_bytes": 1048576,
+    "session_output_tokens": 768
+  },
+  "sampling_note": "no seed is sent; sessions diverge after the shared system and task prompt, and runs are reproducible only from their captures"
+}
