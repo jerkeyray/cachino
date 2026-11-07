@@ -26,6 +26,9 @@ not GPU latency.
   cache sized for about one, 25% of their recomputed tokens were lost to each
   other's traffic; a run whose sessions stayed smaller lost none, and single
   sessions never did ([concurrent sessions](docs/notes/concurrent-results-20261107.md)).
+  Replaying that traffic at six cache sizes shows a cliff: no eviction from
+  16k tokens up, 43% of recomputation at 12k, all predicted exactly
+  ([cache sweep](docs/notes/cache-sweep-20261107.md)).
 - **One intervention, with a cost.** Keeping the cue in history let the engine
   reuse each reply and cut recomputation by about half, but changed the model's
   next action ([counterfactual](docs/notes/cue-counterfactual-20261107.md)).
