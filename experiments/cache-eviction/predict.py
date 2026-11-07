@@ -44,17 +44,24 @@ class FreeQueuePredictor:
         """Serve one prompt and return {"cached_tokens", "created_cache_tokens"}.
 
         generated > 0 models a reply of that many tokens. Its KV covers all but
-        the last sampled token, which is never fed back. Generated tokens get
-        unique placeholder IDs, so they can never match a later prompt: that is
-        the hypothesis under test, not an established fact. With generated == 0
-        the prompt length must not be a block multiple (see the module note).
+        the last sampled token, which is never fed back. An integer count gives
+        generated tokens unique placeholder IDs, so they can never match a later
+        prompt. A list gives the actual generated IDs, which models the engine
+        caching full blocks of generated tokens like prompt blocks. With
+        generated == 0 the prompt length must not be a block multiple (see the
+        module note).
         """
         size = self.block_size
         n = len(ids)
+        if isinstance(generated, list):
+            tail = list(generated[:-1])
+            generated = len(generated)
+        else:
+            self._serial = getattr(self, "_serial", 0) + 1
+            tail = [("generated", self._serial, i) for i in range(max(generated - 1, 0))]
         if n == 0 or (generated == 0 and n % size == 0) or generated < 0:
             raise ValueError("prompt length must be positive and not a multiple of the block size")
-        self._serial = getattr(self, "_serial", 0) + 1
-        sequence = list(ids) + [("generated", self._serial, i) for i in range(max(generated - 1, 0))]
+        sequence = list(ids) + tail
         full = len(sequence) // size
         keys = [tuple(sequence[:(i + 1) * size]) for i in range(full)]
         hits = []
