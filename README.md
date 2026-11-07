@@ -6,11 +6,6 @@ cache reuse. It forwards `POST /v1/chat/completions`, `/v1/messages`, and
 upstream, captures raw request/response bodies, and produces offline JSON reports
 and a derived SQLite index. A deterministic fake endpoint supports development.
 
-The repository's [contribution conventions](CONTRIBUTING.md) cover short
-lowercase commits and comments that explain responsibilities, contracts and
-consequential implementation choices. The [documentation index](docs/README.md)
-lists results, plans and references.
-
 ## Findings so far
 
 All engine results below come from vLLM at commit `2173d712`, built for the Mac
