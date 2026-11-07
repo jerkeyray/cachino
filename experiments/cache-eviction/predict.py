@@ -40,14 +40,23 @@ class FreeQueuePredictor:
         self.hash_of.clear()
         self.block_of.clear()
 
-    def request(self, ids):
-        """Serve one prompt and return {"cached_tokens", "created_cache_tokens"}."""
+    def request(self, ids, generated=0):
+        """Serve one prompt and return {"cached_tokens", "created_cache_tokens"}.
+
+        generated > 0 models a reply of that many tokens. Its KV covers all but
+        the last sampled token, which is never fed back. Generated tokens get
+        unique placeholder IDs, so they can never match a later prompt: that is
+        the hypothesis under test, not an established fact. With generated == 0
+        the prompt length must not be a block multiple (see the module note).
+        """
         size = self.block_size
         n = len(ids)
-        if n == 0 or n % size == 0:
+        if n == 0 or (generated == 0 and n % size == 0) or generated < 0:
             raise ValueError("prompt length must be positive and not a multiple of the block size")
-        full = n // size
-        keys = [tuple(ids[:(i + 1) * size]) for i in range(full)]
+        self._serial = getattr(self, "_serial", 0) + 1
+        sequence = list(ids) + [("generated", self._serial, i) for i in range(max(generated - 1, 0))]
+        full = len(sequence) // size
+        keys = [tuple(sequence[:(i + 1) * size]) for i in range(full)]
         hits = []
         for key in keys[:(n - 1) // size]:
             block = self.block_of.get(key)
@@ -56,7 +65,8 @@ class FreeQueuePredictor:
             hits.append(block)
         for block in hits:
             self.queue.remove(block)
-        needed = full + 1 - len(hits)  # remaining full blocks plus the partial block
+        partial = 1 if len(sequence) % size else 0
+        needed = full + partial - len(hits)
         if needed > len(self.queue):
             raise ValueError("request does not fit in the free blocks")
         new = [self.queue.popleft() for _ in range(needed)]
