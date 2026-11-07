@@ -11,6 +11,9 @@ and a derived SQLite index. A deterministic fake endpoint supports development.
 All engine results below come from vLLM at commit `2173d712`, built for the Mac
 CPU, serving Qwen3-0.6B with 32-token blocks. They concern cache accounting,
 not GPU latency.
+The template boundary and eviction under shared load are already reported
+elsewhere; Cachino's part is exact, engine-validated attribution of each
+request's lost reuse ([related work](docs/notes/related-work-check-20261107.md)).
 
 - **Token parity.** The engine's prompt token IDs equal Cachino's local render
   exactly, including through the proxy ([M4](docs/notes/m4-cpu-results-20261107.md)).
