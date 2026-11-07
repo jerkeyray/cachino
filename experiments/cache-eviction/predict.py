@@ -83,14 +83,16 @@ class FreeQueuePredictor:
             if block is None:
                 break
             hits.append(block)
+        partial = 1 if len(sequence) % size else 0
+        needed = full + partial - len(hits)
+        # Check capacity before changing any state, so a caller can retry later.
+        idle_hits = sum(1 for block in hits if self.refs.get(block, 0) == 0)
+        if needed > len(self.queue) - idle_hits:
+            raise ValueError("request does not fit in the free blocks")
         for block in hits:
             if self.refs.get(block, 0) == 0:
                 self.queue.remove(block)
             self.refs[block] = self.refs.get(block, 0) + 1
-        partial = 1 if len(sequence) % size else 0
-        needed = full + partial - len(hits)
-        if needed > len(self.queue):
-            raise ValueError("request does not fit in the free blocks")
         new = [self.queue.popleft() for _ in range(needed)]
         for block in new:
             self.refs[block] = 1
