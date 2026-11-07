@@ -381,6 +381,9 @@ observations and a documented tail-estimation method.
 
 ## 7. Next three work sessions
 
+Superseded on 2026-11-07 by the [next stages plan](next-stages-plan.md). The
+original list is kept below for history.
+
 These are ordered work units, not calendar commitments.
 
 1. M1: inventory existing fields and pin/read the engine observation paths.

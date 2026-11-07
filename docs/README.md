@@ -20,6 +20,7 @@ supersedes an earlier plan; each plan's status line says when it ran.
 ## Plans and procedures
 
 - [Research plan](notes/research-plan.md): question, milestones and gates.
+- [Next stages plan](notes/next-stages-plan.md): the remaining stages, from novelty check to write-up.
 - [Prefill measurement contract](notes/prefill-measurement-contract.md): which numbers mean what.
 - [M4 calibration package](notes/m4-calibration-plan.md): what calibration must establish, with source-checked switches.
 - [CPU build plan](notes/m4-cpu-build-plan.md): building pinned vLLM for the Mac CPU and launching it.
