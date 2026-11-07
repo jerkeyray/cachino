@@ -31,7 +31,7 @@ Over all 30 requests: 110,271 prompt tokens, 87,808 reused, 22,463 recomputed.
 1. **Sessions evicted each other.** For the first three minutes, every
    request's reuse equalled its session's own prompt bound. Once session 1
    passed about 9,000 tokens and the other two kept growing, the three
-   sessions' working sets exceeded the 14,016-token cache. From then on, 9
+   sessions' working sets exceeded the 14,016-token cache. From then on, 7
    requests across all three sessions reused less than their own session's
    prefix allowed. Eviction cost 5,536 tokens in total, **25% of all
    recomputation** (1,376, 1,376 and 2,784 by session). For example, session 0's
@@ -50,6 +50,37 @@ Over all 30 requests: 110,271 prompt tokens, 87,808 reused, 22,463 recomputed.
 4. **Once pressure ended, reuse recovered.** Session 0's last three turns ran
    alone and matched their bounds again.
 
+## Repetitions
+
+Two more runs used the same spec, each after a cache reset.
+
+- **Run `-02` replicated run `-01` exactly.** Its 30 request bodies equal
+  run `-01`'s byte for byte, with sessions 1 and 2 swapped by thread start
+  order. Both runs started on a freshly launched server, and the pinned vLLM
+  uses a global seed of 0 when no per-request seed is sent
+  (`vllm/config/model.py` L215; the startup log reports `seed=0`). So sampled
+  traffic is reproducible from a fresh start, and `-02` is a replica, not an
+  independent repetition.
+- **Run `-03` ran on the already-used server and diverged.** Two of its
+  sessions ended early: one at the 12,288-token context limit (HTTP 400 on its
+  sixth request), one when a reply reached the 768-token output limit. With 19
+  completed requests and a smaller combined working set, it showed **no
+  eviction**. The cache served 69% of prompt tokens, cross-session reuse gave
+  1,792 tokens, and the overlap predictor matched 17 of 19 requests. Its 2
+  misses came where the replay judged the cache full and held a request that
+  the engine served at once, so the replay over-reserves blocks under load.
+
+| Run | Requests | Reused | Eviction share of recomputed | Overlap predictor |
+| --- | --- | --- | --- | --- |
+| `-01` | 30 | 80% | 25% | 26 / 30 |
+| `-02` (replica of `-01`) | 30 | 80% | 25% | 26 / 30 |
+| `-03` | 19 | 69% | 0% | 17 / 19 |
+
+Live sampled sessions do not hold load constant: how much eviction appears
+depends on how long the sessions run and how large they grow. The eviction
+share is a property of load relative to cache size, so it needs a controlled
+sweep, not more live repetitions.
+
 ## Compared with sequential sessions
 
 | Session type | Reused | Eviction share of recomputed |
@@ -64,9 +95,11 @@ residency under shared load, as the plan's pivot rule anticipated.
 
 ## Limits
 
-- One run, three sessions, one machine, CPU token counts only. The size of the
+- Two independent runs (plus one exact replica), three sessions, one machine,
+  CPU token counts only. The size of the
   eviction share depends directly on the cache size relative to the sessions'
   combined working sets, which was chosen small here.
-- Sampling without a seed makes the trajectories unrepeatable except from the
-  capture. Repetitions are needed before quoting any share as typical.
+- Sampling without a per-request seed is reproducible only from a fresh
+  server start. Load varies between independent runs, so no single eviction
+  share is typical.
 - Proxy start times stand in for engine admission times.
