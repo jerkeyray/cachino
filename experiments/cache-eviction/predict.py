@@ -33,6 +33,7 @@ class FreeQueuePredictor:
         self.block_size = block_size
         self.queue = deque(range(1, num_blocks))
         self.hash_of = {}  # block -> token prefix tuple
+        self.refs = {}  # block -> number of in-flight requests holding it
         self.block_of = {}  # token prefix tuple -> block
 
     def reset(self):
@@ -41,7 +42,19 @@ class FreeQueuePredictor:
         self.block_of.clear()
 
     def request(self, ids, generated=0):
-        """Serve one prompt and return {"cached_tokens", "created_cache_tokens"}.
+        """Serve one prompt to completion; return {"cached_tokens", "created_cache_tokens"}."""
+        prediction, blocks = self.allocate(ids, generated)
+        self.free(blocks)
+        return prediction
+
+    def allocate(self, ids, generated=0):
+        """Admit one request and hold its blocks; return (prediction, blocks).
+
+        Holding blocks until free() models overlapping requests: a block in use
+        by any request is out of the free queue and cannot be evicted, and a hit
+        on it only adds a reference. All of a request's blocks are taken at
+        admission, while the engine allocates decode blocks as it generates, so
+        overlapping traffic is approximate.
 
         generated > 0 models a reply of that many tokens. Its KV covers all but
         the last sampled token, which is never fed back. An integer count gives
@@ -71,13 +84,16 @@ class FreeQueuePredictor:
                 break
             hits.append(block)
         for block in hits:
-            self.queue.remove(block)
+            if self.refs.get(block, 0) == 0:
+                self.queue.remove(block)
+            self.refs[block] = self.refs.get(block, 0) + 1
         partial = 1 if len(sequence) % size else 0
         needed = full + partial - len(hits)
         if needed > len(self.queue):
             raise ValueError("request does not fit in the free blocks")
         new = [self.queue.popleft() for _ in range(needed)]
         for block in new:
+            self.refs[block] = 1
             old = self.hash_of.pop(block, None)
             if old is not None:
                 del self.block_of[old]
@@ -88,12 +104,18 @@ class FreeQueuePredictor:
                 self.block_of[key] = block
                 self.hash_of[block] = key
                 created += 1
+        return {"cached_tokens": len(hits) * size, "created_cache_tokens": created * size}, blocks
+
+    def free(self, blocks):
+        """Release a request's blocks last-first, as the engine frees them."""
         for block in reversed(blocks):
+            self.refs[block] -= 1
+            if self.refs[block]:
+                continue
             if block in self.hash_of:
                 self.queue.append(block)
             else:
                 self.queue.appendleft(block)
-        return {"cached_tokens": len(hits) * size, "created_cache_tokens": created * size}
 
 
 def predict(sequence, tokens, num_blocks, block_size):

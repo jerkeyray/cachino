@@ -43,6 +43,22 @@ class PredictorTests(unittest.TestCase):
         fits.request(prompt(2, 21))
         self.assertEqual(fits.request(a)["cached_tokens"], 12)
 
+    def test_blocks_held_by_an_in_flight_request_are_not_evicted(self):
+        # 10 usable blocks. While A is in flight, its 4 blocks are held; a
+        # 5-block filler takes 5 of the other 6 and evicts nothing. A second
+        # request for A shares A's 3 held full blocks and needs only one new
+        # partial block.
+        model = FreeQueuePredictor(11, B)
+        a = prompt(1, 13)
+        first, held = model.allocate(a)
+        self.assertEqual(first["cached_tokens"], 0)
+        filler, filler_blocks = model.allocate(prompt(2, 17))
+        again, again_blocks = model.allocate(a)
+        self.assertEqual(again["cached_tokens"], 12)
+        for blocks in (held, filler_blocks, again_blocks):
+            model.free(blocks)
+        self.assertEqual(sorted(model.queue), list(range(1, 11)))
+
     def test_reset_clears_hashes(self):
         model = FreeQueuePredictor(16, B)
         a = prompt(1, 13)
