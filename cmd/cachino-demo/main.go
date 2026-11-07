@@ -69,8 +69,8 @@ func run(out string, limited bool) error {
 			return err
 		}
 		request.Header.Set("Content-Type", "application/json")
-		request.Header.Set("X-Suez-Turn", fmt.Sprint(index))
-		request.Header.Set("X-Suez-Attempt", "0")
+		request.Header.Set("X-Cachino-Turn", fmt.Sprint(index))
+		request.Header.Set("X-Cachino-Attempt", "0")
 		response, err := endpoint.Client.Do(request)
 		if err != nil {
 			return err
@@ -84,7 +84,7 @@ func run(out string, limited bool) error {
 		if response.StatusCode != expected {
 			return fmt.Errorf("turn %d: expected HTTP %d, got %d", index, expected, response.StatusCode)
 		}
-		fmt.Printf("turn=%d status=%d request_id=%s\n", index, response.StatusCode, response.Header.Get("X-Suez-Request-ID"))
+		fmt.Printf("turn=%d status=%d request_id=%s\n", index, response.StatusCode, response.Header.Get("X-Cachino-Request-ID"))
 	}
 	if limited {
 		// Count actual fixture handler entries, not attempted client requests.

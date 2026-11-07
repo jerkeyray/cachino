@@ -84,7 +84,7 @@ func TestCaptureBytesMetadataAndPermissions(t *testing.T) {
 	}))
 	request := httptest.NewRequest("POST", "/v1/chat/completions?secret=must-not-persist", strings.NewReader(body))
 	request.Header.Set("Authorization", "Bearer must-not-persist")
-	request.Header.Set("X-Suez-Turn", "3")
+	request.Header.Set("X-Cachino-Turn", "3")
 	response := httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
 	events := records(t, store)
@@ -95,7 +95,7 @@ func TestCaptureBytesMetadataAndPermissions(t *testing.T) {
 	if record.Status != 201 || record.State != "completed" || record.Sequence != 1 || record.Session != "test-session" || record.Turn == nil || *record.Turn != 3 || record.FirstWriteMS == nil {
 		t.Fatalf("invalid metadata: %+v", record)
 	}
-	if record.ID != response.Header().Get("X-Suez-Request-ID") {
+	if record.ID != response.Header().Get("X-Cachino-Request-ID") {
 		t.Fatal("missing request correlation")
 	}
 	for _, item := range []struct {
@@ -238,7 +238,7 @@ func TestCaptureSSEDoesNotBufferAndRecordsAbort(t *testing.T) {
 			unblock := func() { once.Do(func() { close(release) }) }
 			defer unblock()
 			backend := localhttp.New(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				if r.Header.Get("X-Suez-Session") != "" || r.Header.Get("X-Suez-Turn") != "" {
+				if r.Header.Get("X-Cachino-Session") != "" || r.Header.Get("X-Cachino-Turn") != "" {
 					t.Error("trace labels forwarded to model")
 				}
 				io.Copy(io.Discard, r.Body)
@@ -263,8 +263,8 @@ func TestCaptureSSEDoesNotBufferAndRecordsAbort(t *testing.T) {
 			endpoint := localhttp.New(store.Wrap(handler))
 			defer endpoint.Close()
 			request, _ := http.NewRequest("POST", "http://cachino.test/v1/chat/completions", strings.NewReader("body"))
-			request.Header.Set("X-Suez-Session", "caller-session")
-			request.Header.Set("X-Suez-Turn", "0")
+			request.Header.Set("X-Cachino-Session", "caller-session")
+			request.Header.Set("X-Cachino-Turn", "0")
 			response, err := endpoint.Client.Do(request)
 			if err != nil {
 				t.Fatal(err)

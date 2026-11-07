@@ -39,7 +39,7 @@ class HostedSmokeTests(unittest.TestCase):
             self.assertEqual(payload["max_tokens"], 16)
             self.assertEqual(payload["thinking"], {"type": "disabled"})
             self.assertEqual(payload["stream"], bool(turn))
-            self.assertEqual(req.get_header("X-suez-turn"), str(turn))
+            self.assertEqual(req.get_header("X-cachino-turn"), str(turn))
             self.assertEqual(call.kwargs["timeout"], 30)
 
     def test_http_failure_stops_without_retry(self):

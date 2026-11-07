@@ -163,7 +163,7 @@ func TestOpenAIQuotaIsSharedAcrossConcurrentSessions(t *testing.T) {
 		go func(session int) {
 			defer wg.Done()
 			r := httptest.NewRequest("POST", "/v1/chat/completions", strings.NewReader(`{"model":"wire-fixture","max_tokens":8}`))
-			r.Header.Set("X-Suez-Session", strconv.Itoa(session))
+			r.Header.Set("X-Cachino-Session", strconv.Itoa(session))
 			h.ServeHTTP(httptest.NewRecorder(), r)
 		}(i)
 	}

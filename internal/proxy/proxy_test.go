@@ -162,7 +162,7 @@ func TestMessagesPrefixPreservesProtocol(t *testing.T) {
 						t.Errorf("missing protocol header %s", key)
 					}
 				}
-				if r.Header.Get("X-Suez-Session") != "" {
+				if r.Header.Get("X-Cachino-Session") != "" {
 					t.Error("local label reached upstream")
 				}
 				w.Header().Set("Content-Type", "text/event-stream")
@@ -176,7 +176,7 @@ func TestMessagesPrefixPreservesProtocol(t *testing.T) {
 			request.Header.Set("X-Api-Key", "fixture-key")
 			request.Header.Set("Anthropic-Version", "2023-06-01")
 			request.Header.Set("Anthropic-Beta", "fixture-beta")
-			request.Header.Set("X-Suez-Session", "local")
+			request.Header.Set("X-Cachino-Session", "local")
 			response := httptest.NewRecorder()
 			handler.ServeHTTP(response, request)
 			if response.Code != 200 || response.Body.String() != stream || !response.Flushed {

@@ -154,15 +154,15 @@ func ordinal(r *http.Request, header string) (*int64, error) {
 // begin prepares sidecars and persists a start before admitting forwarding.
 // A failure may leave orphan sidecars, but never an accepted unrecorded request.
 func (s *Store) begin(r *http.Request) (Record, *capture, *capture, error) {
-	turn, err := ordinal(r, "X-Suez-Turn")
+	turn, err := ordinal(r, "X-Cachino-Turn")
 	if err != nil {
 		return Record{}, nil, nil, err
 	}
-	attempt, err := ordinal(r, "X-Suez-Attempt")
+	attempt, err := ordinal(r, "X-Cachino-Attempt")
 	if err != nil {
 		return Record{}, nil, nil, err
 	}
-	session := r.Header.Get("X-Suez-Session")
+	session := r.Header.Get("X-Cachino-Session")
 	if session == "" {
 		session = s.session
 	}
@@ -226,7 +226,7 @@ func (s *Store) Wrap(next http.Handler) http.Handler {
 			http.Error(w, "capture could not start", http.StatusServiceUnavailable)
 			return
 		}
-		w.Header().Set("X-Suez-Request-ID", record.ID)
+		w.Header().Set("X-Cachino-Request-ID", record.ID)
 		body := &observedBody{ReadCloser: r.Body, capture: request}
 		r.Body = body
 		writer := &observedWriter{ResponseWriter: w, capture: response, start: started}

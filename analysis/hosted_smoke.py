@@ -58,8 +58,8 @@ def send(url, key, opener):
     for turn, payload in enumerate(requests()):
         req = Request(url, data=json.dumps(payload).encode(), headers={
             "Content-Type": "application/json", "Authorization": "Bearer " + key,
-            "X-Suez-Session": "hosted-smoke", "X-Suez-Turn": str(turn),
-            "X-Suez-Attempt": "0"}, method="POST")
+            "X-Cachino-Session": "hosted-smoke", "X-Cachino-Turn": str(turn),
+            "X-Cachino-Attempt": "0"}, method="POST")
         with opener.open(req, timeout=30) as response:
             body = response.read((1 << 20) + 1)
             if len(body) > 1 << 20:

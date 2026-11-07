@@ -29,7 +29,7 @@ func run() error {
 	allowedModel := flag.String("session-model", "deepseek-flash", "only accepted model in limited session mode")
 	traceDir := flag.String("trace-dir", "", "new directory for private raw capture (disabled by default)")
 	bodyLimit := flag.Int64("trace-body-limit", 16<<20, "maximum stored bytes per request or response body")
-	session := flag.String("session", "", "default capture session label (caller may override X-Suez-Session)")
+	session := flag.String("session", "", "default capture session label (caller may override X-Cachino-Session)")
 	flag.Parse()
 	handler, err := proxy.New(*upstream, proxy.WithMessagesPrefix(*messagesPrefix))
 	if err != nil {

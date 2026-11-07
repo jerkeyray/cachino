@@ -210,7 +210,7 @@ def fixture_handler(exchanges):
             }).encode()
             exchanges.append({"request": body, "response": response,
                               "placeholder_auth": self.headers.get("Authorization") == "Bearer wire-fixture-placeholder",
-                              "suez_labels_absent": not any(key.lower().startswith("x-suez-") for key in self.headers)})
+                              "local_labels_absent": not any(key.lower().startswith("x-cachino-") for key in self.headers)})
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.send_header("Content-Length", str(len(response)))
@@ -340,7 +340,7 @@ def run(checkout, python, out):
             probe = Request("http://" + spec["proxy"]["listen"] + "/v1/chat/completions",
                             data=json.dumps({"model": "wire-fixture", "max_tokens": 1,
                                              "messages": [{"role": "user", "content": "quota probe"}]}).encode(),
-                            headers={"Content-Type": "application/json", "X-Suez-Session": "mini-wire-quota-probe"})
+                            headers={"Content-Type": "application/json", "X-Cachino-Session": "mini-wire-quota-probe"})
             try:
                 with build_opener(ProxyHandler({})).open(probe, timeout=5) as response:
                     quota_status = response.status
@@ -379,7 +379,7 @@ def run(checkout, python, out):
                     render_support.append({"supported": True})
                 except UnsupportedRequest as error:
                     render_support.append({"supported": False, "reason": str(error)})
-        if not all(item["placeholder_auth"] and item["suez_labels_absent"] for item in exchanges):
+        if not all(item["placeholder_auth"] and item["local_labels_absent"] for item in exchanges):
             raise ValueError("unexpected auth or local-label forwarding")
         worker_result = json.loads((out / "worker-result.json").read_text())
         result = check_messages(requests, worker_result)

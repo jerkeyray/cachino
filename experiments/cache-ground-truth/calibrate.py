@@ -327,12 +327,12 @@ def _step(client, step, index, run_id, direct, suez, bodies, tokens, returned, o
     base = direct
     if step["route"] == "suez":
         base = suez
-        headers.update({"X-Suez-Session": "m4-" + run_id, "X-Suez-Turn": str(index)})
+        headers.update({"X-Cachino-Session": "m4-" + run_id, "X-Cachino-Turn": str(index)})
     status, response_headers, body, elapsed = client.exchange("POST", base + "/v1/chat/completions", data=bodies[probe], headers=headers)
     prefix.with_suffix(".response.body").write_bytes(body)
     prefix.with_suffix(".response.headers.json").write_text(json.dumps(response_headers, indent=2) + "\n")
     record.update(probe=probe, route=step["route"], status=status, x_request_id=request_id,
-                  suez_request_id=response_headers.get("X-Suez-Request-ID"), client_round_trip_ms=elapsed)
+                  suez_request_id=response_headers.get("X-Cachino-Request-ID"), client_round_trip_ms=elapsed)
     if status != 200:
         raise StopRun(f"chat status {status}")
     _json(body, "chat")

@@ -26,7 +26,7 @@ func New(upstream string, options ...Option) (http.Handler, error) {
 		Rewrite: func(r *httputil.ProxyRequest) {
 			r.SetURL(target)
 			// Local trace labels are not model API parameters or credentials.
-			for _, header := range []string{"X-Suez-Session", "X-Suez-Turn", "X-Suez-Attempt"} {
+			for _, header := range []string{"X-Cachino-Session", "X-Cachino-Turn", "X-Cachino-Attempt"} {
 				r.Out.Header.Del(header)
 			}
 		},
