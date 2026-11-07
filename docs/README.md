@@ -31,7 +31,7 @@ supersedes an earlier plan; each plan's status line says when it ran.
 
 - [Trace format](notes/trace-format.md): capture layout and failure policy.
 - [vLLM source paths](notes/vllm-source-paths.md) and [mini-swe-agent source paths](notes/mini-swe-agent-source-paths.md): pinned code read for each claim.
-- [Related work check](notes/related-work-check-20261101.md).
+- [Related work check](notes/related-work-check-20261101.md) and [follow-up for the CPU findings](notes/related-work-check-20261107.md).
 
 ## Earlier observations
 
