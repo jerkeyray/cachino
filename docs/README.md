@@ -13,6 +13,7 @@ supersedes an earlier plan; each plan's status line says when it ran.
 | [30-turn session](notes/live-readonly-results-20261107.md) | Read-only observations; cache served 95% of prompt tokens; recompute split 68% new content, 16% reply, 16% rounding |
 | [1.7B varied session](notes/live-1.7b-results-20261107.md) | Varied actions with large observations; new content is 91% of recompute, reply 7%, rounding 2% |
 | [Concurrent sessions](notes/concurrent-results-20261107.md) | Three sessions sharing one cache evicted each other; eviction was 25% of recompute |
+| [Cache size sweep](notes/cache-sweep-20261107.md) | Fixed three-session traffic: no eviction at 16k tokens or more, 21% of recompute at 14k, 43% at 12k |
 | [Cue counterfactual](notes/cue-counterfactual-20261107.md) | Keeping the cue lets the engine reuse each reply's KV, but changed the model's behavior |
 | [Proxy overhead](notes/proxy-overhead-20261107.md) | Forwarding adds under 0.5 ms; capture adds about 15 ms per request from durability syncs |
 
