@@ -1,7 +1,7 @@
 # Hosted protocol smoke test
 
 Stage: Mac CPU capture preparation. This sends two synthetic requests through
-Suez to DeepSeek, one JSON and one SSE. It is not a cache experiment, real agent
+Cachino to DeepSeek, one JSON and one SSE. It is not a cache experiment, real agent
 session, token-identity validation, latency benchmark or GPU measurement.
 
 Preview without a key or network access:
@@ -19,10 +19,10 @@ prompt. The client reads at most 1 MiB per response and uses a 30-second socket
 timeout, which is not a total wall-time or billing limit. Cancellation does not
 guarantee that upstream work stops immediately.
 
-In terminal 1, start a freshly built Suez with a new private capture directory:
+In terminal 1, start a freshly built Cachino with a new private capture directory:
 
 ```sh
-go run ./cmd/suez -upstream https://api.deepseek.com \
+go run ./cmd/cachino -upstream https://api.deepseek.com \
   -trace-dir "traces/hosted-$(date -u +%Y%m%dT%H%M%SZ)"
 ```
 
@@ -38,11 +38,11 @@ unset DEEPSEEK_API_KEY
 ```
 
 Do not paste the key into chat. The client sends it in the Authorization header
-to the local proxy, which forwards it upstream. Suez does not persist that
+to the local proxy, which forwards it upstream. Cachino does not persist that
 header. The client bypasses environment HTTP proxies and accepts only an
 explicit `http://127.0.0.1:PORT` origin. Check terminal 1's upstream before sending.
 
-After the client exits, stop Suez with Ctrl-C, then substitute its capture path:
+After the client exits, stop Cachino with Ctrl-C, then substitute its capture path:
 
 ```sh
 python3 analysis/report.py traces/hosted-TIMESTAMP \

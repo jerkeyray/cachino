@@ -61,7 +61,7 @@ reference revision, evaluator and manifests outside the agent's task mount.
 
 ## Default dry run
 
-This executes only Suez's evaluator code and imports no target repository:
+This executes only Cachino's evaluator code and imports no target repository:
 
 ```sh
 python3 experiments/agent-task/evaluate.py
@@ -103,7 +103,7 @@ is part of this immediate task-checkout step.
 
 ## Baseline and reference checks
 
-These commands ran separately from the Suez root. Use new result paths to repeat:
+These commands ran separately from the Cachino root. Use new result paths to repeat:
 
 ```sh
 /opt/homebrew/bin/python3.12 -B experiments/agent-task/evaluate.py \
@@ -140,7 +140,7 @@ of task failure or success.
 
 ## Harness and capture specification
 
-Use pinned `DefaultAgent` with Suez's [DirectTextModel](direct_model.py), the
+Use pinned `DefaultAgent` with Cachino's [DirectTextModel](direct_model.py), the
 upstream text-action parser and observation formatter. Harness source pin:
 `04d809ceab9df28f9adaed044884180159172930`. This is a controlled configuration
 with a custom model adapter. Results do not characterize the stock default
@@ -157,7 +157,7 @@ endpoints and additional message modalities need separate implementation.
 
 Proposed first live bounds remain 12 agent steps, at most 1,024 requested output
 tokens per call, 300 seconds total and 20 seconds per shell action. These are
-proposed bounds, not authorization for live execution. The Suez proxy must
+proposed bounds, not authorization for live execution. The Cachino proxy must
 explicitly enable `-session-protocol openai` with matching model/request/output
 bounds; buffering admission affects timing and is not a general billing cap.
 
@@ -188,7 +188,7 @@ the unchanged strict renderer. Read the
 [direct adapter observations](../../docs/notes/direct-harness-observations.md).
 
 The runner checks a clean pinned checkout and 18 inspected blob identities,
-snapshots sources, builds Suez, starts owned loopback servers and runs the actual
+snapshots sources, builds Cachino, starts owned loopback servers and runs the actual
 agent in a child interpreter. It never clones, installs packages or executes an
 agent command. Port 18082 must be free; completed prior runs may leave TIME_WAIT
 sockets, which the reservation handles with `SO_REUSEADDR`. Owned processes are
@@ -271,7 +271,7 @@ rewrite to claim natural long-context behavior.
 ## Live session on the CPU engine
 
 `live_cpu.py` runs the pinned loop with its text-based templates against a
-running vLLM CPU server, through a Suez proxy it builds and owns. The
+running vLLM CPU server, through a Cachino proxy it builds and owns. The
 environment records actions and returns one fixed observation; no command runs.
 The spec is `live-cpu.json`. With the server on port 18000 (see the
 [CPU build plan](../../docs/notes/m4-cpu-build-plan.md)):

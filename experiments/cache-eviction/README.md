@@ -31,8 +31,8 @@ Launch vLLM as in the [CPU build plan](../../docs/notes/m4-cpu-build-plan.md), b
 ```sh
 python3 experiments/cache-ground-truth/calibrate.py --spec experiments/cache-eviction/e4.json \
   --probes artifacts/e4-probes-NEW --manifest artifacts/RUN/manifest.json \
-  --direct http://127.0.0.1:18000 --suez http://127.0.0.1:18080 --out artifacts/RUN/out --run
+  --direct http://127.0.0.1:18000 --proxy http://127.0.0.1:18080 --out artifacts/RUN/out --run
 ```
 
 The runner refuses a manifest whose cache geometry differs from the build's
-prediction parameters. E4 has no proxy steps, so `--suez` is not contacted.
+prediction parameters. E4 has no proxy steps, so `--proxy` is not contacted.

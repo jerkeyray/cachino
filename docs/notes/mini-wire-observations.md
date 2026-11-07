@@ -5,7 +5,7 @@ Historical LiteLLM-backed check. On 2026-11-05 the active path changed to a
 lock contains 13 packages. This note describes the earlier saved source/lock.
 
 On 2026-11-03, the pinned mini-swe-agent ran its actual `DefaultAgent` and
-`LitellmTextbasedModel` against a fixed local OpenAI fixture through Suez.
+`LitellmTextbasedModel` against a fixed local OpenAI fixture through Cachino.
 This establishes transport compatibility for the selected configuration and
 reveals one reconstruction boundary. It is not a coding-task or cache experiment.
 
@@ -18,7 +18,7 @@ reveals one reconstruction boundary. It is not a coding-task or cache experiment
   lock saved in each run's `source/experiments/agent-task/wire-requirements.lock`.
 - Two agent steps, one regex text action per reply; the environment records
   the action and returns a fixed observation. It has no shell execution path.
-- A fresh Suez instance admits at most two calls, with exact fixture model,
+- A fresh Cachino instance admits at most two calls, with exact fixture model,
   128 KiB input bound, requested output bound 64 and retries disabled.
 
 ## Observed shape
@@ -34,7 +34,7 @@ Both SDK requests contain exactly `model`, `messages`, `max_tokens`, `n` and
 message objects. The assistant object additionally contains
 `provider_specific_fields: {"refusal": null}`. The harness's `extra` metadata
 does not reach the wire. Raw bodies were preserved without normalization and
-checked against the bytes received by the fixture and sent back to Suez.
+checked against the bytes received by the fixture and sent back to Cachino.
 
 Each run recorded HTTP statuses 200/200/403, exactly two upstream fixture calls,
 three complete integrity-verified captures, no unfinished requests and no report
@@ -52,7 +52,7 @@ an empty worker log. Both reached the same transport/reconstruction outcome.
 No external model endpoint was configured or contacted.
 
 The harness loads dotenv at import. Each child used an explicit environment,
-`PYTHON_DOTENV_DISABLED=1` and a new empty config directory. Neither used Suez's
+`PYTHON_DOTENV_DISABLED=1` and a new empty config directory. Neither used Cachino's
 dotenv or inherited host credentials/proxy settings. Both config directories
 remained free of dotenv files. The Python network guard is not an OS sandbox.
 

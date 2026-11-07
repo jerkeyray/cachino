@@ -11,7 +11,7 @@ on a Mac/CPU, without PyTorch, weights, an inference engine, or a GPU:
 An optional first argument selects a new output directory. Existing outputs are
 never overwritten. The experiment builds deterministic 128-line requests and
 compares each named variant to its declared baseline, not the preceding variant.
-The original Suez demo instead compares adjacent accepted requests in a session.
+The original Cachino demo instead compares adjacent accepted requests in a session.
 
 Each output directory contains literal `.request.json` fixtures, rendered
 `.prompt.txt`, exact `.tokens.json`, `report.json` and `report.csv`. The report

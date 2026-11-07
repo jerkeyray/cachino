@@ -14,7 +14,7 @@ agent loop and text-action helpers. Both resulting requests reconstruct locally.
 
 ## Selected scope
 
-Use `DefaultAgent` with Suez's `DirectTextModel`, upstream `parse_regex_actions`
+Use `DefaultAgent` with Cachino's `DirectTextModel`, upstream `parse_regex_actions`
 and `format_observation_messages`. Its transport uses stdlib HTTP, has no retries
 and constructs only explicit text message fields. The earlier selected
 `LitellmTextbasedModel` is documented as historical source inspection below.
@@ -28,7 +28,7 @@ now exposes a generation-boundary suffix difference despite append-only messages
 
 ## Actual flow
 
-The active flow is `DefaultAgent` -> `DirectTextModel` -> Suez -> local fixture,
+The active flow is `DefaultAgent` -> `DirectTextModel` -> Cachino -> local fixture,
 using the pinned helpers in item 4 for observations and their text-action parser.
 Items 2, 3, 5 and 6 below describe the earlier LiteLLM-backed path.
 
@@ -42,7 +42,7 @@ Items 2, 3, 5 and 6 below describe the earlier LiteLLM-backed path.
    removes `extra` from each message, applies the Anthropic thinking helper,
    then optional cache-control processing. Assistant responses keep the model's
    message dump plus local `extra`; actual wire fields need a pinned LiteLLM
-   transport check before claiming compatibility with Suez reconstruction.
+   transport check before claiming compatibility with Cachino reconstruction.
 3. [`LitellmTextbasedModel._query`](https://github.com/SWE-agent/mini-swe-agent/blob/04d809ceab9df28f9adaed044884180159172930/src/minisweagent/models/litellm_textbased_model.py)
    calls LiteLLM without the parent's `BASH_TOOL` schema. It parses one regex
    action from text and turns command outputs into user observation messages.
@@ -69,10 +69,10 @@ Items 2, 3, 5 and 6 below describe the earlier LiteLLM-backed path.
   `n_calls` alone does not generally establish the number of upstream attempts.
 - [`GlobalModelStats`](https://github.com/SWE-agent/mini-swe-agent/blob/04d809ceab9df28f9adaed044884180159172930/src/minisweagent/models/__init__.py)
   updates after calls; cost limits are not guaranteed pre-dispatch billing caps.
-  Suez now has explicit OpenAI admission via `-session-protocol openai`, tested
+  Cachino now has explicit OpenAI admission via `-session-protocol openai`, tested
   with a synthetic JSON/SSE fixture. Default limited mode remains Messages.
   The current direct adapter leaves cost unavailable rather than inventing it;
-  it relies on Suez's separately verified OpenAI request quota.
+  it relies on Cachino's separately verified OpenAI request quota.
 - [`LocalEnvironment`](https://github.com/SWE-agent/mini-swe-agent/blob/04d809ceab9df28f9adaed044884180159172930/src/minisweagent/environments/local.py)
   executes directly on the host and includes host environment variables. A cwd
   setting is not isolation. Do not use it for unrestricted model-generated
@@ -90,7 +90,7 @@ Items 2, 3, 5 and 6 below describe the earlier LiteLLM-backed path.
 - [`minisweagent.__init__`](https://github.com/SWE-agent/mini-swe-agent/blob/04d809ceab9df28f9adaed044884180159172930/src/minisweagent/__init__.py)
   creates its global config directory and calls `dotenv.load_dotenv` at import.
   The wire-check child must select a new empty `MSWEA_GLOBAL_CONFIG_DIR` and
-  disable dotenv loading before this import. Not calling dotenv in Suez's runner
+  disable dotenv loading before this import. Not calling dotenv in Cachino's runner
   alone would not prevent the harness from loading its global credentials.
   This entry point is included in the manifest's blob inventory.
 

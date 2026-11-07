@@ -2,7 +2,7 @@
 
 Run `live-cpu-20261107-01`. The pinned mini-swe-agent loop (`04d809ce`, text-based
 templates from `mini_textbased.yaml`) ran the frozen `split_after` task against
-Qwen3-0.6B on the vLLM CPU backend, through Suez. The environment recorded each
+Qwen3-0.6B on the vLLM CPU backend, through Cachino. The environment recorded each
 action and returned one fixed observation, so no command was executed. Raw
 capture and attribution are private (`artifacts/live-cpu-20261107-01/`); this is
 the tracked summary.
@@ -20,7 +20,7 @@ the tracked summary.
   same pinned-checkout check, locked 13-package environment and loopback-only
   network guard as the wire check. Analysis: `live_attribution.py`.
 
-The session ended at its step limit after 8 model calls. Suez captured 8 requests,
+The session ended at its step limit after 8 model calls. Cachino captured 8 requests,
 all HTTP 200 with request and response integrity verified. No network attempt
 was blocked. The model chose `ls -la` on every turn. This run is about the
 structure of the traffic, not the task.
@@ -87,5 +87,5 @@ counterfactual render, not a finding.
 - The live requests did not ask for `return_token_ids`; ID parity comes from the
   replay of the same prompts.
 - The driver and spec were not yet committed when the session ran. The recorded
-  `suez_commit` (`cbb844d0`) is the parent of the commit that adds them.
+  code commit (`cbb844d0`, recorded then as `suez_commit`) is the parent of the commit that adds them.
 - CPU timing only.

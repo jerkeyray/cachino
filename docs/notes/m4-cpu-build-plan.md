@@ -66,21 +66,21 @@ Tools; Homebrew `cmake`; `uv`; Homebrew Python 3.12; 139 GiB free disk.
 ## Approval boundaries
 
 1. **External checkout:** clone vLLM at the pin into `.project/checkouts/vllm-2173d712`
-   (ignored, inside Suez).
+   (ignored, inside Cachino).
 2. **Dependency install:** a new virtual environment at `.project/venvs/vllm-cpu`
    with the pinned CPU requirements (torch 2.14.0 and vLLM's common
    requirements; a few GB), then the vLLM source build.
 3. **Weights download:** Qwen3-0.6B at the pinned revision, about 1.5 GB, into
    `.project/hf`.
 
-Nothing outside the Suez checkout is written; `.project/` is ignored.
+Nothing outside the Cachino checkout is written; `.project/` is ignored.
 
 ## Commands
 
 Step 1, checkout:
 
 ```bash
-cd /Users/jerkeyray/code/suez
+cd path/to/cachino
 git clone --filter=blob:none https://github.com/vllm-project/vllm.git .project/checkouts/vllm-2173d712
 git -C .project/checkouts/vllm-2173d712 checkout --detach 2173d7121fc6e8d756c884f46691546c61b60c57
 git -C .project/checkouts/vllm-2173d712 rev-parse HEAD
@@ -105,14 +105,14 @@ be a separate decision for you.
 Step 3, weights:
 
 ```bash
-export HF_HOME=/Users/jerkeyray/code/suez/.project/hf
+export HF_HOME=$PWD/.project/hf
 hf download Qwen/Qwen3-0.6B --revision c1899de289a04d12100db370d81485cdf75e47ca
 ```
 
 Step 4, launch on loopback:
 
 ```bash
-export HF_HOME=/Users/jerkeyray/code/suez/.project/hf VLLM_SERVER_DEV_MODE=1
+export HF_HOME=$PWD/.project/hf VLLM_SERVER_DEV_MODE=1
 vllm serve Qwen/Qwen3-0.6B \
   --revision c1899de289a04d12100db370d81485cdf75e47ca \
   --tokenizer-revision c1899de289a04d12100db370d81485cdf75e47ca \

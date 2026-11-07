@@ -1,4 +1,4 @@
-# Suez: explaining avoidable prefill in coding agents
+# Cachino: explaining avoidable prefill in coding agents
 
 Plan date: 2026-11-03. Status on 2026-11-07: engine calibration (M4), eviction
 (E4) and a first live agent session ran on the vLLM CPU backend with Qwen3-0.6B
@@ -120,7 +120,7 @@ validate the mechanism. A second harness is added only to answer a measured gap.
 | Component | Input and responsibility | Output and boundary |
 | --- | --- | --- |
 | Harness | Task, current files, tool results and history; assembles requests | Original requests with explicit task/session/attempt identifiers |
-| Suez proxy | Forwards bytes and captures complete/incomplete exchanges | Immutable bodies, integrity metadata and proxy timing; no prompt rewriting |
+| Cachino proxy | Forwards bytes and captures complete/incomplete exchanges | Immutable bodies, integrity metadata and proxy timing; no prompt rewriting |
 | Reconstruction | Pinned model/template/options and supported request bodies | Exact IDs and token hashes; reject unsupported content |
 | History analysis | Earlier eligible materialized sequences and current prompt | Adjacent LCP plus history-aware structural candidates; no residency claim |
 | Engine adapter | Correlated lookup, block lifecycle, scheduling and timing observations | Actual hits, processed prompt work and available eviction evidence |
@@ -169,7 +169,7 @@ come from older requests, other sessions or generated assistant output.
 
 ### M0. Freeze direction and maintain the plan
 
-Status: plan prepared. This document owns the focused Suez execution plan;
+Status: plan prepared. This document owns the focused Cachino execution plan;
 `.project/STATE.md` owns observed progress and `.project/WORK.md` the checklist.
 The older shared Malacca roadmap remains historical cross-project context.
 Notion will be the user-facing project page once writing is available. Record
@@ -268,7 +268,7 @@ discrepancy remains, stop causal attribution and investigate it.
 Depends on M3 and M4. Prefer the same local model/engine used for validation so
 the first research slice does not require a provider-to-local translation.
 
-- Run the frozen task through Suez within explicit bounds and an isolated task
+- Run the frozen task through Cachino within explicit bounds and an isolated task
   environment. Preserve the resulting patch, task checks and failed attempts.
 - Correlate each request with exact rendered input and engine observations.
 - Trace candidate prompt changes to harness source and record mixed/unknown

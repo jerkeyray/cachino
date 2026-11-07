@@ -1,8 +1,8 @@
 # Prefill measurement contract, version 1
 
-Status: M1 specification grounded in existing Suez and read-only vLLM source
+Status: M1 specification grounded in existing Cachino and read-only vLLM source
 inspection on 2026-11-03. No vLLM runtime, cache state or performance was tested.
-See [the execution plan](suez-research-plan.md) for milestones and
+See [the execution plan](research-plan.md) for milestones and
 [the pinned source paths](vllm-source-paths.md) for the observation mechanisms.
 
 ## Supported initial experiment
@@ -21,7 +21,7 @@ release. Record any later runtime pin change and review this contract again.
 
 | Quantity | Existing source | What it establishes | Required extension |
 | --- | --- | --- | --- |
-| Suez request ID / acceptance sequence | `internal/trace/trace.go:Record` | Local identity and admission order | Join to returned engine ID; sequence is not completion order |
+| Cachino request ID / acceptance sequence | `internal/trace/trace.go:Record` | Local identity and admission order | Join to returned engine ID; sequence is not completion order |
 | Session / turn / attempt | Explicit caller labels in trace and report | Labeled grouping, including unknown labels | Add task/run identity in a run manifest; do not infer missing labels |
 | Body identity and completeness | Stored/observed SHA-256, byte counts and flags | Capture integrity | Preserve raw records unchanged |
 | Proxy duration / first response write | Monotonic handler measurements | Handler interval / first nonempty write | First content-event timing needs new instrumentation; neither is engine TTFT |
@@ -32,8 +32,8 @@ release. Record any later runtime pin change and review this contract again.
 | Engine prompt/output IDs | Raw body may contain them; no extraction today | None in current derived report | Parse `return_token_ids` response fields without changing captured bodies |
 | Actual engine hit count | API `usage.prompt_tokens_details.cached_tokens`, if enabled | Source-defined per-request hit observation | Validate flag/configuration and counts in M4 |
 | Engine queue/prefill intervals | Per-request response metrics or finished stats | Source-specific intervals, not kernel durations | Normalize names/boundaries and preserve raw values |
-| Repeated processing after preemption | No Suez source | Unknown | Scheduler-step instrumentation or mark unavailable |
-| Cache blocks stored/removed/reset | No Suez source | Unknown | Subscribe to pinned KV events; verify identity, loss and ordering |
+| Repeated processing after preemption | No Cachino source | Unknown | Scheduler-step instrumentation or mark unavailable |
+| Cache blocks stored/removed/reset | No Cachino source | Unknown | Subscribe to pinned KV events; verify identity, loss and ordering |
 
 ## Identity and record families
 
@@ -43,7 +43,7 @@ request ID. Never join by coincident timing alone.
 | Record | Required identity/provenance | Important fields |
 | --- | --- | --- |
 | Run | `run_id`, source snapshot/hash, engine/model/rendering pins | Worker, cache namespace, geometry, reset epoch, arrivals, replay mode, intervention ID |
-| Request | `(run_id, suez_request_id)` | Acceptance sequence, session/turn/attempt/task, capture integrity, original path/model |
+| Request | `(run_id, cachino_request_id)` | Acceptance sequence, session/turn/attempt/task, capture integrity, original path/model |
 | Engine correlation | Request key plus returned response ID and worker | Match method, ambiguity, nullable internal request ID |
 | Rendering | Request key plus rendering-domain fingerprint | Exact ID reference/hash/count, source/template/library pins, model remap, parity state |
 | Structural comparison | Current and predecessor/candidate IDs | Adjacent LCP, historical observed-prompt LCP, candidate coverage, unknown boundaries |
@@ -52,11 +52,11 @@ request ID. Never join by coincident timing alone.
 | Intervention | Immutable ID and original/derived dataset hashes | Exactly changed operation, source location, semantic risk, validation status |
 
 Use a controller's `X-Request-Id` header for planned local runs, preserving the
-Suez-generated ID separately. The inspected server prefixes the returned ID
+Cachino-generated ID separately. The inspected server prefixes the returned ID
 with `chatcmpl-`; headers take precedence over a body `request_id`. Parse the
 actual returned ID rather than assuming identity or manufacturing correlation.
 No proxy mutation of arbitrary user request bodies is required. Session labels
-in Suez headers are stripped and do not automatically set an engine session.
+in Cachino headers are stripped and do not automatically set an engine session.
 
 ## Exact token parity and structural history
 
@@ -96,8 +96,8 @@ rules possible. Simple `floor(LCP / block_size)` is not a universal oracle.
 
 | Normalized name | Source and interval | Limit |
 | --- | --- | --- |
-| `proxy_handler_ms` | Suez `duration_ms` | Includes forwarding/capture effects |
-| `proxy_first_write_ms` | Suez `first_response_write_ms` | Role-only event can trigger it |
+| `proxy_handler_ms` | Cachino `duration_ms` | Includes forwarding/capture effects |
+| `proxy_first_write_ms` | Cachino `first_response_write_ms` | Role-only event can trigger it |
 | `proxy_first_content_ms` | Future parsed live event timestamp | Null until implemented; raw completed bodies have no per-event arrival times |
 | `engine_schedule_to_first_token_ms` | API `metrics.time_to_first_token_ms` | Source computes first-token minus scheduled timestamp, excluding queue time |
 | `engine_queue_ms` | API `metrics.queue_time_ms` | Scheduled minus queued timestamp |
@@ -163,5 +163,5 @@ This is a focused overlap check, not an exhaustive novelty review or reproductio
 | [The Physical Cost of Context v1, sections 3, 7 and appendix A](https://arxiv.org/html/2610.34763v1) | Context policies, reuse, resource accounting and quality gates | Strong overlap; its reported limits include sequential execution and untested pressure/batching. Our controlled pressure interaction is an investigation, not proven novelty |
 
 All three are evidence for grounding and scope. Absence of an experiment in one
-paper does not establish that no other work addresses it. Suez can succeed as
+paper does not establish that no other work addresses it. Cachino can succeed as
 reproducible tooling and an experimental blog even if the finding is established.

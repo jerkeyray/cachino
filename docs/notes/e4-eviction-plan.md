@@ -85,7 +85,7 @@ evicted from the front of a prompt would report 0 there, and 0 in C2 as well.
 
 M1 and M2 split one miss into its two causes. In M2 the prompt change alone
 would allow 1,056 tokens; the extra 32-token shortfall is eviction. This is the
-attribution Suez is meant to produce from real traffic.
+attribution Cachino is meant to produce from real traffic.
 
 ## Pieces to build
 

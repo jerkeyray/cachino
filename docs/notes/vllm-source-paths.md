@@ -1,4 +1,4 @@
-# vLLM observation paths for Suez M1
+# vLLM observation paths for Cachino M1
 
 Inspected read-only on 2026-11-03 at commit
 `2173d7121fc6e8d756c884f46691546c61b60c57` (main resolved once, then all
@@ -26,7 +26,7 @@ against the eventual GPU environment before it becomes an execution pin.
   prefers `X-Request-Id` over the default/body ID. The
   [chat endpoint, lines 320-346](https://github.com/vllm-project/vllm/blob/2173d7121fc6e8d756c884f46691546c61b60c57/vllm/entrypoints/openai/chat_completion/serving.py#L320)
   prefixes the base ID and can create subrequests. Start with `n=1` and record
-  actual returned IDs; distinguish them from Suez's local ID.
+  actual returned IDs; distinguish them from Cachino's local ID.
 - [`_make_prompt_tokens_details`, lines 95-114](https://github.com/vllm-project/vllm/blob/2173d7121fc6e8d756c884f46691546c61b60c57/vllm/entrypoints/openai/chat_completion/serving.py#L95)
   exposes cached tokens only when details are enabled. Final JSON usage is built
   at lines 1103-1125; streaming derives its cached count from the initial output.
@@ -84,7 +84,7 @@ against the eventual GPU environment before it becomes an execution pin.
 
 [`build_per_request_timing_metrics`, lines 45-97](https://github.com/vllm-project/vllm/blob/2173d7121fc6e8d756c884f46691546c61b60c57/vllm/entrypoints/generate/base/serving.py#L45)
 computes the API field `time_to_first_token_ms` as first-token timestamp minus
-scheduled timestamp. Queue time is separate. Suez should normalize that field
+scheduled timestamp. Queue time is separate. Cachino should normalize that field
 as `engine_schedule_to_first_token_ms`, not arrival-to-content TTFT.
 
 The [finished-stats calculation, lines 598-613](https://github.com/vllm-project/vllm/blob/2173d7121fc6e8d756c884f46691546c61b60c57/vllm/v1/metrics/stats.py#L598)

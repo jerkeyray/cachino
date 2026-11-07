@@ -2,7 +2,7 @@
 
 Run `m4-cpu-20261107-01`. One sequential pass of the 17-step
 [probe sequence](../../experiments/cache-ground-truth/probes.json), with no
-retries. Raw responses, the filled manifest and the Suez capture are private
+retries. Raw responses, the filled manifest and the Cachino capture are private
 (`artifacts/m4-cpu-20261107-01/`, `traces/m4-cpu-20261107-01/`). This note is
 the tracked summary.
 
@@ -15,7 +15,7 @@ the tracked summary.
 | Tokenizer | Files byte-identical to the earlier Qwen3-8B pin; probe IDs identical to the 8B build |
 | Cache | Prefix caching on, block 32, hash block 32 (source-derived), SHA-256 hashing, 1 GiB = 9,344 tokens |
 | Scheduling | One worker, chunked prefill on, max 128 sequences, 2,048 batched tokens, no speculative decoding, no KV connector |
-| Probe set | `m4-probes-20261107-01`, spec SHA-256 `64000c16…d35b`, Suez commit `50f61c28` |
+| Probe set | `m4-probes-20261107-01`, spec SHA-256 `64000c16…d35b`, Cachino commit `50f61c28` |
 
 The CPU platform setup is in the [CPU build plan](m4-cpu-build-plan.md).
 
@@ -34,10 +34,10 @@ The run completed with no failed checks or stops.
 | history-turn-1 (after reset) | 1091 | n/a | not checked | 0 | 1088 |
 | history-turn-2 | 1124 | 1087 | 1056 | 1056 | 64 |
 | direct-cold (after reset) | 1091 | n/a | 0 | 0 | 1088 |
-| proxy-cold through Suez (after reset) | 1091 | n/a | 0 | 0 | 1088 |
+| proxy-cold through Cachino (after reset) | 1091 | n/a | 0 | 0 | 1088 |
 
 1. **Token parity.** Every returned `prompt_token_ids` equals the local IDs
-   element by element, and `usage.prompt_tokens` equals the count. The Suez
+   element by element, and `usage.prompt_tokens` equals the count. The Cachino
    route returned the same IDs as the direct route.
 2. **Reset.** All six `POST /reset_prefix_cache` calls returned
    `{"success": true}`, and every following probe reported `cached_tokens` 0.
@@ -49,7 +49,7 @@ The run completed with no failed checks or stops.
    minus those served from cache: 1,088 when cold (34 of 34 blocks), 32 after the
    late mutation (34 full blocks minus 33 reused), and 64 for the 1,124-token
    turn 2 (35 full blocks minus 33 reused). A full warm hit creates nothing.
-5. **Suez transparency.** Suez captured the proxy step with request and response
+5. **Cachino transparency.** Cachino captured the proxy step with request and response
    integrity verified, and the captured request SHA-256 equals the probe body
    (`a02d3247…01c9e`). `X-Request-Id` came back as the response ID on every step.
 
@@ -67,6 +67,6 @@ The run completed with no failed checks or stops.
   effect on this machine only.
 - The proxy step is one request. It shows byte and ID transparency, not proxy
   overhead, which needs repeated pairs.
-- The calibration client prefixes the Suez session label with `m4-` on top of a
+- The calibration client prefixes the Cachino session label with `m4-` on top of a
   run ID that already starts with `m4-`, so the captured session is
   `m4-m4-cpu-20261107-01`. This is cosmetic.

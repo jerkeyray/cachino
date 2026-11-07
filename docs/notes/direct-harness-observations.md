@@ -1,6 +1,6 @@
 # Direct harness capture and local prompt reconstruction
 
-On 2026-11-05, Suez's direct HTTP model adapter completed the pinned
+On 2026-11-05, Cachino's direct HTTP model adapter completed the pinned
 mini-swe-agent loop's two-step fixture and CPU reconstruction checks. It uses
 `DefaultAgent`, the upstream text-action parser and observation formatter, and
 an environment that records actions without executing them. The model adapter

@@ -22,7 +22,7 @@ commands use --frozen to preserve that resolution.
 
 1. Fetch and hash the tokenizer assets at the exact revision in model.json.
 2. Validate/load the tokenizer and runtime, then produce five synthetic captures
-   through the existing Suez demo. Failed setup does not create a capture run.
+   through the existing Cachino demo. Failed setup does not create a capture run.
 3. Explicitly remap fake-model requests into the local pinned Qwen domain.
 4. Render supported messages/tools with fixed generation/thinking flags.
 5. Compare direct template tokenization with rendered-text encoding using

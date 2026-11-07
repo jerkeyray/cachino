@@ -24,7 +24,7 @@ Before any cache attribution, one run on one vLLM worker must show:
    engine's recorded block geometry rather than an assumed formula.
 5. **History boundary.** A follow-up turn replaces the template's empty thinking
    cue with an assistant reply, so reuse must stop at that boundary.
-6. **Direct versus proxy.** The same request through Suez returns the same IDs
+6. **Direct versus proxy.** The same request through Cachino returns the same IDs
    and cold behavior. Latency overhead needs repeated pairs, not one request.
 
 ## Source-checked switches at vLLM `2173d712`
@@ -102,7 +102,7 @@ the spec hash.
   SSH port forward, so probe traffic never goes to a non-loopback address.
 - Each request is one exchange with no retries, redirects or environment
   proxies, an 8 MiB response cap and an `X-Request-Id` of
-  `suez-m4-<run_id>-<step>`. The record notes whether the returned ID equals
+  `cachino-m4-<run_id>-<step>`. The record notes whether the returned ID equals
   `chatcmpl-` plus that value.
 - Raw response bytes are written before parsing. Each step record is appended to
   `steps.jsonl` and synced before the next request, so an interrupted run leaves
@@ -116,7 +116,7 @@ the spec hash.
 
 Tests drive the client against a local test double that returns configured IDs
 and block-aligned hit counts. The double checks client behavior only; its
-numbers say nothing about vLLM. Suez capture integrity for the proxy step is
+numbers say nothing about vLLM. Cachino capture integrity for the proxy step is
 checked afterwards with `analysis/report.py`.
 
 ## Remaining before a run

@@ -3,7 +3,7 @@
 Reviewed 2026-11-01. This is a focused overlap check, not an exhaustive survey.
 Read status below distinguishes inspected sections from a full paper or code
 reproduction. Results are authors' reports, not independently replicated here.
-No literature source establishes novelty for Suez.
+No literature source establishes novelty for Cachino.
 
 | Source | Inspected evidence | Overlap and consequence |
 | --- | --- | --- |
@@ -13,11 +13,11 @@ No literature source establishes novelty for Suez.
 | [The Physical Cost of Context, v1](https://arxiv.org/html/2610.34763v1), Yu et al., October 2026 | Policy definitions, evaluation controls, measurements and limitations | Directly connects context policies, prefix reuse, uncached prefill, task quality and physical resources. Tests include local vLLM/SGLang stacks and a patch-generation study. Thus “shorter history can increase work by breaking reuse” and “evaluate quality as well as tokens” are already covered. Stated limits include sequential serving and untested batching/cache pressure; these are leads for investigation, not proof of a gap. Artifacts not reproduced. |
 | [TurnCost, v1](https://arxiv.org/html/2610.15093v1), Kumar and Pandey, October 2026 | Abstract, cache-aware cost model, cost-comparison results and implications | Analyzes coding trajectories and the economics of truncation/delegation under high reuse. Cost-only contrasts do not establish quality equivalence. Relevant to our choice of baselines and to avoiding flat-input-price savings claims. Full methodology/code review remains pending. |
 
-## Decision for Suez
+## Decision for Cachino
 
 The broad research premise is already studied. Do not present request capture,
 harness comparisons, prefix caching, compaction penalties or quality-aware
-resource measurement as new merely because Suez implements them.
+resource measurement as new merely because Cachino implements them.
 
 A narrower provisional question is worth checking: which concrete harness
 operations change the *server-rendered token prefix*, which only change request

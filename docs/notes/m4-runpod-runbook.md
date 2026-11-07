@@ -37,14 +37,14 @@ These involve accounts and payment, so the agent cannot do them:
 ## Phase 0: local preparation (no spend, before deploying)
 
 ```bash
-cd /Users/jerkeyray/code/suez
-go build -o bin/suez ./cmd/suez
+cd path/to/cachino
+go build -o bin/cachino ./cmd/cachino
 RUN=m4-run-$(date -u +%Y%m%d-%H%M)
 mkdir artifacts/$RUN
 cp experiments/cache-ground-truth/run-manifest.template.json artifacts/$RUN/manifest.json
 python3 experiments/cache-ground-truth/calibrate.py \
   --probes artifacts/m4-probes-20261105-02 --manifest artifacts/$RUN/manifest.json \
-  --direct http://127.0.0.1:18000 --suez http://127.0.0.1:18080 --out artifacts/$RUN/out
+  --direct http://127.0.0.1:18000 --proxy http://127.0.0.1:18080 --out artifacts/$RUN/out
 ```
 
 The last command is a dry run. It must print the plan and list the manifest's
@@ -153,7 +153,7 @@ ssh -N -L 18000:127.0.0.1:8000 root@<ip> -p <port> -i <key>
 ```
 
 ```bash
-./bin/suez -listen 127.0.0.1:18080 -upstream http://127.0.0.1:18000 \
+./bin/cachino -listen 127.0.0.1:18080 -upstream http://127.0.0.1:18000 \
   -trace-dir traces/$RUN -session m4-$RUN
 ```
 
@@ -170,7 +170,7 @@ telemetry from the launch line and startup log. Then:
 python3 experiments/cache-ground-truth/check_manifest.py artifacts/$RUN/manifest.json
 python3 experiments/cache-ground-truth/calibrate.py \
   --probes artifacts/m4-probes-20261105-02 --manifest artifacts/$RUN/manifest.json \
-  --direct http://127.0.0.1:18000 --suez http://127.0.0.1:18080 \
+  --direct http://127.0.0.1:18000 --proxy http://127.0.0.1:18080 \
   --out artifacts/$RUN/out --run
 python3 analysis/report.py traces/$RUN
 ```

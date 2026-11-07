@@ -10,7 +10,7 @@ Preview the fixed task and limits without credentials or requests:
 python3 experiments/claude-capture/run.py
 ```
 
-The opt-in live command builds Suez, starts a separate proxy, loads the local
+The opt-in live command builds Cachino, starts a separate proxy, loads the local
 `.env` key, runs Claude in the dedicated task directory and stops its children:
 
 ```sh
@@ -53,15 +53,15 @@ See [observations and limits](../../docs/notes/claude-capture-audit.md).
 
 ## Request flow
 
-Claude Code -> local Suez `/v1/messages` -> DeepSeek
+Claude Code -> local Cachino `/v1/messages` -> DeepSeek
 `/anthropic/v1/messages` -> original response stream back to Claude Code.
-Suez preserves request bytes, API headers and SSE framing; it does not translate
+Cachino preserves request bytes, API headers and SSE framing; it does not translate
 requests between API formats. Token-count requests use the same prefix.
 
 Start a separate proxy with a new capture directory:
 
 ```sh
-go run ./cmd/suez -listen 127.0.0.1:18081 \
+go run ./cmd/cachino -listen 127.0.0.1:18081 \
   -upstream https://api.deepseek.com -messages-prefix /anthropic \
   -trace-dir "traces/claude-$(date -u +%Y%m%dT%H%M%SZ)" \
   -session claude-deepseek

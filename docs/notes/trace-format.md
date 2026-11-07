@@ -22,11 +22,11 @@ without a finish remains an unfinished request, never a successful zero-byte
 capture. The importer ignores an unterminated final log fragment with a warning;
 malformed terminated lines and inconsistent identities fail inspection.
 
-`X-Suez-Session`, `X-Suez-Turn`, and `X-Suez-Attempt` are optional caller-supplied
+`X-Cachino-Session`, `X-Cachino-Turn`, and `X-Cachino-Attempt` are optional caller-supplied
 labels. Turn/attempt must be nonnegative integers. `-session` supplies a default
-session; absent labels remain unknown. Suez strips these three headers before
+session; absent labels remain unknown. Cachino strips these three headers before
 forwarding to the model. It never infers sessions from API keys, auto-increments
-semantic turns, or retries requests. The response adds `X-Suez-Request-ID` for
+semantic turns, or retries requests. The response adds `X-Cachino-Request-ID` for
 correlation. Missing/invalid capture metadata or unavailable initial storage
 prevents forwarding and returns 503; no unrecorded model request is sent.
 

@@ -1,6 +1,6 @@
 # M4 engine calibration
 
-Checks that a running vLLM server sees exactly the token IDs Suez predicts
+Checks that a running vLLM server sees exactly the token IDs Cachino predicts
 locally, that its prefix-cache reset works, and that reported reuse follows
 the block rule. Results from the first run are in
 [M4 CPU results](../../docs/notes/m4-cpu-results-20261107.md).
@@ -28,19 +28,24 @@ HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 uv run --project analysis/tokenizer --fr
   experiments/cache-ground-truth/build_probes.py --out artifacts/m4-probes-NEW
 ```
 
-Start the server on loopback with the flags in the build plan, start Suez in
+Start the server on loopback with the flags in the build plan, start Cachino in
 front of it, copy and fill the manifest, then:
 
 ```sh
 python3 experiments/cache-ground-truth/check_manifest.py artifacts/RUN/manifest.json
 python3 experiments/cache-ground-truth/calibrate.py --probes artifacts/m4-probes-NEW \
   --manifest artifacts/RUN/manifest.json --direct http://127.0.0.1:18000 \
-  --suez http://127.0.0.1:18080 --out artifacts/RUN/out --run
+  --proxy http://127.0.0.1:18080 --out artifacts/RUN/out --run
 python3 analysis/report.py traces/RUN
 ```
 
 `--run` refuses to start until the manifest has no open gates and names this
 spec, model and tokenizer revision. Raw output stays in ignored `artifacts/`.
+
+The runs recorded on 2026-11-07 predate the rename from Suez: their spec used
+route `suez` and the flag `--suez`, so its hash differs from the current
+`probes.json`. Check out the commit named in each result note to reproduce a run
+byte for byte.
 
 ## Checks
 

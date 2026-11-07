@@ -26,7 +26,7 @@ other sessions, processing order and residency remain outside this report.
 
 ## Reproduction
 
-From the Suez root, after the named existing artifacts are available:
+From the Cachino root, after the named existing artifacts are available:
 
 ```sh
 python3 analysis/reuse.py \

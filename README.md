@@ -1,6 +1,6 @@
-# Suez
+# Cachino
 
-Suez is an early Go proxy for studying how coding-agent requests affect prefix
+Cachino is an early Go proxy for studying how coding-agent requests affect prefix
 cache reuse. It forwards `POST /v1/chat/completions`, `/v1/messages`, and
 `/v1/messages/count_tokens` to a configured
 upstream, captures raw request/response bodies, and produces offline JSON reports
@@ -12,7 +12,7 @@ All engine results below come from vLLM at commit `2173d712`, built for the Mac
 CPU, serving Qwen3-0.6B with 32-token blocks. They concern cache accounting,
 not GPU latency.
 
-- **Token parity.** The engine's prompt token IDs equal Suez's local render
+- **Token parity.** The engine's prompt token IDs equal Cachino's local render
   exactly, including through the proxy ([M4](docs/notes/m4-cpu-results-20261107.md)).
 - **Reuse rule.** Reuse equals the exact shared token prefix, capped at prompt
   length minus 1, rounded down to whole blocks.
@@ -79,7 +79,7 @@ The output is structural history, not a resident-cache model. Read the
 [saved CPU history result](docs/notes/prompt-history-observations.md),
 [measurement contract](docs/notes/prefill-measurement-contract.md) and
 [pinned vLLM observation paths](docs/notes/vllm-source-paths.md). The
-[focused research plan](docs/notes/suez-research-plan.md) defines the next gates.
+[focused research plan](docs/notes/research-plan.md) defines the next gates.
 
 The pinned mini-swe-agent loop now uses a small direct HTTP model adapter.
 Its two-step fixture run passes capture and exact local token reconstruction,
@@ -100,7 +100,7 @@ and verifies the resulting report without binding ports or using a GPU:
 ```
 
 It sends JSON requests, an exact repeat, a mutation, an SSE request and an
-invalid request through Suez. The output directory contains raw body sidecars,
+invalid request through Cachino. The output directory contains raw body sidecars,
 `events.jsonl`, `report.json` and `index.sqlite`. The path must be new.
 See [the fixture protocol](experiments/offline-capture/README.md).
 
@@ -114,13 +114,13 @@ In one terminal, start the fake endpoint:
 go run ./cmd/fake-model -listen 127.0.0.1:8081
 ```
 
-In another, start Suez:
+In another, start Cachino:
 
 ```sh
-go run ./cmd/suez -listen 127.0.0.1:8080 -upstream http://127.0.0.1:8081
+go run ./cmd/cachino -listen 127.0.0.1:8080 -upstream http://127.0.0.1:8081
 ```
 
-Send a request through Suez:
+Send a request through Cachino:
 
 ```sh
 curl --fail-with-body http://127.0.0.1:8080/v1/chat/completions \
@@ -151,12 +151,12 @@ events for inspection. This pacing is unrelated to model latency.
   to 1 MiB. It is a narrow fixture, not a full API validator. It stops emitting
   on request cancellation or a write/flush error. Usage and cache metrics are
   absent, not zero.
-- `cmd/suez`: proxy on port 8080 by default.
+- `cmd/cachino`: proxy on port 8080 by default.
 - `internal/trace`: opt-in streaming body capture with bounded disk storage,
   start/finish lifecycle records, body hashes and explicit incomplete states.
 - `analysis/report.py`: raw capture validation, per-request/session summaries,
   nullable upstream usage/cache metrics and optional SQLite indexing.
-- `cmd/suez-demo`, `internal/localhttp`: synthetic end-to-end run over real HTTP
+- `cmd/cachino-demo`, `internal/localhttp`: synthetic end-to-end run over real HTTP
   on in-memory connections. These do not validate TCP or GPU behavior.
 - `internal/proxy`: Go standard-library reverse proxy. Request body bytes pass
   through without JSON parsing. Upstream status, response body and end-to-end
@@ -167,13 +167,13 @@ events for inspection. This pacing is unrelated to model latency.
 For SSE, the standard reverse proxy flushes immediately without accumulating
 the full response. Client cancellation or closing the response body cancels
 the upstream request. Once HTTP 200 headers have been sent, an upstream
-connection failure interrupts the body; Suez cannot replace the status with
+connection failure interrupts the body; Cachino cannot replace the status with
 502 and does not invent a finish event or `[DONE]`. An in-band SSE error event
 passes through unchanged. A stream ending normally without `[DONE]` also passes
-through: Suez does not yet interpret or validate stream semantics.
+through: Cachino does not yet interpret or validate stream semantics.
 
 `-upstream` takes an HTTP(S) origin without `/v1`, credentials, query or fragment.
-Suez preserves the incoming route and query. Other routes return 404, and other
+Cachino preserves the incoming route and query. Other routes return 404, and other
 methods on supported routes return 405. Both commands default to loopback.
 `-messages-prefix /anthropic` prepends that gateway path only to Messages and
 token-count routes, leaving chat completions unchanged. See
@@ -190,13 +190,13 @@ rejects `best_of`. Missing output limits, duplicate top-level fields and
 ambiguous aliases are rejected. Rejected payloads are never rewritten into
 eligible ones. This mode buffers request bodies and changes admission timing;
 leave it disabled for transparent streaming/overhead measurements. The quota
-includes token counting and upstream errors and resets when Suez restarts.
+includes token counting and upstream errors and resets when Cachino restarts.
 
 To exercise two admitted JSON/SSE calls and one local quota rejection without
 an SDK, model or TCP listener:
 
 ```sh
-GOTOOLCHAIN=local go run ./cmd/suez-demo -limited-openai \
+GOTOOLCHAIN=local go run ./cmd/cachino-demo -limited-openai \
   -out traces/my-openai-admission-check
 ```
 
@@ -211,17 +211,17 @@ HTTP checks.
 
 ## Capture and inspect
 
-Start Suez with capture enabled (in place of the earlier Suez command):
+Start Cachino with capture enabled (in place of the earlier Cachino command):
 
 ```sh
-go run ./cmd/suez -upstream http://127.0.0.1:8081 \
+go run ./cmd/cachino -upstream http://127.0.0.1:8081 \
   -trace-dir traces/my-session -session my-session
 ```
 
 Capture is off by default. The capture directory must not exist yet. It records
-only supported model API POSTs. Caller headers `X-Suez-Session`, `X-Suez-Turn`, and
-`X-Suez-Attempt` supply optional explicit labels, and are stripped before
-forwarding. The response has a correlation header `X-Suez-Request-ID`.
+only supported model API POSTs. Caller headers `X-Cachino-Session`, `X-Cachino-Turn`, and
+`X-Cachino-Attempt` supply optional explicit labels, and are stripped before
+forwarding. The response has a correlation header `X-Cachino-Request-ID`.
 
 The default body storage cap is 16 MiB per direction, adjustable using
 `-trace-body-limit`. Larger bodies continue through the proxy; stored copies
