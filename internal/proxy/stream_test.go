@@ -79,7 +79,7 @@ func openStream(t *testing.T, upstream http.Handler) (*http.Response, context.Ca
 	client := pipeHTTP(t, forwarder(t))
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
-	request, err := http.NewRequestWithContext(ctx, "POST", "http://suez.test/v1/chat/completions", strings.NewReader(`{"model":"fake-model","messages":[{}],"stream":true}`))
+	request, err := http.NewRequestWithContext(ctx, "POST", "http://cachino.test/v1/chat/completions", strings.NewReader(`{"model":"fake-model","messages":[{}],"stream":true}`))
 	if err != nil {
 		t.Fatal(err)
 	}

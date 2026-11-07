@@ -1,4 +1,4 @@
-// Command suez wires the proxy, optional raw capture, and HTTP server lifecycle.
+// Command cachino wires the proxy, optional raw capture, and HTTP server lifecycle.
 package main
 
 import (
@@ -11,9 +11,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/jerkeyray/suez/internal/proxy"
-	"github.com/jerkeyray/suez/internal/sessionlimit"
-	"github.com/jerkeyray/suez/internal/trace"
+	"github.com/jerkeyray/cachino/internal/proxy"
+	"github.com/jerkeyray/cachino/internal/sessionlimit"
+	"github.com/jerkeyray/cachino/internal/trace"
 )
 
 // run keeps resource cleanup separate from main's process-exiting error log.
@@ -75,7 +75,7 @@ func run() error {
 		case <-serveDone:
 		}
 	}()
-	log.Printf("suez listening on %s", *listen)
+	log.Printf("cachino listening on %s", *listen)
 	err = server.ListenAndServe()
 	close(serveDone)
 	// ListenAndServe can return as soon as shutdown starts. Wait for the drain

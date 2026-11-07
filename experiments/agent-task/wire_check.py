@@ -287,9 +287,9 @@ def run(checkout, python, out):
         target = out / "harness-source" / name
         target.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
         target.write_bytes((checkout / name).read_bytes())
-    binary = out / "suez"
-    build_env = dict(os.environ, GOTOOLCHAIN="local", GOCACHE="/tmp/suez-go-cache")
-    subprocess.run(["go", "build", "-o", str(binary), "./cmd/suez"], cwd=ROOT,
+    binary = out / "cachino"
+    build_env = dict(os.environ, GOTOOLCHAIN="local", GOCACHE="/tmp/cachino-go-cache")
+    subprocess.run(["go", "build", "-o", str(binary), "./cmd/cachino"], cwd=ROOT,
                    env=build_env, check=True, timeout=60)
     if any(hashlib.sha256((ROOT / name).read_bytes()).hexdigest() != digest for name, digest in source_hashes.items()):
         raise ValueError("Suez source changed during build")

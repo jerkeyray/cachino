@@ -1,4 +1,4 @@
-// fake-model runs a local deterministic upstream for Suez development.
+// fake-model runs a local deterministic upstream for Cachino development.
 package main
 
 import (
@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/jerkeyray/suez/internal/fakemodel"
+	"github.com/jerkeyray/cachino/internal/fakemodel"
 )
 
 func main() {

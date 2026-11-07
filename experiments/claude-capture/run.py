@@ -86,8 +86,8 @@ def main():
     # All outputs below inherit private permissions, including subprocess logs.
     os.umask(0o077)
     source_hashes = snapshot_sources(out)
-    binary = out / "suez"
-    subprocess.run(["go", "build", "-o", str(binary), "./cmd/suez"], cwd=ROOT, check=True)
+    binary = out / "cachino"
+    subprocess.run(["go", "build", "-o", str(binary), "./cmd/cachino"], cwd=ROOT, check=True)
     if any(hashlib.sha256((ROOT / name).read_bytes()).hexdigest() != digest for name, digest in source_hashes.items()):
         raise RuntimeError("source changed during build; run not dispatched")
     command = [str(binary), "-listen", "127.0.0.1:18081", "-upstream", "https://api.deepseek.com",

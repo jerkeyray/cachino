@@ -131,8 +131,8 @@ def run(checkout, python, out, engine, spec_path):
     (home / "mini-config").mkdir(mode=0o700, parents=True)
     spec["proxy"]["upstream"] = engine
     write_json(out / "effective-spec.json", spec)
-    binary = out / "suez"
-    subprocess.run(["go", "build", "-o", str(binary), "./cmd/suez"], cwd=ROOT,
+    binary = out / "cachino"
+    subprocess.run(["go", "build", "-o", str(binary), "./cmd/cachino"], cwd=ROOT,
                    env=dict(os.environ, GOTOOLCHAIN="local"), check=True, timeout=120)
     write_json(out / "provenance.json", {
         "harness_revision": manifest["harness"]["revision"], "harness_source_sha256": harness_hashes,

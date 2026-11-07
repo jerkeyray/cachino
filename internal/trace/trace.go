@@ -20,7 +20,7 @@ import (
 	"time"
 )
 
-// Body describes the bytes observed by Suez, which can be partial on disconnect.
+// Body describes the bytes observed by Cachino, which can be partial on disconnect.
 type Body struct {
 	Path         string `json:"path"`
 	Observed     int64  `json:"observed_bytes"`

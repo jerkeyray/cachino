@@ -14,8 +14,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/jerkeyray/suez/internal/localhttp"
-	"github.com/jerkeyray/suez/internal/proxy"
+	"github.com/jerkeyray/cachino/internal/localhttp"
+	"github.com/jerkeyray/cachino/internal/proxy"
 )
 
 func storeFor(t *testing.T, limit int64) *Store {
@@ -211,7 +211,7 @@ func TestCancelledCaptureIsExplicit(t *testing.T) {
 	}
 	endpoint := localhttp.New(store.Wrap(handler))
 	defer endpoint.Close()
-	request, _ := http.NewRequest("POST", "http://suez.test/v1/chat/completions", strings.NewReader("body"))
+	request, _ := http.NewRequest("POST", "http://cachino.test/v1/chat/completions", strings.NewReader("body"))
 	response, err := endpoint.Client.Do(request)
 	if err != nil {
 		t.Fatal(err)
@@ -262,7 +262,7 @@ func TestCaptureSSEDoesNotBufferAndRecordsAbort(t *testing.T) {
 			}
 			endpoint := localhttp.New(store.Wrap(handler))
 			defer endpoint.Close()
-			request, _ := http.NewRequest("POST", "http://suez.test/v1/chat/completions", strings.NewReader("body"))
+			request, _ := http.NewRequest("POST", "http://cachino.test/v1/chat/completions", strings.NewReader("body"))
 			request.Header.Set("X-Suez-Session", "caller-session")
 			request.Header.Set("X-Suez-Turn", "0")
 			response, err := endpoint.Client.Do(request)

@@ -54,7 +54,7 @@ func Wrap(next http.Handler, limits Limits) (http.Handler, error) {
 		reject := func(status int) {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(status)
-			io.WriteString(w, `{"type":"error","error":{"type":"invalid_request_error","message":"Suez session limit rejected request"}}`)
+			io.WriteString(w, `{"type":"error","error":{"type":"invalid_request_error","message":"Cachino session limit rejected request"}}`)
 		}
 		allowedPath := r.URL.Path == "/v1/messages" || r.URL.Path == "/v1/messages/count_tokens"
 		if protocol == ProtocolOpenAI {

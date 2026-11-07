@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jerkeyray/suez/internal/fakemodel"
-	"github.com/jerkeyray/suez/internal/proxy"
+	"github.com/jerkeyray/cachino/internal/fakemodel"
+	"github.com/jerkeyray/cachino/internal/proxy"
 )
 
 // This complements the in-memory tests with actual HTTP transport over TCP.

@@ -18,7 +18,7 @@ class CaptureSourceTests(unittest.TestCase):
             hashes = module.snapshot_sources(root)
             self.assertIn("experiments/claude-capture/run.py", hashes)
             self.assertIn("analysis/report.py", hashes)
-            self.assertIn("cmd/suez/main.go", hashes)
+            self.assertIn("cmd/cachino/main.go", hashes)
             self.assertFalse(any(".env" in name or name.startswith("traces/") for name in hashes))
             for name, digest in hashes.items():
                 self.assertEqual(hashlib.sha256((root / "source" / name).read_bytes()).hexdigest(), digest)

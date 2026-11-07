@@ -1,3 +1,3 @@
-module github.com/jerkeyray/suez
+module github.com/jerkeyray/cachino
 
 go 1.26.0

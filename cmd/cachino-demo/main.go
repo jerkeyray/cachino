@@ -1,4 +1,4 @@
-// suez-demo produces a synthetic capture without a GPU, provider or TCP listener.
+// cachino-demo produces a synthetic capture without a GPU, provider or TCP listener.
 package main
 
 import (
@@ -10,11 +10,11 @@ import (
 	"strings"
 	"sync/atomic"
 
-	"github.com/jerkeyray/suez/internal/fakemodel"
-	"github.com/jerkeyray/suez/internal/localhttp"
-	"github.com/jerkeyray/suez/internal/proxy"
-	"github.com/jerkeyray/suez/internal/sessionlimit"
-	"github.com/jerkeyray/suez/internal/trace"
+	"github.com/jerkeyray/cachino/internal/fakemodel"
+	"github.com/jerkeyray/cachino/internal/localhttp"
+	"github.com/jerkeyray/cachino/internal/proxy"
+	"github.com/jerkeyray/cachino/internal/sessionlimit"
+	"github.com/jerkeyray/cachino/internal/trace"
 )
 
 // run exercises capture with controlled inputs over real HTTP on net.Pipe.
@@ -64,7 +64,7 @@ func run(out string, limited bool) error {
 		statuses = []int{200, 200, 403}
 	}
 	for index, body := range bodies {
-		request, err := http.NewRequest("POST", "http://suez.test/v1/chat/completions", strings.NewReader(body))
+		request, err := http.NewRequest("POST", "http://cachino.test/v1/chat/completions", strings.NewReader(body))
 		if err != nil {
 			return err
 		}

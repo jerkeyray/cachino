@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jerkeyray/suez/internal/fakemodel"
-	"github.com/jerkeyray/suez/internal/proxy"
+	"github.com/jerkeyray/cachino/internal/fakemodel"
+	"github.com/jerkeyray/cachino/internal/proxy"
 )
 
 type roundTripFunc func(*http.Request) (*http.Response, error)

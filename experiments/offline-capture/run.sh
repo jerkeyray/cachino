@@ -3,7 +3,7 @@
 set -eu
 cd "$(dirname "$0")/../.."
 run_dir="${1:-traces/offline-$(date -u +%Y%m%dT%H%M%SZ)}"
-go run ./cmd/suez-demo -out "$run_dir"
+go run ./cmd/cachino-demo -out "$run_dir"
 uv run --project analysis --offline --no-python-downloads python analysis/report.py \
   "$run_dir" --sqlite "$run_dir/index.sqlite" > "$run_dir/report.json"
 uv run --project analysis --offline --no-python-downloads python - "$run_dir/report.json" <<'PY'

@@ -14,7 +14,7 @@ uv run --project analysis/tokenizer --frozen --python 3.12 --no-python-downloads
   analysis/reconstruct.py --assets "$assets" --check-setup
 mkdir -p "$(dirname "$run_dir")"
 mkdir -m 700 "$run_dir"
-go run ./cmd/suez-demo -out "$run_dir/capture"
+go run ./cmd/cachino-demo -out "$run_dir/capture"
 uv run --project analysis/tokenizer --frozen --python 3.12 --no-python-downloads python \
   analysis/reconstruct.py "$run_dir/capture" --assets "$assets" \
   --out "$run_dir/reconstructed" --allow-model-remap

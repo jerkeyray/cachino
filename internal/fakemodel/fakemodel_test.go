@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jerkeyray/suez/internal/fakemodel"
+	"github.com/jerkeyray/cachino/internal/fakemodel"
 )
 
 func TestCompletion(t *testing.T) {

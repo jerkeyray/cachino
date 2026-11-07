@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jerkeyray/suez/internal/trace"
+	"github.com/jerkeyray/cachino/internal/trace"
 )
 
 // TestLimitedOpenAITrace exercises production-order capture/admission/proxy
