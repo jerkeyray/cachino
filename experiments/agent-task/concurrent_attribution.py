@@ -72,15 +72,30 @@ def load_requests(run_dir, tokenizer, pin):
 def attribute(rows, num_blocks, block):
     """Fill predictions and bounds into rows (already sorted by start)."""
     events = [(row["start"], 1, i) for i, row in enumerate(rows)] + [(row["end"], 0, i) for i, row in enumerate(rows)]
-    overlap, held = FreeQueuePredictor(num_blocks, block), {}
+    overlap, held, waiting = FreeQueuePredictor(num_blocks, block), {}, []
+
+    def admit(i):
+        """Admit request i if its blocks fit; otherwise it waits, as in the scheduler queue."""
+        try:
+            prediction, held[i] = overlap.allocate(rows[i]["ids"], generated=max(rows[i]["completion_tokens"] or 1, 1))
+        except ValueError:
+            return False
+        rows[i]["predicted_overlap"] = prediction["cached_tokens"]
+        return True
+
     for _, kind, i in sorted(events):  # frees sort before admissions at equal times
-        row = rows[i]
         if kind == 1:
-            generated = max(row["completion_tokens"] or 1, 1)
-            prediction, held[i] = overlap.allocate(row["ids"], generated=generated)
-            row["predicted_overlap"] = prediction["cached_tokens"]
-        else:
+            rows[i]["waited_for_blocks"] = not (not waiting and admit(i))
+            if rows[i]["waited_for_blocks"]:
+                waiting.append(i)
+        elif i in held:
             overlap.free(held.pop(i))
+            while waiting and admit(waiting[0]):
+                waiting.pop(0)
+        else:
+            # The request never fit before its captured end; record that.
+            waiting.remove(i)
+            rows[i]["predicted_overlap"] = None
     sequential = FreeQueuePredictor(num_blocks, block)
     for i, row in enumerate(rows):
         row["predicted_sequential"] = sequential.request(row["ids"], generated=max(row["completion_tokens"] or 1, 1))
