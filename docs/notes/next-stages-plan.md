@@ -24,6 +24,11 @@ whether that framing survives prior work.
 
 ## Stage 1: novelty and framing
 
+Done 2026-11-07: see the [related work check](related-work-check-20261107.md).
+All three findings have close prior work. The framing is now a measurement and
+attribution tool with validated reproductions, and Stages 2 and 4 were adjusted
+there.
+
 Question: what of this is already known?
 
 1. Compare with the closest work named in the research plan (TraceLab, CacheWise,
