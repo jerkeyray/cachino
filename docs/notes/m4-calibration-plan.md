@@ -1,7 +1,9 @@
 # M4 engine calibration package
 
-Status: prepared on CPU on 2026-11-05. Nothing here has run against an engine.
-No vLLM install, model weights or GPU were used. This note explains what the
+Status: prepared on 2026-11-05. On 2026-11-07 the package was retargeted to
+Qwen3-0.6B on the vLLM CPU backend and run once; see the
+[CPU results](m4-cpu-results-20261107.md). The 8B expectations below are kept
+as written; the 0.6B probe IDs are identical. This note explains what the
 calibration run must establish, what the pinned source says about the switches
 it depends on, and which local pieces exist. It extends the
 [prefill measurement contract](prefill-measurement-contract.md) and

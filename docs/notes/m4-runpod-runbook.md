@@ -1,6 +1,10 @@
 # M4 calibration runbook: RunPod RTX 4090
 
-Status: plan only, written 2026-11-05. Nothing here has been rented, installed
+Status: plan only, written 2026-11-05. Deferred on 2026-11-07 for lack of budget;
+M4 ran on the CPU backend instead ([results](m4-cpu-results-20261107.md)). The
+probe spec now names Qwen3-0.6B, so an 8B run here needs a spec copy naming
+`Qwen/Qwen3-8B`, built with `--pin experiments/tokenizer/model.json --assets
+artifacts/qwen3-8b-tokenizer`. Nothing here has been rented, installed
 or downloaded. The user chose a RunPod on-demand RTX 4090 with a $10 spend
 ceiling and a 3 hour time ceiling. Each paid or installing step still needs a
 go-ahead when it is reached. This runbook executes the
