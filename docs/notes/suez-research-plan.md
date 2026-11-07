@@ -1,7 +1,9 @@
 # Suez: explaining avoidable prefill in coding agents
 
-Plan date: 2026-11-03. Status: direction accepted; execution plan prepared;
-engine experiments and performance findings remain pending.
+Plan date: 2026-11-03. Status on 2026-11-07: engine calibration (M4), eviction
+(E4) and a first live agent session ran on the vLLM CPU backend with Qwen3-0.6B
+instead of a GPU; see the [docs index](../README.md). GPU latency findings
+remain pending.
 
 Execution update 2026-11-05: the active pinned agent loop now uses a small direct
 HTTP text adapter. Both agent requests pass capture and exact local reconstruction;
