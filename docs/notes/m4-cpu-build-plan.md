@@ -1,7 +1,10 @@
 # M4 on CPU: vLLM CPU backend on Apple Silicon
 
-Status: plan only, written 2026-11-07. Nothing has been cloned, installed or
-downloaded. Each approval boundary below needs a separate go-ahead.
+Status: written and executed on 2026-11-07. The build, weights and smoke checks
+succeeded; see the [M4 CPU results](m4-cpu-results-20261107.md). One change from
+the plan: Homebrew's Python 3.12 failed uv's platform check, so the environment
+uses uv's managed CPython 3.12.13. The section on package changes describes work
+since done in the retarget commit.
 
 ## Why CPU
 
