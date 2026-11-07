@@ -8,7 +8,37 @@ and a derived SQLite index. A deterministic fake endpoint supports development.
 
 The repository's [contribution conventions](CONTRIBUTING.md) cover short
 lowercase commits and comments that explain responsibilities, contracts and
-consequential implementation choices.
+consequential implementation choices. The [documentation index](docs/README.md)
+lists results, plans and references.
+
+## Findings so far
+
+All engine results below come from vLLM at commit `2173d712`, built for the Mac
+CPU, serving Qwen3-0.6B with 32-token blocks. They concern cache accounting,
+not GPU latency.
+
+- **Token parity.** The engine's prompt token IDs equal Suez's local render
+  exactly, including through the proxy ([M4](docs/notes/m4-cpu-results-20261107.md)).
+- **Reuse rule.** Reuse equals the exact shared token prefix, capped at prompt
+  length minus 1, rounded down to whole blocks.
+- **Eviction is predictable.** Under a capped cache, a model of the pinned free
+  queue predicted every hit count, and prompts are evicted from the end
+  backwards ([E4](docs/notes/e4-cpu-results-20261107.md)).
+- **Real agent traffic.** In a mini-swe-agent session, every turn's reuse stops
+  where the template's empty thinking cue is replaced by the previous reply, so
+  each reply is prefilled again ([live session](docs/notes/live-cpu-results-20261107.md)).
+- **One intervention, with a cost.** Keeping the cue in history let the engine
+  reuse each reply and cut recomputation by about half, but changed the model's
+  next action ([counterfactual](docs/notes/cue-counterfactual-20261107.md)).
+
+## Engine experiments on CPU
+
+These need the vLLM CPU build and Qwen3-0.6B weights described in the
+[CPU build plan](docs/notes/m4-cpu-build-plan.md). No GPU is used.
+
+- [M4 calibration](experiments/cache-ground-truth/README.md): parity, reset and block-rule checks.
+- [E4 eviction](experiments/cache-eviction/README.md): predicted versus observed reuse under a capped cache.
+- [Live agent session](experiments/agent-task/README.md#live-session-on-the-cpu-engine): capture, per-turn attribution and the cue counterfactual.
 
 ## Work on a Mac
 
@@ -61,8 +91,9 @@ Its two-step fixture run passes capture and exact local token reconstruction,
 with a third quota probe rejected separately. Read the
 [direct adapter observations](docs/notes/direct-harness-observations.md):
 unchanged message history still has a template generation-boundary difference.
-No inference or agent shell action ran. LiteLLM and OpenAI SDKs are absent from
-the active experiment environment.
+That fixture run used no inference; the live CPU session above later confirmed
+the boundary on the engine. No agent shell action has run. LiteLLM and OpenAI
+SDKs are absent from the active experiment environment.
 
 ## Offline milestone
 
@@ -178,9 +209,10 @@ This is a synthetic HTTP/capture check; it does not validate harness SDK behavio
 or inference/cache performance. Usage remains unknown in the fixture responses.
 
 Local token reconstruction is available for a documented supported subset.
-Real-engine token equivalence and cache attribution remain pending. The fake
-endpoint itself does not simulate tokenizer or KV-cache behavior.
-No GPU is needed for these HTTP checks; real engine/cache validation needs one.
+Engine token equivalence and cache attribution are validated on the vLLM CPU
+backend (see Findings so far); GPU latency is not. The fake endpoint itself
+does not simulate tokenizer or KV-cache behavior. No GPU is needed for these
+HTTP checks.
 
 ## Capture and inspect
 
