@@ -267,3 +267,30 @@ resources and no host credentials, egress, Docker socket or reference/control
 mounts. Docker startup and model/GPU spending remain separate authorization
 boundaries. The short task is an integration baseline; do not pad it or force a
 rewrite to claim natural long-context behavior.
+
+## Live session on the CPU engine
+
+`live_cpu.py` runs the pinned loop with its text-based templates against a
+running vLLM CPU server, through a Suez proxy it builds and owns. The
+environment records actions and returns one fixed observation; no command runs.
+The spec is `live-cpu.json`. With the server on port 18000 (see the
+[CPU build plan](../../docs/notes/m4-cpu-build-plan.md)):
+
+```sh
+curl -s -X POST 127.0.0.1:18000/reset_prefix_cache
+python3.14 -B experiments/agent-task/live_cpu.py --run --out artifacts/live-cpu-NEW
+```
+
+Per-turn attribution, with a prompt replay that checks engine token IDs:
+
+```sh
+HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 uv run --project analysis/tokenizer --frozen \
+  --python 3.12 --no-python-downloads python -B experiments/agent-task/live_attribution.py \
+  --capture artifacts/live-cpu-NEW/capture --num-blocks 585 --block-size 32 \
+  --replay http://127.0.0.1:18000 --out artifacts/live-cpu-NEW/attribution
+```
+
+`cue_counterfactual.py` replays the same prompts with and without the thinking
+cue kept in assistant history. Results:
+[live session](../../docs/notes/live-cpu-results-20261107.md) and
+[cue counterfactual](../../docs/notes/cue-counterfactual-20261107.md).
