@@ -145,7 +145,7 @@ upstream text-action parser and observation formatter. Harness source pin:
 `04d809ceab9df28f9adaed044884180159172930`. This is a controlled configuration
 with a custom model adapter. Results do not characterize the stock default
 harness or prove a prompt optimization. See the
-[source note](../../docs/notes/mini-swe-agent-source-paths.md).
+[source note](../../docs/archive/mini-swe-agent-source-paths.md).
 
 The direct adapter uses stdlib HTTP and sends one explicit text-only JSON
 request per query. It strips only the harness's local `extra`, rejects unknown
@@ -185,7 +185,7 @@ messages and appended history. The quota probe has its own session label, so it
 does not join agent history. Zero external network attempts were blocked and
 neither LiteLLM nor OpenAI SDK modules were imported. Both agent requests pass
 the unchanged strict renderer. Read the
-[direct adapter observations](../../docs/notes/direct-harness-observations.md).
+[direct adapter observations](../../docs/archive/direct-harness-observations.md).
 
 The runner checks a clean pinned checkout and 18 inspected blob identities,
 snapshots sources, builds Cachino, starts owned loopback servers and runs the actual
@@ -257,7 +257,7 @@ its HTTP status is 403. These are local structural observations. M4 must establi
 engine token identity, cold reset and warm reuse before any cache/latency claims.
 
 The earlier LiteLLM-backed check remains documented in
-[its historical note](../../docs/notes/mini-wire-observations.md). Its unknown
+[its historical note](../../docs/archive/mini-wire-observations.md). Its unknown
 metadata rejection was preserved; the renderer was not broadened to ignore it.
 The model adapter changed, so these runs alone cannot establish improved reuse.
 
@@ -274,7 +274,7 @@ rewrite to claim natural long-context behavior.
 running vLLM CPU server, through a Cachino proxy it builds and owns. The
 environment records actions and returns one fixed observation; no command runs.
 The spec is `live-cpu.json`. With the server on port 18000 (see the
-[CPU build plan](../../docs/notes/m4-cpu-build-plan.md)):
+[CPU build plan](../../docs/archive/m4-cpu-build-plan.md)):
 
 ```sh
 curl -s -X POST 127.0.0.1:18000/reset_prefix_cache
@@ -300,5 +300,13 @@ python3.14 -B experiments/agent-task/live_cpu.py --run \
 
 `cue_counterfactual.py` replays the same prompts with and without the thinking
 cue kept in assistant history. Results:
-[live session](../../docs/notes/live-cpu-results-20261107.md) and
-[cue counterfactual](../../docs/notes/cue-counterfactual-20261107.md).
+[live session](../../docs/archive/live-cpu-results-20261107.md) and
+[cue counterfactual](../../docs/archive/cue-counterfactual-20261107.md).
+
+## Cache-size and scheduling replays
+
+`cache_sweep.py` replays a captured multi-session run at one cache size;
+`reuse_curve.py` predicts reuse over a range of sizes and the eviction
+threshold; `schedule_replay.py` compares session scheduling orders on one run,
+optionally confirming each on the engine. Results are in
+[results](../../docs/results.md).
