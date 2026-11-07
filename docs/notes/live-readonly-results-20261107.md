@@ -52,3 +52,20 @@ property of the 0.6B model under greedy decoding, not of the environment.
   observations or concurrent sessions under a capped cache are where eviction
   would appear.
 - One session, one harness, one model, CPU token counts only.
+
+## Sampled rerun
+
+Run `live-cpu-sampled-20261107-01`, spec `live-cpu-sampled.json`: identical
+except temperature 0.7, with no seed sent, so it is not reproducible beyond its
+capture. The aim was varied actions. It did not achieve that: 27 of 28 parsed
+actions were `ls -la`, from the second turn on prefixed with `cd /task &&`.
+Once the history holds identical actions, this model copies them.
+
+The measurements repeat the greedy run. The predictor matched all 30 live
+turns, and the replay matched all 30 with exact prompt-ID parity. Over turns 1
+to 29, 56,448 of 59,419 prompt tokens were reused. The 2,971 recomputed tokens
+split into 1,916 new content (64%), 558 previous reply (19%), 497 block rounding
+(17%) and no eviction. Reply lengths ranged from 18 to 108 tokens.
+
+Varied actions therefore need a more capable model than Qwen3-0.6B, not
+sampling.
