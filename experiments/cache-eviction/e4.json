@@ -1,0 +1,374 @@
+{
+  "schema_version": 1,
+  "status": "specification_not_executed",
+  "note": "E4 eviction controls (docs/notes/e4-eviction-plan.md). Prompt A and A-late are the M4 base and late-mutation probes; flood prompts share no block with A or each other. build_e4.py writes bodies, local IDs and free-queue predictions for a stated block count before any request is sent.",
+  "common_request": {
+    "model": "Qwen/Qwen3-0.6B",
+    "max_tokens": 1,
+    "temperature": 0,
+    "n": 1,
+    "stream": false,
+    "return_token_ids": true,
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    },
+    "add_generation_prompt": true
+  },
+  "m4_spec": "../cache-ground-truth/probes.json",
+  "flood": {
+    "system_line": "Flood {flood:02d} filler line {line:03d}: an unrelated maintenance note with no shared wording, entry {line}.",
+    "user": "Reply with one word.",
+    "target_min_tokens": 1000
+  },
+  "probes": {
+    "a": {
+      "from_m4": "base"
+    },
+    "a-late": {
+      "from_m4": "late-mutation"
+    },
+    "flood-1": {
+      "flood": 1
+    },
+    "flood-2": {
+      "flood": 2
+    },
+    "flood-3": {
+      "flood": 3
+    },
+    "flood-4": {
+      "flood": 4
+    }
+  },
+  "sequence": [
+    {
+      "step": "preflight",
+      "action": "get_models",
+      "accept": "served model name recorded in the run manifest"
+    },
+    {
+      "step": "c0-reset",
+      "action": "reset_prefix_cache",
+      "accept": "HTTP 200 and success true; otherwise stop"
+    },
+    {
+      "step": "c0-a",
+      "action": "send",
+      "probe": "a",
+      "route": "direct",
+      "checks": [
+        "parity",
+        "cached_zero",
+        "predicted"
+      ]
+    },
+    {
+      "step": "c0-final",
+      "action": "send",
+      "probe": "a",
+      "route": "direct",
+      "checks": [
+        "parity",
+        "predicted"
+      ]
+    },
+    {
+      "step": "c1-reset",
+      "action": "reset_prefix_cache",
+      "accept": "HTTP 200 and success true; otherwise stop"
+    },
+    {
+      "step": "c1-a",
+      "action": "send",
+      "probe": "a",
+      "route": "direct",
+      "checks": [
+        "parity",
+        "cached_zero",
+        "predicted"
+      ]
+    },
+    {
+      "step": "c1-flood-1",
+      "action": "send",
+      "probe": "flood-1",
+      "route": "direct",
+      "checks": [
+        "parity",
+        "predicted"
+      ]
+    },
+    {
+      "step": "c1-final",
+      "action": "send",
+      "probe": "a",
+      "route": "direct",
+      "checks": [
+        "parity",
+        "predicted"
+      ]
+    },
+    {
+      "step": "c2-reset",
+      "action": "reset_prefix_cache",
+      "accept": "HTTP 200 and success true; otherwise stop"
+    },
+    {
+      "step": "c2-a",
+      "action": "send",
+      "probe": "a",
+      "route": "direct",
+      "checks": [
+        "parity",
+        "cached_zero",
+        "predicted"
+      ]
+    },
+    {
+      "step": "c2-flood-1",
+      "action": "send",
+      "probe": "flood-1",
+      "route": "direct",
+      "checks": [
+        "parity",
+        "predicted"
+      ]
+    },
+    {
+      "step": "c2-flood-2",
+      "action": "send",
+      "probe": "flood-2",
+      "route": "direct",
+      "checks": [
+        "parity",
+        "predicted"
+      ]
+    },
+    {
+      "step": "c2-final",
+      "action": "send",
+      "probe": "a",
+      "route": "direct",
+      "checks": [
+        "parity",
+        "predicted"
+      ]
+    },
+    {
+      "step": "c3-reset",
+      "action": "reset_prefix_cache",
+      "accept": "HTTP 200 and success true; otherwise stop"
+    },
+    {
+      "step": "c3-a",
+      "action": "send",
+      "probe": "a",
+      "route": "direct",
+      "checks": [
+        "parity",
+        "cached_zero",
+        "predicted"
+      ]
+    },
+    {
+      "step": "c3-flood-1",
+      "action": "send",
+      "probe": "flood-1",
+      "route": "direct",
+      "checks": [
+        "parity",
+        "predicted"
+      ]
+    },
+    {
+      "step": "c3-flood-2",
+      "action": "send",
+      "probe": "flood-2",
+      "route": "direct",
+      "checks": [
+        "parity",
+        "predicted"
+      ]
+    },
+    {
+      "step": "c3-flood-3",
+      "action": "send",
+      "probe": "flood-3",
+      "route": "direct",
+      "checks": [
+        "parity",
+        "predicted"
+      ]
+    },
+    {
+      "step": "c3-final",
+      "action": "send",
+      "probe": "a",
+      "route": "direct",
+      "checks": [
+        "parity",
+        "predicted"
+      ]
+    },
+    {
+      "step": "c4-reset",
+      "action": "reset_prefix_cache",
+      "accept": "HTTP 200 and success true; otherwise stop"
+    },
+    {
+      "step": "c4-a",
+      "action": "send",
+      "probe": "a",
+      "route": "direct",
+      "checks": [
+        "parity",
+        "cached_zero",
+        "predicted"
+      ]
+    },
+    {
+      "step": "c4-flood-1",
+      "action": "send",
+      "probe": "flood-1",
+      "route": "direct",
+      "checks": [
+        "parity",
+        "predicted"
+      ]
+    },
+    {
+      "step": "c4-flood-2",
+      "action": "send",
+      "probe": "flood-2",
+      "route": "direct",
+      "checks": [
+        "parity",
+        "predicted"
+      ]
+    },
+    {
+      "step": "c4-flood-3",
+      "action": "send",
+      "probe": "flood-3",
+      "route": "direct",
+      "checks": [
+        "parity",
+        "predicted"
+      ]
+    },
+    {
+      "step": "c4-flood-4",
+      "action": "send",
+      "probe": "flood-4",
+      "route": "direct",
+      "checks": [
+        "parity",
+        "predicted"
+      ]
+    },
+    {
+      "step": "c4-final",
+      "action": "send",
+      "probe": "a",
+      "route": "direct",
+      "checks": [
+        "parity",
+        "predicted"
+      ]
+    },
+    {
+      "step": "m1-reset",
+      "action": "reset_prefix_cache",
+      "accept": "HTTP 200 and success true; otherwise stop"
+    },
+    {
+      "step": "m1-a",
+      "action": "send",
+      "probe": "a",
+      "route": "direct",
+      "checks": [
+        "parity",
+        "cached_zero",
+        "predicted"
+      ]
+    },
+    {
+      "step": "m1-flood-1",
+      "action": "send",
+      "probe": "flood-1",
+      "route": "direct",
+      "checks": [
+        "parity",
+        "predicted"
+      ]
+    },
+    {
+      "step": "m1-final",
+      "action": "send",
+      "probe": "a-late",
+      "route": "direct",
+      "checks": [
+        "parity",
+        "predicted"
+      ]
+    },
+    {
+      "step": "m2-reset",
+      "action": "reset_prefix_cache",
+      "accept": "HTTP 200 and success true; otherwise stop"
+    },
+    {
+      "step": "m2-a",
+      "action": "send",
+      "probe": "a",
+      "route": "direct",
+      "checks": [
+        "parity",
+        "cached_zero",
+        "predicted"
+      ]
+    },
+    {
+      "step": "m2-flood-1",
+      "action": "send",
+      "probe": "flood-1",
+      "route": "direct",
+      "checks": [
+        "parity",
+        "predicted"
+      ]
+    },
+    {
+      "step": "m2-flood-2",
+      "action": "send",
+      "probe": "flood-2",
+      "route": "direct",
+      "checks": [
+        "parity",
+        "predicted"
+      ]
+    },
+    {
+      "step": "m2-final",
+      "action": "send",
+      "probe": "a-late",
+      "route": "direct",
+      "checks": [
+        "parity",
+        "predicted"
+      ]
+    }
+  ],
+  "stop_rules": [
+    "Stop at the first ID parity mismatch and keep the mismatching request and response bodies.",
+    "Stop if a reset returns success false or a non-200 status.",
+    "Stop if prompt_tokens_details or per-request metrics are absent; record them as unavailable, never as zero.",
+    "No retries. A transport failure ends the run with the failed step recorded.",
+    "Other check failures are recorded and the sequence continues, so one run shows every control's outcome."
+  ],
+  "check_definitions": {
+    "parity": "returned prompt_token_ids equal local IDs element by element, and usage.prompt_tokens equals their count when reported",
+    "cached_zero": "usage.prompt_tokens_details.cached_tokens is reported and equals 0",
+    "predicted": "cached_tokens and created_cache_tokens equal the free-queue predictor's values for this step, computed at build time from the stated block count and block size. A mismatch is a recorded failure, not a stop"
+  }
+}

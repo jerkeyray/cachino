@@ -11,7 +11,7 @@ CALIBRATION = Path(__file__).resolve().parents[1] / "experiments/cache-ground-tr
 sys.path.insert(0, str(CALIBRATION))
 
 from build_probes import body_bytes, expand  # noqa: E402
-from calibrate import InputError, check_ready, load_inputs, origin, run  # noqa: E402
+from calibrate import InputError, check_ready, evaluate, load_inputs, origin, run  # noqa: E402
 from test_cache_calibration import filled_manifest  # noqa: E402
 
 CUE = [9, 9, 9, 9]
@@ -201,6 +201,32 @@ class CalibrateTests(unittest.TestCase):
         self.assertEqual(result["status"], "completed_with_failures")
         self.assertIn("late-warmup: cached_zero", result["failed_checks"])
         self.assertEqual(len(steps), len(self.inputs[0]["sequence"]))
+
+    def test_predicted_check_compares_cached_and_created(self):
+        seen = {"cached_tokens": 64, "created_cache_tokens": 32}
+        tokens = {"p": [1, 2, 3]}
+        self.assertTrue(evaluate("predicted", "p", seen, tokens, {}, predicted={"cached_tokens": 64, "created_cache_tokens": 32})[0])
+        self.assertFalse(evaluate("predicted", "p", seen, tokens, {}, predicted={"cached_tokens": 64, "created_cache_tokens": 0})[0])
+        self.assertFalse(evaluate("predicted", "p", dict(seen, created_cache_tokens=None), tokens, {},
+                                  predicted={"cached_tokens": 64, "created_cache_tokens": 32})[0])
+        with self.assertRaises(InputError):
+            evaluate("predicted", "p", seen, tokens, {})
+
+    def test_ready_rejects_geometry_other_than_the_predictions(self):
+        spec, spec_sha = self.inputs[0], self.inputs[1]
+        summary_path = self.root / "probes/summary.json"
+        summary = json.loads(summary_path.read_text())
+        summary["prediction_params"] = {"num_gpu_blocks": 96, "block_size_tokens": BLOCK}
+        summary_path.write_text(json.dumps(summary))
+        self.manifest["run"]["probe_spec_sha256"] = spec_sha
+        for key, value in (("model_id", self.pin["model_id"]), ("served_model_name", self.pin["model_id"]),
+                           ("local_tokenizer_revision", self.pin["revision"])):
+            self.manifest["model"][key] = value
+        self.manifest["cache"]["num_gpu_blocks"] = 96
+        check_ready(self.manifest, spec, spec_sha, self.root / "probes")
+        self.manifest["cache"]["num_gpu_blocks"] = 292
+        with self.assertRaisesRegex(InputError, "geometry"):
+            check_ready(self.manifest, spec, spec_sha, self.root / "probes")
 
     def test_existing_inputs_are_validated(self):
         with self.assertRaises(InputError):

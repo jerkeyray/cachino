@@ -107,9 +107,20 @@ def check_ready(manifest, spec, spec_sha, probes_dir):
     model = spec["common_request"]["model"]
     if manifest["model"]["served_model_name"] != model or manifest["model"]["model_id"] != model:
         raise InputError("manifest model or served model name differs from the probe request model")
-    built = json.loads((Path(probes_dir) / "summary.json").read_text(encoding="utf-8"))["pin"]
+    summary = json.loads((Path(probes_dir) / "summary.json").read_text(encoding="utf-8"))
+    built = summary["pin"]
     if built["model_id"] != model or manifest["model"]["local_tokenizer_revision"] != built["revision"]:
         raise InputError("manifest local_tokenizer_revision differs from the probe build pin")
+    # Predictions are frozen at build time for one cache geometry. A run on a
+    # different geometry would compare against numbers made for another engine.
+    params = summary.get("prediction_params")
+    if params is not None and any(manifest["cache"][key] != value for key, value in params.items()):
+        raise InputError("manifest cache geometry differs from the prediction parameters")
+
+
+def load_predictions(probes_dir):
+    """Return the build-time per-step predictions, or None if the build has none."""
+    return json.loads((Path(probes_dir) / "summary.json").read_text(encoding="utf-8")).get("predictions")
 
 
 class Client:
@@ -172,10 +183,11 @@ def observe(body):
     }
 
 
-def evaluate(name, probe, seen, tokens, returned, block=None):
+def evaluate(name, probe, seen, tokens, returned, block=None, predicted=None):
     """Return (passed, detail) for one named check from the spec.
 
     block is the recorded block_size_tokens, used only by block_prediction.
+    predicted is this step's build-time prediction, used only by predicted.
 
     Parity failure and unavailable cache details raise StopRun, because every
     later comparison depends on them. Other failures are recorded and the
@@ -210,6 +222,13 @@ def evaluate(name, probe, seen, tokens, returned, block=None):
         other = name.split(":", 1)[1]
         bound = lcp(tokens[other], local)
         return cached <= bound, f"cached {cached}, local LCP with {other} {bound}"
+    if name == "predicted":
+        if predicted is None:
+            raise InputError("predicted check without a build-time prediction for this step")
+        created = seen["created_cache_tokens"]
+        passed = cached == predicted["cached_tokens"] and created == predicted["created_cache_tokens"]
+        return passed, (f"cached {cached} vs predicted {predicted['cached_tokens']}; "
+                        f"created {created} vs predicted {predicted['created_cache_tokens']}")
     if name.startswith("block_prediction:"):
         # Hits land on whole blocks, and the final prompt token is never served
         # from cache, so reuse is the shared prefix capped at length - 1 and
@@ -229,7 +248,7 @@ def plan(spec):
              "route": s.get("route"), "checks": s.get("checks", [])} for i, s in enumerate(spec["sequence"])]
 
 
-def run(spec, spec_sha, bodies, tokens, manifest, direct, suez, out, timeout=120.0):
+def run(spec, spec_sha, bodies, tokens, manifest, direct, suez, out, timeout=120.0, predictions=None):
     """Execute the sequence once and return the result summary.
 
     Each step record is appended to steps.jsonl and synced before the next
@@ -248,7 +267,8 @@ def run(spec, spec_sha, bodies, tokens, manifest, direct, suez, out, timeout=120
             record = {"index": index, "step": step["step"], "action": step["action"]}
             try:
                 _step(client, step, index, run_id, direct, suez, bodies, tokens, returned, out, record,
-                      block=manifest["cache"]["block_size_tokens"])
+                      block=manifest["cache"]["block_size_tokens"],
+                      predicted=(predictions or {}).get(step["step"]))
                 failures.extend(f"{step['step']}: {c['check']}" for c in record.get("checks", []) if not c["passed"])
             except StopRun as error:
                 record["stopped"] = str(error)
@@ -274,7 +294,8 @@ def _json(body, what):
         raise StopRun(what + " response is not JSON") from error
 
 
-def _step(client, step, index, run_id, direct, suez, bodies, tokens, returned, out, record, block=None):
+def _step(client, step, index, run_id, direct, suez, bodies, tokens, returned, out, record, block=None,
+          predicted=None):
     """Perform one action, filling record in place; raise StopRun on a stop rule.
 
     Filling the caller's record keeps fields observed before a stop, such as the
@@ -327,7 +348,7 @@ def _step(client, step, index, run_id, direct, suez, bodies, tokens, returned, o
     record["checks"] = []
     for name in step.get("checks", []):
         try:
-            passed, detail = evaluate(name, probe, seen, tokens, returned, block)
+            passed, detail = evaluate(name, probe, seen, tokens, returned, block, predicted)
         except StopRun as error:
             record["checks"].append({"check": name, "passed": False, "detail": str(error)})
             raise StopRun(str(error)) from error
@@ -358,7 +379,8 @@ def main():
     check_ready(manifest, spec, spec_sha, args.probes)
     if args.out.exists():
         raise InputError("output directory already exists")
-    result = run(spec, spec_sha, bodies, tokens, manifest, direct, suez, args.out, args.timeout)
+    result = run(spec, spec_sha, bodies, tokens, manifest, direct, suez, args.out, args.timeout,
+                 predictions=load_predictions(args.probes))
     print(json.dumps(result, indent=2))
     return 0 if result["status"] == "completed" else 1
 
