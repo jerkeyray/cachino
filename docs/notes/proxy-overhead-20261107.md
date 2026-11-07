@@ -37,9 +37,10 @@ Paired difference from the direct route, median with a 95% bootstrap interval:
   latency measured without it. Engine-reported timing (`metrics`) is unaffected;
   client and proxy timing are not.
 - On a GPU server, where prefill of a long prompt can take tens of milliseconds,
-  a 15 ms capture cost is not negligible. Before GPU latency work, either run
-  timing passes with capture off or decide whether the per-event sync ordering
-  should change. That is a design decision about crash evidence, not a bug.
+  a 15 ms capture cost is not negligible.
+- Decision, 2026-11-07: the per-event sync stays, because it keeps an exact,
+  verifiable record up to any crash. Latency passes run with capture off and
+  pair with a separate capture pass for attribution.
 
 ## Limits
 
