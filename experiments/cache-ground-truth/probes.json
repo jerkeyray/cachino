@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
   "status": "specification_not_executed",
-  "note": "Sequential M4 calibration controls for one vLLM worker, one model and one cache namespace. build_probes.py turns this into exact request bodies and local expected token IDs. No step here has run against an engine.",
+  "note": "Sequential M4 calibration controls for one vLLM worker, one model and one cache namespace. Retargeted to Qwen3-0.6B on the vLLM CPU backend on 2026-11-07; its tokenizer files equal the earlier Qwen3-8B pin. build_probes.py turns this into exact request bodies and local expected token IDs. No step here has run against an engine.",
   "common_request": {
-    "model": "Qwen/Qwen3-8B",
+    "model": "Qwen/Qwen3-0.6B",
     "max_tokens": 1,
     "temperature": 0,
     "n": 1,
@@ -153,7 +153,8 @@
       "checks": [
         "parity",
         "cached_positive",
-        "cached_within_eligible"
+        "cached_within_eligible",
+        "block_prediction:base"
       ]
     },
     {
@@ -164,7 +165,8 @@
       "accept": "cached_tokens at most the local LCP with base; record the gap to LCP and the block geometry that explains it",
       "checks": [
         "parity",
-        "cached_within_lcp:base"
+        "cached_within_lcp:base",
+        "block_prediction:base"
       ]
     },
     {
@@ -192,7 +194,8 @@
       "checks": [
         "parity",
         "cached_positive",
-        "cached_within_lcp:base"
+        "cached_within_lcp:base",
+        "block_prediction:base"
       ]
     },
     {
@@ -218,7 +221,8 @@
       "accept": "ID parity; cached_tokens at most the local LCP with base. The empty thinking cue in base is replaced by the fixed assistant reply, so a hit beyond that boundary would contradict the local model. The fixed reply is not the generated output, so this probe does not reproduce real agent cache state",
       "checks": [
         "parity",
-        "cached_within_lcp:base"
+        "cached_within_lcp:base",
+        "block_prediction:base"
       ]
     },
     {
@@ -268,6 +272,7 @@
     "cached_positive": "cached_tokens is reported and greater than 0",
     "cached_within_eligible": "cached_tokens is at most local prompt length minus one",
     "cached_within_lcp:P": "cached_tokens is at most the local exact-ID LCP between this probe and probe P",
-    "same_prompt_ids_as:S": "returned prompt_token_ids equal those returned at step S"
+    "same_prompt_ids_as:S": "returned prompt_token_ids equal those returned at step S",
+    "block_prediction:P": "cached_tokens equals floor(min(local exact-ID LCP with P, local prompt length - 1) / B) * B, where B is the manifest's recorded block_size_tokens. Assumes P is fully cached and nothing was evicted in between; a mismatch is a recorded failure to explain, not a stop"
   }
 }

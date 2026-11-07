@@ -11,7 +11,7 @@ CALIBRATION = Path(__file__).resolve().parents[1] / "experiments/cache-ground-tr
 sys.path.insert(0, str(CALIBRATION))
 
 from build_probes import body_bytes, expand  # noqa: E402
-from calibrate import InputError, load_inputs, origin, run  # noqa: E402
+from calibrate import InputError, check_ready, load_inputs, origin, run  # noqa: E402
 from test_cache_calibration import filled_manifest  # noqa: E402
 
 CUE = [9, 9, 9, 9]
@@ -49,18 +49,19 @@ class Engine:
 
     def complete(self, body, headers):
         ids = list(self.ids_by_body[body])
-        cached = 0
+        cached, stored = 0, 0
         for end in range(BLOCK, len(ids), BLOCK):
             if tuple(ids[:end]) in self.store:
                 cached = end
         for end in range(BLOCK, len(ids) + 1, BLOCK):
+            stored += tuple(ids[:end]) not in self.store
             self.store.add(tuple(ids[:end]))
         if self.corrupt is not None and len(self.requests) == self.corrupt:
             ids[-1] += 1
         self.requests.append(headers.get("X-Request-Id"))
         usage = {"prompt_tokens": len(ids), "completion_tokens": 1}
         if self.details:
-            usage["prompt_tokens_details"] = {"cached_tokens": cached}
+            usage["prompt_tokens_details"] = {"cached_tokens": cached, "created_cache_tokens": stored * BLOCK}
         return {"id": "chatcmpl-" + headers.get("X-Request-Id"), "prompt_token_ids": ids,
                 "choices": [{"index": 0, "finish_reason": "length", "token_ids": [7],
                              "message": {"role": "assistant", "content": "x"}}],
@@ -81,7 +82,7 @@ def serve(engine):
             self.wfile.write(data)
 
         def do_GET(self):
-            self.reply({"data": [{"id": "Qwen/Qwen3-8B"}]})
+            self.reply({"data": [{"id": "Qwen/Qwen3-0.6B"}]})
 
         def do_POST(self):
             body = self.rfile.read(int(self.headers.get("Content-Length", 0)))
@@ -112,7 +113,9 @@ class CalibrateTests(unittest.TestCase):
             rows[name] = {"request_sha256": hashlib.sha256(data).hexdigest(),
                           "token_ids_sha256": hashlib.sha256(json.dumps(ids, separators=(",", ":")).encode()).hexdigest()}
             ids_by_body[data] = ids
-        (probes / "summary.json").write_text(json.dumps({"spec_sha256": hashlib.sha256(spec_bytes).hexdigest(), "probes": rows}))
+        self.pin = {"model_id": spec["common_request"]["model"], "revision": "c" * 40}
+        (probes / "summary.json").write_text(json.dumps({"spec_sha256": hashlib.sha256(spec_bytes).hexdigest(),
+                                                         "pin": self.pin, "probes": rows}))
         self.inputs = load_inputs(CALIBRATION / "probes.json", probes)
         self.engine = Engine(ids_by_body)
         # Two listeners share one engine, standing in for direct and proxied routes.
@@ -120,6 +123,7 @@ class CalibrateTests(unittest.TestCase):
         self.direct, self.suez = (f"http://127.0.0.1:{s.server_address[1]}" for s in self.servers)
         self.manifest = filled_manifest()
         self.manifest["run"]["run_id"] = "t1"
+        self.manifest["cache"]["block_size_tokens"] = BLOCK
 
     def tearDown(self):
         for server in self.servers:
@@ -142,6 +146,29 @@ class CalibrateTests(unittest.TestCase):
         proxy = next(s for s in steps if s["step"] == "proxy-cold")
         self.assertEqual(proxy["route"], "suez")
         self.assertTrue((self.root / "out/raw/00-preflight.response.body").exists())
+        late = next(s for s in steps if s["step"] == "late-after-warm")
+        self.assertTrue(all(c["passed"] for c in late["checks"]))
+        self.assertIn("block_prediction:base", [c["check"] for c in late["checks"]])
+        self.assertIsNotNone(late["created_cache_tokens"])
+
+    def test_wrong_block_size_is_a_recorded_prediction_failure(self):
+        # The double caches in blocks of 4; a manifest claiming 8 must make the
+        # block predictions miss without stopping the run.
+        self.manifest["cache"]["block_size_tokens"] = 2 * BLOCK
+        result, steps = self.execute()
+        self.assertEqual(result["status"], "completed_with_failures")
+        self.assertTrue(all("block_prediction" in f for f in result["failed_checks"]), result["failed_checks"])
+
+    def test_ready_requires_matching_model_and_tokenizer_revision(self):
+        spec, spec_sha = self.inputs[0], self.inputs[1]
+        self.manifest["run"]["probe_spec_sha256"] = spec_sha
+        for key, value in (("model_id", self.pin["model_id"]), ("served_model_name", self.pin["model_id"]),
+                           ("local_tokenizer_revision", self.pin["revision"])):
+            self.manifest["model"][key] = value
+        check_ready(self.manifest, spec, spec_sha, self.root / "probes")
+        self.manifest["model"]["local_tokenizer_revision"] = "b" * 40
+        with self.assertRaisesRegex(InputError, "tokenizer_revision"):
+            check_ready(self.manifest, spec, spec_sha, self.root / "probes")
 
     def test_parity_mismatch_stops_and_keeps_partial_record(self):
         self.engine.corrupt = 0

@@ -8,6 +8,9 @@ used for captured traffic. The output is a local prediction for comparison with
 engine-returned prompt_token_ids. It says nothing about what the engine renders,
 caches or reuses until a run shows parity.
 
+The spec's model must equal the tokenizer pin's model, so a probe set never
+pairs one model's request with another model's tokenizer snapshot.
+
 Run with the tokenizer environment, offline:
   HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 analysis/tokenizer/.venv/bin/python -B \
     experiments/cache-ground-truth/build_probes.py --out artifacts/m4-probes-NEW
@@ -23,6 +26,10 @@ sys.path.insert(0, str(ROOT / "analysis"))
 
 from reconstruct import _load_tokenizer, lcp, render  # noqa: E402
 from tokenizer_assets import load_pin  # noqa: E402
+
+# M4 runs on the CPU backend with Qwen3-0.6B (docs/notes/m4-cpu-build-plan.md).
+DEFAULT_PIN = ROOT / "experiments/tokenizer/qwen3-0.6b.json"
+DEFAULT_ASSETS = ROOT / "artifacts/qwen3-0.6b-tokenizer"
 
 
 def expand(spec):
@@ -60,7 +67,7 @@ def body_bytes(request):
     return json.dumps(request, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
 
 
-def build(spec_path, assets, out):
+def build(spec_path, assets, out, pin_path=DEFAULT_PIN):
     """Write bodies, local IDs and a summary to a new directory.
 
     The output directory must not exist, so an earlier probe set is never
@@ -70,7 +77,9 @@ def build(spec_path, assets, out):
     """
     spec_bytes = Path(spec_path).read_bytes()
     spec = json.loads(spec_bytes)
-    pin = load_pin()
+    pin = load_pin(pin_path)
+    if spec["common_request"]["model"] != pin["model_id"]:
+        raise ValueError("spec model %s differs from tokenizer pin %s" % (spec["common_request"]["model"], pin["model_id"]))
     tokenizer, manifest, libraries = _load_tokenizer(Path(assets), pin)
     out = Path(out)
     out.mkdir(mode=0o700, parents=True)
@@ -101,10 +110,11 @@ def build(spec_path, assets, out):
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--spec", default=Path(__file__).with_name("probes.json"), type=Path)
-    parser.add_argument("--assets", default=ROOT / "artifacts/qwen3-8b-tokenizer", type=Path)
+    parser.add_argument("--pin", default=DEFAULT_PIN, type=Path)
+    parser.add_argument("--assets", default=DEFAULT_ASSETS, type=Path)
     parser.add_argument("--out", required=True, type=Path)
     args = parser.parse_args()
-    summary = build(args.spec, args.assets, args.out)
+    summary = build(args.spec, args.assets, args.out, args.pin)
     print(json.dumps({"probes": summary["probes"], "comparisons": summary["comparisons"]}, indent=2, ensure_ascii=False))
 
 

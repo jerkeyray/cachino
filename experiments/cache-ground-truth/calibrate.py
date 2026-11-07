@@ -92,15 +92,24 @@ def load_inputs(spec_path, probes_dir):
     return spec, spec_sha, bodies, tokens
 
 
-def check_ready(manifest, spec, spec_sha):
-    """Raise InputError unless the manifest has no open gates for this spec."""
+def check_ready(manifest, spec, spec_sha, probes_dir):
+    """Raise InputError unless the manifest has no open gates for this spec.
+
+    The manifest must name the same model as the probe requests and the same
+    tokenizer revision the probe set was built with, so expected IDs cannot come
+    from a different snapshot than the one the run claims.
+    """
     missing, conflicts = check_manifest(manifest)
     if missing or conflicts:
         raise InputError("manifest not ready: missing " + ", ".join(missing) + "; conflicts " + "; ".join(conflicts))
     if manifest["run"]["probe_spec_sha256"] != spec_sha:
         raise InputError("manifest probe_spec_sha256 does not match probes.json")
-    if manifest["model"]["served_model_name"] != spec["common_request"]["model"]:
-        raise InputError("served model name differs from the probe request model")
+    model = spec["common_request"]["model"]
+    if manifest["model"]["served_model_name"] != model or manifest["model"]["model_id"] != model:
+        raise InputError("manifest model or served model name differs from the probe request model")
+    built = json.loads((Path(probes_dir) / "summary.json").read_text(encoding="utf-8"))["pin"]
+    if built["model_id"] != model or manifest["model"]["local_tokenizer_revision"] != built["revision"]:
+        raise InputError("manifest local_tokenizer_revision differs from the probe build pin")
 
 
 class Client:
@@ -152,6 +161,9 @@ def observe(body):
         "usage_prompt_tokens": usage.get("prompt_tokens"),
         "usage_completion_tokens": usage.get("completion_tokens"),
         "cached_tokens": details.get("cached_tokens") if isinstance(details, dict) else None,
+        # Present at the pinned build (observed on the CPU backend 2026-11-07):
+        # tokens newly written to the prefix cache by this request.
+        "created_cache_tokens": details.get("created_cache_tokens") if isinstance(details, dict) else None,
         "prompt_tokens_details_present": isinstance(details, dict),
         "metrics_present": isinstance(metrics, dict),
         "engine_schedule_to_first_token_ms": metrics.get("time_to_first_token_ms") if isinstance(metrics, dict) else None,
@@ -160,8 +172,10 @@ def observe(body):
     }
 
 
-def evaluate(name, probe, seen, tokens, returned):
+def evaluate(name, probe, seen, tokens, returned, block=None):
     """Return (passed, detail) for one named check from the spec.
+
+    block is the recorded block_size_tokens, used only by block_prediction.
 
     Parity failure and unavailable cache details raise StopRun, because every
     later comparison depends on them. Other failures are recorded and the
@@ -196,6 +210,16 @@ def evaluate(name, probe, seen, tokens, returned):
         other = name.split(":", 1)[1]
         bound = lcp(tokens[other], local)
         return cached <= bound, f"cached {cached}, local LCP with {other} {bound}"
+    if name.startswith("block_prediction:"):
+        # Hits land on whole blocks, and the final prompt token is never served
+        # from cache, so reuse is the shared prefix capped at length - 1 and
+        # rounded down to a block. This assumes the reference probe is still
+        # fully cached; eviction would show up as a shortfall.
+        if not isinstance(block, int) or block <= 0:
+            raise InputError("block_prediction needs an integer block_size_tokens in the manifest")
+        other = name.split(":", 1)[1]
+        predicted = min(lcp(tokens[other], local), len(local) - 1) // block * block
+        return cached == predicted, f"cached {cached}, predicted {predicted} at block {block}"
     raise InputError("unknown check " + name)
 
 
@@ -223,7 +247,8 @@ def run(spec, spec_sha, bodies, tokens, manifest, direct, suez, out, timeout=120
         for index, step in enumerate(spec["sequence"]):
             record = {"index": index, "step": step["step"], "action": step["action"]}
             try:
-                _step(client, step, index, run_id, direct, suez, bodies, tokens, returned, out, record)
+                _step(client, step, index, run_id, direct, suez, bodies, tokens, returned, out, record,
+                      block=manifest["cache"]["block_size_tokens"])
                 failures.extend(f"{step['step']}: {c['check']}" for c in record.get("checks", []) if not c["passed"])
             except StopRun as error:
                 record["stopped"] = str(error)
@@ -249,7 +274,7 @@ def _json(body, what):
         raise StopRun(what + " response is not JSON") from error
 
 
-def _step(client, step, index, run_id, direct, suez, bodies, tokens, returned, out, record):
+def _step(client, step, index, run_id, direct, suez, bodies, tokens, returned, out, record, block=None):
     """Perform one action, filling record in place; raise StopRun on a stop rule.
 
     Filling the caller's record keeps fields observed before a stop, such as the
@@ -302,7 +327,7 @@ def _step(client, step, index, run_id, direct, suez, bodies, tokens, returned, o
     record["checks"] = []
     for name in step.get("checks", []):
         try:
-            passed, detail = evaluate(name, probe, seen, tokens, returned)
+            passed, detail = evaluate(name, probe, seen, tokens, returned, block)
         except StopRun as error:
             record["checks"].append({"check": name, "passed": False, "detail": str(error)})
             raise StopRun(str(error)) from error
@@ -330,7 +355,7 @@ def main():
         print(json.dumps({"dry_run": True, "spec_sha256": spec_sha, "manifest_missing": missing,
                           "manifest_conflicts": conflicts, "steps": plan(spec)}, indent=2))
         return 0
-    check_ready(manifest, spec, spec_sha)
+    check_ready(manifest, spec, spec_sha, args.probes)
     if args.out.exists():
         raise InputError("output directory already exists")
     result = run(spec, spec_sha, bodies, tokens, manifest, direct, suez, args.out, args.timeout)

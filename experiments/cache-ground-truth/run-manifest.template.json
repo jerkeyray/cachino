@@ -25,10 +25,10 @@
     "installed_matches_source_pin": null
   },
   "model": {
-    "model_id": "Qwen/Qwen3-8B",
+    "model_id": null,
     "weights_revision": null,
     "tokenizer_revision": null,
-    "local_tokenizer_revision": "b968826d9c46dd6066d109eabc6255188de91218",
+    "local_tokenizer_revision": null,
     "served_model_name": null,
     "dtype": null,
     "max_model_len": null,
