@@ -308,5 +308,6 @@ cue kept in assistant history. Results:
 `cache_sweep.py` replays a captured multi-session run at one cache size;
 `reuse_curve.py` predicts reuse over a range of sizes and the eviction
 threshold; `schedule_replay.py` compares session scheduling orders on one run,
-optionally confirming each on the engine. Results are in
+optionally confirming each on the engine; `overlap_replay.py` replays a
+concurrent run with its recorded timing and compares overlap models. Results are in
 [results](../../docs/results.md).

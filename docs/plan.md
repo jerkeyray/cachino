@@ -21,8 +21,8 @@ Updated 2026-11-08. The original research plan and stage plan are in
 2. **Simulator comparison.** Run vLLM's native simulator (PR #47922) on the same
    captures. It needs `triton-cpu`, which the pinned requirements provide only
    on x86_64 Linux, so it cannot run on this Mac.
-3. **Overlap replay.** Replay concurrent runs with their recorded interleaving to
-   explain the 6 overlap misses.
+3. **Overlap replay.** Done 2026-11-08: the misses come from decode-block timing
+   ([results](results.md#overlap-replay)).
 4. **Scheduling under real overlap.** Repeat the scheduling test with live
    concurrent sessions and wall-clock delay rather than sequential replay.
 5. **Write-up.** Figures regenerated from captures by script, and a short

@@ -21,6 +21,7 @@ engine-validated attribution is the contribution.
 | Fixed trace at 7 cache sizes | 30 / 30 at each | [sweep](archive/cache-sweep-20261107.md), [stage 2](archive/stage2-results-20261108.md) |
 | Concurrent sessions, 9 seeded runs | 259 / 265 (misses only under eviction, 1 to 3 blocks) | [stage 2](archive/stage2-results-20261108.md) |
 | 5 scheduling orders | 39 / 39 each | this page |
+| Timed overlap replay, 3 evicting runs | 93 / 98 | this page |
 
 Engine prompt token IDs equalled the local render on every replayed request.
 
@@ -81,6 +82,26 @@ One fixed three-session trace, replayed at each size:
 
 Records: [concurrent](archive/concurrent-results-20261107.md),
 [sweep](archive/cache-sweep-20261107.md), [stage 2](archive/stage2-results-20261108.md).
+
+## Overlap replay
+
+Run `overlap-replay-20261108-01`, `experiments/agent-task/overlap_replay.py`.
+The three concurrent runs that evicted were replayed on one engine (438 blocks)
+with their recorded start offsets, each request generating its recorded number
+of tokens (`ignore_eos`). Every run evicted again, and prompt-ID parity held on
+all 98 requests. The replay's own timing drove three predictor variants that
+differ only in when decode blocks are taken:
+
+| Decode blocks taken | Exact | Total error |
+| --- | --- | --- |
+| At admission | 93 / 98 | 352 tokens |
+| At completion, freed tail first | 92 / 98 | 384 tokens |
+| Never (prompt blocks only) | 88 / 98 | 1,664 tokens |
+
+Ignoring decode blocks is clearly worse, and the two timing variants each win
+on a different run. The engine allocates as it decodes, between the two, so the
+remaining error under overlap, one to a few blocks on about 5% of requests,
+comes from decode-block timing, not from the eviction rules.
 
 ## Scheduling (stage 4)
 
