@@ -1,6 +1,7 @@
 # E4 plan: eviction under a capped KV cache
 
-Status: plan only, written 2026-11-07. Nothing here has run. It follows the
+Status: written 2026-11-07 and run the same day; every prediction matched. See the
+[E4 results](e4-cpu-results-20261107.md). It follows the
 completed [M4 CPU calibration](m4-cpu-results-20261107.md) on the same engine,
 model and machine.
 
