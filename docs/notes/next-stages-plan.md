@@ -43,6 +43,10 @@ claim chosen or reframed. Needs: nothing; read-only web search.
 
 ## Stage 2: evidence that holds up
 
+Partly done 2026-11-08: see [stage 2 results](stage2-results-20261108.md).
+Repetitions and threshold location are done. Simulator comparisons, overlap
+replay and the control template remain.
+
 Question: are the shares and the cliff stable, and which parts are general?
 
 1. **Independent repetitions.** Vary the engine's `--seed` per run, which makes
