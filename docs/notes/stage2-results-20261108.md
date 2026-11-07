@@ -81,7 +81,7 @@ the threshold, rather than a step.
 - **PrefixSim** needs a libCacheSim build, a new dependency.
 - **Overlap replay** that reproduces recorded interleaving on the engine, to
   explain the 6 misses.
-- **A control template** without the thinking cue, which needs a model download.
+- **A control template:** done separately, see [control template](control-template-20261108.md).
 
 ## Limits
 
