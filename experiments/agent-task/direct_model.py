@@ -80,7 +80,8 @@ class DirectTextModel:
     no cost is invented when price/usage have not been established.
     """
 
-    def __init__(self, *, model_name, api_base, api_key, max_tokens=64, temperature=0, timeout=10):
+    def __init__(self, *, model_name, api_base, api_key, max_tokens=64, temperature=0, timeout=10,
+                 observation_template=None):
         url = urlsplit(api_base)
         if (url.scheme != "http" or url.hostname != "127.0.0.1" or url.port is None
                 or url.username is not None or url.password is not None
@@ -93,6 +94,9 @@ class DirectTextModel:
         for name, value in (("temperature", temperature), ("timeout", timeout)):
             if type(value) not in (int, float) or not math.isfinite(value) or value < 0 or (name == "timeout" and value == 0):
                 raise ValueError("invalid " + name)
+        # The default template is the minimal wire-check form. Live sessions pass
+        # the pinned config's template, which truncates long outputs.
+        self._observation_template = observation_template or OBSERVATION_TEMPLATE
         self.config = {"model_name": model_name, "api_base": api_base, "max_tokens": max_tokens,
                        "temperature": temperature, "timeout": timeout}
         self._api_key = api_key
@@ -136,7 +140,7 @@ class DirectTextModel:
     def format_observation_messages(self, message, outputs, template_vars=None):
         """Use the pinned upstream observation formatter, with multimodal off."""
         from minisweagent.models.utils.actions_text import format_observation_messages
-        return format_observation_messages(outputs, observation_template=OBSERVATION_TEMPLATE,
+        return format_observation_messages(outputs, observation_template=self._observation_template,
                                            template_vars=template_vars, multimodal_regex="")
 
     def get_template_vars(self):
