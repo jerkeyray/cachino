@@ -69,6 +69,11 @@ All in `analysis/`, run with the tokenizer environment, directly or through
 | `cue_counterfactual.py` | Sessions replayed with and without the thinking cue |
 | `template_check.py` | Each turn classified as append-only, generation prompt dropped, reply dropped or history changed |
 
+For a session served with a template that keeps the reply's generation context
+(such as `artifacts/keep-cue/qwen3-keep-cue.jinja`), pass `live_attribution.py`
+that template with `--chat-template` and add `--reply-ids`, so the predictor
+can credit reuse of the reply's own KV.
+
 For example, the threshold of the first concurrent run:
 
 ```sh

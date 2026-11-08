@@ -16,7 +16,9 @@ frozen task, we find that in single sessions most recomputation is new content,
 with a fixed extra cost from Qwen3's chat template; that sessions sharing a
 cache evict each other past a threshold predictable from the capture; that on
 a T4 each recomputed token adds about 1.34 ms to time to first token; and that
-limiting concurrency removed eviction on one trace, cutting recomputation 16.5%.
+limiting concurrency removed eviction on one trace, cutting recomputation 16.5%,
+and on live runs whenever sessions outgrew the cache. Serving a template that
+keeps the cue let vLLM reuse every reply's KV in a live sandboxed session.
 Both mechanisms were already known; the contribution is exact, engine-validated
 attribution.
 
@@ -87,11 +89,15 @@ otherwise, so independent runs used `--seed`.
 | Sequential agent sessions (5 runs, 3 models) | every turn |
 | Fixed trace at 7 cache sizes, CPU | 30 / 30 at each |
 | Same trace at 4 cache sizes, Tesla T4 | 30 / 30 at each |
+| smolagents sessions, 4 runs | 23 / 23 |
+| Sandboxed sessions, both templates, with reply IDs (3.9) | 120 / 120 |
 | Concurrent sessions, 9 seeded runs | 259 / 265 |
+| Session-cap runs, seeds 4 and 5 (3.8) | 147 / 158 |
 | Timed overlap replay, 3 evicting runs | 93 / 98 |
 
 Engine prompt IDs equalled the local render on every replayed request. Under
-overlap, the few misses were off by one to a few blocks. Replaying three
+overlap, the misses were off by one to a few blocks, except in the two most
+evicting cap runs, where they reached 26 blocks. Replaying three
 evicting runs with their recorded timing, a predictor that takes decode blocks
 at admission was exact on 93 of 98 requests, one that takes them at completion
 on 92, and one that ignores them on 88. The engine allocates as it decodes,
@@ -155,6 +161,13 @@ five tool calls in six steps and ended with a final answer.
   a template that kept the cue, this harness's replies could not be reused, and
   identical calls never produce identical history.
 
+Three more sessions sampled at temperature 0.7 under engine seeds 1 to 3 (run
+`smol-matrix-20261108`) made 8, 5 and 5 requests. The predictor was exact on
+all 18, and all 15 of their transitions dropped the cue. Recomputation
+was 2,543 to 2,618 tokens per session, almost all new content (block rounding
+43 to 97 tokens, no eviction), so a longer session added little: the long
+fixed opening was reused and each turn's new text was small.
+
 ### 3.5 Shared caches and the eviction threshold
 
 Concurrent sessions on one 14,016-token cache evicted each other in 2 of 9
@@ -205,9 +218,9 @@ or a greedy order, removed eviction and cut recomputation by 16.5%.
 Cachino's proxy can cap active sessions (`-max-active-sessions`; a session stays
 active between its turns for an idle period, and new sessions wait for a free
 slot). Four concurrent Qwen3-1.7B sessions shared one proxy and one 438-block
-cache, with the cap off and at 2, over three engine seeds (run
-`limit-matrix-20261108`). Runs without the cap reproduced the earlier seeded
-runs exactly.
+cache, with the cap off and at 2, over five engine seeds (run
+`limit-matrix-20261108`). For seeds 1 to 3, runs without the cap reproduced
+the earlier seeded runs exactly.
 
 | Seed | Cap | Requests | Lost to eviction | Engine time to first token | Wall clock | Waits |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -217,11 +230,19 @@ runs exactly.
 | 2 | 2 | 40 | 0 | 212.2 s | 373.7 s | 197 s, 217 s |
 | 3 | off | 40 | 0 | 139.2 s | 241.6 s | none |
 | 3 | 2 | 37 | 0 | 191.0 s | 303.6 s | 120 s, 140 s |
+| 4 | off | 38 | 66,528 | 1,137.7 s | 1,242.8 s | none |
+| 4 | 2 | 40 | 0 | 146.3 s | 299.0 s | 182 s, 186 s |
+| 5 | off | 40 | 256 | 202.6 s | 306.0 s | none |
+| 5 | 2 | 40 | 0 | 93.8 s | 233.4 s | 72 s, 146 s |
 
-- The cap removed eviction in the one seed whose sessions outgrew the cache.
-- Where nothing would have been evicted, it only made two sessions wait, and
-  total wall clock rose by up to 26%.
-- The predictor was exact on 223 of 226 requests, all misses in the evicting run.
+- The cap removed eviction in all three seeds whose sessions outgrew the cache.
+- In seed 4 the uncapped sessions grew long: eviction caused 70% of all
+  recomputation, reuse fell to 43%, and one session was rejected when its
+  prompt passed the 12,288-token context. With the cap, wall clock fell from
+  1,243 s to 299 s.
+- Where nothing would have been evicted, the cap only made two sessions wait,
+  and total wall clock rose by up to 26%.
+- The predictor was exact on 370 of 384 requests, all misses in evicting runs.
 
 Changing the interleaving changes which sampled replies are generated, so
 trajectories, request counts and recomputed totals differ between paired runs;
@@ -229,7 +250,43 @@ eviction is the comparable measure. A fixed cap pays off only when the combined
 working set exceeds the cache, which the capture-based threshold (3.5)
 predicts. Timing is on the Mac CPU and compares conditions only.
 
-### 3.9 Proxy overhead
+### 3.9 Keeping the cue in a sandboxed task
+
+The counterfactual in 3.3 changed the template after the fact. Here the engine
+served a cue-kept copy of the pinned Qwen3 template (`--chat-template`, made by
+`experiments/agent-task/make_keep_cue_template.py`) and was compared with the
+default template, over three engine seeds each (run `exec-matrix-20261108`).
+mini-swe-agent drove Qwen3-1.7B at temperature 0.7 for up to 20 steps, and
+its commands really ran: under macOS `sandbox-exec`, in a throwaway copy of the
+task with no network and no writes outside the copy. The frozen evaluator then
+scored the copy.
+
+| Template | Seed | Requests | Prompt tokens | Reused | Reply re-prefilled | New content |
+| --- | --- | --- | --- | --- | --- | --- |
+| Default | 1 | 20 | 60,715 | 91.2% | 1,532 | 3,556 |
+| Default | 2 | 20 | 71,946 | 90.8% | 919 | 5,381 |
+| Default | 3 | 20 | 109,014 | 92.3% | 1,967 | 6,068 |
+| Cue kept | 1 | 20 | 82,227 | 91.5% | 0 | 6,820 |
+| Cue kept | 2 | 20 | 116,375 | 93.8% | 0 | 6,906 |
+| Cue kept | 3 | 20 | 39,413 | 94.9% | 0 | 1,718 |
+
+- With the cue kept, no reply was ever re-prefilled. Each next prompt continued
+  the previous generation token for token, and vLLM served the reply from the
+  KV it wrote while decoding.
+- That reuse is invisible to the default predictor, which gives generated tokens
+  unique IDs: it was exact on only 4 of the 60 cue-kept requests, always below
+  the engine. With `--reply-ids`, which models each reply as its re-tokenized
+  text, it was exact on all 120 requests in both arms.
+- No session solved the task, or edited any file. All six used their 20 steps
+  reading the repository, and each copy scored 15 of 21, as the unedited
+  baseline does. Task success therefore could not separate the templates.
+
+Sampled trajectories differ between arms, so totals differ; the re-prefilled
+reply is the comparable measure. In the sandbox, `ls -la` at the task root
+exits with status 1, because the profile denies reading the parent directory;
+its listing is otherwise complete.
+
+### 3.10 Proxy overhead
 
 Forwarding adds about 0.24 ms to a JSON exchange and 0.4 ms to the first SSE
 event. Capture adds about 15 ms per request on macOS, because each event and
@@ -255,17 +312,19 @@ raw capture. Search records: [first check](records/related-work-check-20261101.m
 
 - One task, two harnesses (the second for one session) and small models (0.6B
   to 1.7B). The shares describe this setup, not production traffic.
-- Commands were never executed, so trajectories differ from a real environment,
-  and task success was not measured.
+- Commands ran only in the six sandboxed sessions (3.9); elsewhere observations
+  came from a read-only snapshot. The 1.7B model never solved the task, so
+  task success did not separate any conditions.
 - Timing comes from one sequential replay on one GPU.
 - The scheduling replay counts delay in positions; the live cap test measures
-  wall-clock time, but only on the Mac CPU, over three seeds, with one task.
+  wall-clock time, but only on the Mac CPU, over five seeds, with one task.
 - vLLM's native simulator could not run on the Mac (it needs `triton-cpu` on
   x86_64 Linux), so the predictor was not compared with it.
 
 ## 6. Future work
 
-More sessions with the second harness and real tasks with execution; a cap that switches on only
+Models large enough to solve the task, so that a template change can be
+judged by success as well as reuse; a cap that switches on only
 when the predicted working set exceeds the cache; larger models on faster GPUs;
 and a comparison with vLLM's native simulator once it is merged.
 
