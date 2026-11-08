@@ -88,8 +88,12 @@ HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 $T analysis/reuse_curve.py \
 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 $T experiments/figures/make_figures.py
 ```
 
-It reads the run directories named in the [records](records/) and rewrites
-`docs/figures/`.
+It reads the run directories named in the [records](records/) and rewrites the
+data figures and `docs/figures/data.json`. The two diagrams need no data:
+
+```sh
+python3 experiments/figures/make_diagrams.py
+```
 
 ## 6. Examples
 

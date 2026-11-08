@@ -1,28 +1,34 @@
 # Where coding agents lose prefix reuse
 
-*A measurement study with Cachino, November 2026.*
+*An engine-validated measurement study with Cachino.* jerkeyray, November 2026.
+
+**Contents:** [Abstract](#abstract) · [1 Introduction](#1-introduction) ·
+[2 Method](#2-method) · [3 Results](#3-results) · [4 Related work](#4-related-work) ·
+[5 Limitations](#5-limitations) · [6 Future work](#6-future-work) ·
+[7 Reproducing](#7-reproducing)
 
 ## Abstract
 
-Coding agents resend their whole conversation on every turn, and serving
-engines skip the shared part only if it is still in their prefix cache and
-matches token for token. We built Cachino, which captures agent traffic byte for
-byte, rebuilds the exact token IDs the model sees, and replays a pinned vLLM
-build's cache rules to predict each request's reused tokens and attribute the
-rest to prompt change, block rounding, eviction or sharing with other sessions.
-The predictions matched vLLM's reported counts on every sequential request
-tested, on a Mac CPU and on a Tesla T4. Running mini-swe-agent with Qwen3 on a
-frozen task, we find that in single sessions most recomputation is new content,
-with a fixed extra cost from Qwen3's chat template; that sessions sharing a
-cache evict each other past a threshold predictable from the capture; that on
-a T4 each recomputed token adds about 1.34 ms to time to first token; and that
-limiting concurrency removed eviction on one trace, cutting recomputation 16.5%,
-and on live runs whenever sessions outgrew the cache. Serving a template that
-keeps the cue let vLLM reuse every reply's KV in a live sandboxed session.
-Both mechanisms were already known; the contribution is exact, engine-validated
-attribution.
+Coding agents resend their whole conversation on every turn, and a serving
+engine skips the repeated part only if it matches an earlier prompt token for
+token and is still cached. Servers report how many prompt tokens were cached,
+but not why the rest were recomputed. We built Cachino, which captures agent
+traffic byte for byte, rebuilds the exact token IDs the model sees, and replays
+a pinned vLLM build's prefix-cache rules to predict each request's hit and
+attribute every recomputed token to its cause. The predictions matched vLLM's
+reported counts on every sequential request, on a Mac CPU and a Tesla T4, and on
+710 of 738 requests under live concurrency; a baseline that ignores residency
+had 24 times the error. Driving Qwen3 with mini-swe-agent and smolagents on a
+frozen coding task, we find that single sessions mostly recompute new content;
+that Qwen3's chat template makes every turn re-prefill the reply just
+generated, and that fixing it restores reuse but changes the model's next
+action; that sessions sharing a cache evict each other past a threshold
+predictable from the capture; that on a T4 eviction raised time to first token
+by 31% to 86%; and that capping concurrent sessions removes eviction, which
+pays off only when the sessions' working set exceeds the cache. Both mechanisms
+were known; the contribution is exact, engine-validated, per-request attribution.
 
-## 1. Question
+## 1. Introduction
 
 When an agent turn's prefill is slow, how much of the redone work came from the
 prompt changing, from the cache's block granularity, or from the cache evicting
@@ -30,9 +36,38 @@ what the agent needed? A server reports only one number per request, the cached
 tokens. We split that number into its causes, and check every prediction
 against the engine.
 
+**Background.** vLLM's prefix cache stores KV in fixed-size blocks (32 tokens
+here), each identified by a hash chained over every token before it, so a block
+is reusable only when the whole prefix up to its end is identical. A request
+reuses the longest run of cached full blocks from the start of its prompt, never
+the final prompt token. Freed blocks keep their hashes until another request
+takes them, so whether a matching prefix is still there depends on everything
+else the engine has served since.
+
+![Three ways an agent turn loses prefix reuse](figures/reuse-loss.svg)
+
+*Figure 1. The causes this study separates. A schematic, not data: block counts
+are illustrative.*
+
+**Contributions.**
+
+1. A capture-to-token pipeline that reproduces the engine's prompt token IDs
+   exactly from raw agent traffic, including tool definitions and tool-call
+   history (2, 3.4).
+2. A predictor of vLLM's prefix-cache hits, built rule by rule from the pinned
+   source, exact on every sequential request on CPU and GPU and on 710 of 738
+   concurrent ones (3.1).
+3. A per-request attribution of recomputation into new content, a re-prefilled
+   reply, block rounding, eviction and cross-session reuse, and a template check
+   that finds template boundaries from a capture alone (3.2 to 3.4).
+4. Measurements of the eviction threshold, its cost in time to first token, and
+   two ways of scheduling around it, offline and live (3.5 to 3.8).
+
 ## 2. Method
 
-![Pipeline](figures/pipeline.svg)
+![How Cachino measures prefix reuse](figures/pipeline.svg)
+
+*Figure 2. Online, the proxy forwards and records traffic; offline, each request is rendered, predicted, attributed and checked against the engine.*
 
 1. **Capture.** The Go proxy forwards requests unchanged and stores request and
    response bytes with lifecycle events ([trace format](records/trace-format.md)).
@@ -72,7 +107,7 @@ counts are never taken as matching tokens.
 | Models | Qwen3-0.6B (`c1899de2`), Qwen3-1.7B (`70d244cc`), Qwen2.5-0.5B-Instruct (`7ae55760`) as a control; FP16 |
 | Agent | mini-swe-agent at `04d809ce` with its text-based templates, through a minimal HTTP adapter |
 | Task | Fix `split_after` in more-itertools (issue 658), frozen at its baseline revision |
-| Environment | Commands are never executed; a read-only emulator answers `ls`, `cat`, `grep` and similar from the repository's baseline tree and refuses edits |
+| Environment | A read-only emulator answers `ls`, `cat`, `grep` and similar from the repository's baseline tree and refuses edits; in 3.9 commands ran for real under macOS `sandbox-exec` |
 
 Qwen3-0.6B and 1.7B have byte-identical tokenizer files and the same KV size per
 token, so their captures replay on either. vLLM samples with seed 0 unless told
@@ -93,6 +128,7 @@ otherwise, so independent runs used `--seed`.
 | Sandboxed sessions, both templates, with reply IDs (3.9) | 120 / 120 |
 | Concurrent sessions, 9 seeded runs | 259 / 265 |
 | Session-cap runs, seeds 4 and 5 (3.8) | 147 / 158 |
+| Token-budget runs, both versions, 8 runs (3.8) | 304 / 315 |
 | Timed overlap replay, 3 evicting runs | 93 / 98 |
 
 Engine prompt IDs equalled the local render on every replayed request. Under
@@ -113,9 +149,18 @@ naive error equals the reuse lost to eviction. On the ten session-cap runs the
 error fell from 74,752 to 5,184 tokens. Without eviction the two agree; the
 cache model matters where residency does ([baseline](records/baseline-20261108.md)).
 
+| Predictor, 9 concurrent runs (265 requests) | Exact | Total absolute error |
+| --- | --- | --- |
+| Longest prefix with any earlier prompt, assumed cached | 256 | 8,320 tokens |
+| Same, own session only | 226 | 24,064 tokens |
+| Free queue, requests in sequence | 259 | 1,504 tokens |
+| Free queue, overlapping requests | 259 | 352 tokens |
+
 ### 3.2 Single sessions: mostly new content
 
-![Recomputed tokens by cause](figures/recompute-split.svg)
+![What a single session recomputes](figures/recompute-split.svg)
+
+*Figure 3. Recomputed tokens by cause in three single sessions, from turn 1 on.*
 
 | Session | Reused | Recomputed: new content / previous reply / block rounding |
 | --- | --- | --- |
@@ -187,6 +232,8 @@ each capture did, for all 9 runs ([concurrent](records/concurrent-results-202611
 
 ![Eviction against cache size](figures/eviction-curve.svg)
 
+*Figure 4. Predicted eviction for one captured trace at every cache size, with engine measurements on the CPU and the T4.*
+
 One three-session trace replayed at each size: nothing is lost from 488 blocks
 up, and eviction grows steadily below. Engine points on the CPU and the T4 sit
 on the predicted curve, including 32 tokens lost at 487 blocks and none at 488
@@ -194,10 +241,12 @@ on the predicted curve, including 32 tokens lost at 487 blocks and none at 488
 
 ### 3.6 What eviction costs in time
 
-![Time to first token by cache size](figures/gpu-ttft.svg)
+![What eviction costs on a Tesla T4](figures/gpu-ttft.svg)
+
+*Figure 5. Total time to first token for the same 30 requests at four cache sizes on a Tesla T4.*
 
 On a Kaggle Tesla T4 (pinned wheel, torch 2.14.0 for CUDA 13.0, FP16, capture
-off, two rounds per size), the same 30 requests took 23.5 s of total time to
+off, two rounds per size), the same 30 requests took 23.6 s of total time to
 first token without eviction, 30.9 s at 438 blocks (+31%) and 43.9 s at 384
 blocks (+86%). A fit over 240 requests gives about 1.34 ms per recomputed token
 plus 64 ms per request. Time to first token is vLLM's per-request metric from
@@ -205,7 +254,9 @@ scheduling; requests were sent one at a time.
 
 ### 3.7 Scheduling to avoid eviction
 
-![Scheduling orders](figures/scheduling.svg)
+![Scheduling sessions to avoid eviction](figures/scheduling.svg)
+
+*Figure 6. Recomputation against delay for five orders of one evicting trace, on the engine.*
 
 The four-session run that evicted was replayed at its own cache size in five
 orders, keeping each session's turns in order so prompts and behavior were
@@ -243,6 +294,10 @@ the earlier seeded runs exactly.
 | 4 | 2 | 40 | 0 | 146.3 s | 299.0 s | 182 s, 186 s |
 | 5 | off | 40 | 256 | 202.6 s | 306.0 s | none |
 | 5 | 2 | 40 | 0 | 93.8 s | 233.4 s | 72 s, 146 s |
+
+![Session limits pay off only when sessions outgrow the cache](figures/session-cap.svg)
+
+*Figure 7. Wall clock for the four sessions per seed with no limit, the two-session cap and the token budget described below; tokens lost to eviction at right.*
 
 - The cap removed eviction in all three seeds whose sessions outgrew the cache.
 - In seed 4 the uncapped sessions grew long: eviction caused 70% of all
@@ -372,4 +427,7 @@ and a comparison with vLLM's native simulator once it is merged.
 
 Commands are in [reproduce](reproduce.md). Each [record](records/) names its run
 directory, spec hash and code commit; raw captures stay private, and
-`experiments/figures/make_figures.py` regenerates the figures from them.
+`experiments/figures/make_figures.py` regenerates the data figures from them, writing every
+plotted number to `figures/data.json`; `experiments/figures/make_diagrams.py` draws
+Figures 1 and 2. [examples/](../examples/README.md) reproduces small versions of 3.3 and
+3.5 on a fresh checkout.
