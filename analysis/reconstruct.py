@@ -29,6 +29,13 @@ OBSERVATION_FIELDS = {"return_token_ids"}
 # so a calibration request must state the thinking setting itself.
 TEMPLATE_CONTROL_FIELDS = {"chat_template_kwargs", "add_generation_prompt"}
 
+# tool_choice "auto" and "required" render the same tool list into the prompt
+# at the inspected pin (vllm/renderers/online_renderer.py L292-297); "required"
+# only constrains decoding. "none" can drop the tools when the server sets
+# exclude_tools_when_tool_choice_none, and named choices are unvalidated, so
+# both stay rejected.
+RENDER_NEUTRAL_TOOL_CHOICES = {"auto", "required"}
+
 
 def template_controls(request, pin):
     """Check request template controls against the pin; return what was explicit.
@@ -63,9 +70,13 @@ def prompt_inputs(request, model_id, remap=False):
     rather than silently being dropped. Source request bytes remain untouched.
     """
     generation_fields = {"stream", "stream_options", "temperature", "top_p", "top_k", "min_p", "max_tokens", "max_completion_tokens", "seed", "stop", "presence_penalty", "frequency_penalty", "repetition_penalty", "n", "logprobs", "top_logprobs"}
-    allowed = generation_fields | OBSERVATION_FIELDS | TEMPLATE_CONTROL_FIELDS | {"model", "messages", "tools"}
+    allowed = generation_fields | OBSERVATION_FIELDS | TEMPLATE_CONTROL_FIELDS | {"model", "messages", "tools", "tool_choice"}
     if not isinstance(request, dict) or set(request) - allowed:
         raise UnsupportedRequest("unknown request fields or non-object request")
+    choice = request.get("tool_choice")
+    if "tool_choice" in request and (not isinstance(choice, str) or choice not in RENDER_NEUTRAL_TOOL_CHOICES
+                                     or not request.get("tools")):
+        raise UnsupportedRequest("tool_choice must be auto or required, with tools")
     if "return_token_ids" in request and not isinstance(request["return_token_ids"], bool):
         raise UnsupportedRequest("return_token_ids must be a boolean")
     if not isinstance(request.get("model"), str) or not request["model"]:

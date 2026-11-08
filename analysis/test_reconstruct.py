@@ -36,6 +36,15 @@ class PromptTests(unittest.TestCase):
             with self.assertRaises(UnsupportedRequest):
                 prompt_inputs(request, self.pin["model_id"])
 
+    def test_tool_choice_accepted_only_when_render_neutral(self):
+        tools = [{"type": "function", "function": {"name": "read_file", "parameters": {"type": "object"}}}]
+        for choice in ("auto", "required"):
+            prompt_inputs(dict(self.request, tools=tools, tool_choice=choice), self.pin["model_id"])
+        for request in (dict(self.request, tools=tools, tool_choice="none"),
+                        dict(self.request, tool_choice="required")):
+            with self.assertRaisesRegex(UnsupportedRequest, "tool_choice"):
+                prompt_inputs(request, self.pin["model_id"])
+
     def test_return_token_ids_is_observational(self):
         request = dict(self.request, return_token_ids=True)
         messages, _ = prompt_inputs(request, self.pin["model_id"])
