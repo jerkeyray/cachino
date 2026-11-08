@@ -4,11 +4,32 @@ Reads <base>/s<seed>-n<sessions>/concurrent-attribution.json (from
 concurrent_attribution.py) and result.json (from live_concurrent.py) and prints
 one row per run plus per-session-count ranges. Eviction is reuse below each
 request's own-session prompt bound; cross-session reuse is reuse above it.
+
+Each run also scores four predictors of the engine's cached_tokens: exact
+requests and total absolute error over the requests each one predicted.
+"naive" is the longest prefix shared with any earlier prompt, rounded to
+blocks and assumed still cached; "own_session" is the same within the session;
+"sequential" and "overlap" are the free-queue predictors. The naive bound
+ignores residency, so its error is what modeling eviction has to explain.
 """
 import argparse
 import json
 from pathlib import Path
 import re
+
+PREDICTORS = {"naive": "any_session_bound", "own_session": "session_bound",
+              "sequential": "predicted_sequential", "overlap": "predicted_overlap"}
+
+
+def score(rows):
+    """Return {predictor: {exact, abs_error, unpredicted}} against the engine's cached_tokens."""
+    out = {}
+    for name, key in PREDICTORS.items():
+        scored = [r for r in rows if r[key] is not None]
+        out[name] = {"exact": sum(r[key] == r["cached_tokens"] for r in scored),
+                     "abs_error": sum(abs(r[key] - r["cached_tokens"]) for r in scored),
+                     "unpredicted": len(rows) - len(scored)}
+    return out
 
 
 def run_row(path):
@@ -35,7 +56,8 @@ def run_row(path):
             "wall_clock_s": raw.get("wall_clock_s"),
             "mean_session_s": round(sum(spans) / len(spans), 1) if spans else None,
             # The limiter logs only requests that waited, so an absent wait is zero.
-            "total_wait_s": round(sum(w["waited_ms"] for w in raw.get("waits", [])) / 1000, 1)}
+            "total_wait_s": round(sum(w["waited_ms"] for w in raw.get("waits", [])) / 1000, 1),
+            "predictors": score(rows)}
 
 
 def main():
@@ -51,7 +73,10 @@ def main():
     ranges = {n: {k: [min(r[k] for r in rs), max(r[k] for r in rs)]
                   for k in ("reused_pct", "eviction_pct_of_recomputed", "prompt_tokens")}
               for n, rs in sorted(by_n.items())}
-    print(json.dumps({"runs": rows, "ranges_by_sessions": ranges}, indent=2))
+    predictors = {name: {k: sum(r["predictors"][name][k] for r in rows) for k in ("exact", "abs_error", "unpredicted")}
+                  for name in PREDICTORS}
+    print(json.dumps({"runs": rows, "ranges_by_sessions": ranges,
+                      "predictors": {"requests": sum(r["requests"] for r in rows), **predictors}}, indent=2))
 
 
 if __name__ == "__main__":

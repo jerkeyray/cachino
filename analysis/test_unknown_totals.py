@@ -22,7 +22,7 @@ class GpuTotalTests(unittest.TestCase):
 class MatrixSummaryTests(unittest.TestCase):
     def run_row(self, ttfts):
         rows = [{"prompt_tokens_local": 64, "cached_tokens": 32, "session_bound": 32, "predicted_overlap": 32,
-                 "predicted_sequential": 32, "engine_ttft_ms": t} for t in ttfts]
+                 "predicted_sequential": 32, "any_session_bound": 32, "engine_ttft_ms": t} for t in ttfts]
         with tempfile.TemporaryDirectory() as tmp:
             run = Path(tmp) / "s1-n2"
             run.mkdir()
@@ -33,6 +33,18 @@ class MatrixSummaryTests(unittest.TestCase):
     def test_engine_ttft_total_needs_every_request(self):
         self.assertEqual(self.run_row([1000.0, 500.0])["engine_ttft_total_s"], 1.5)
         self.assertIsNone(self.run_row([1000.0, None])["engine_ttft_total_s"])
+
+
+class PredictorScoreTests(unittest.TestCase):
+    def test_naive_bound_misses_evicted_reuse(self):
+        rows = [{"cached_tokens": 0, "any_session_bound": 0, "session_bound": 0,
+                 "predicted_sequential": 0, "predicted_overlap": 0},
+                # 64 tokens matched an earlier prompt but were evicted.
+                {"cached_tokens": 0, "any_session_bound": 64, "session_bound": 64,
+                 "predicted_sequential": 64, "predicted_overlap": None}]
+        scores = matrix_summary.score(rows)
+        self.assertEqual(scores["naive"], {"exact": 1, "abs_error": 64, "unpredicted": 0})
+        self.assertEqual(scores["overlap"], {"exact": 1, "abs_error": 0, "unpredicted": 1})
 
 
 if __name__ == "__main__":
