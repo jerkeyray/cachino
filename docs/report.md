@@ -135,7 +135,27 @@ turn that kept its reply diverged inside the 4-token cue (28, 9 and 34
 transitions in three captures); on the Qwen2.5 capture, none did, and the only
 divergences were dropped replies.
 
-### 3.4 Shared caches and the eviction threshold
+### 3.4 A second harness
+
+smolagents 1.26.0 (`ToolCallingAgent`) ran the same task with Qwen3-1.7B and
+read-only tools (list a directory, read lines, search) backed by the same
+snapshot, through Cachino, with vLLM parsing Qwen3's tool calls (run
+`smol-cpu-20261108-01`, `experiments/agent-task/smol_cpu.py`). The agent made
+five tool calls in six steps and ended with a final answer.
+
+- The renderer reproduced the engine's prompt IDs exactly for all five
+  tool-calling requests (tool definitions, `tool_choice: required`, tool-call
+  history), and the predictor was exact on every request.
+- Its fixed opening, a system prompt plus tool definitions, is about 1,700
+  tokens, twice mini-swe-agent's.
+- Every turn again diverged at Qwen3's empty thinking cue (4 of 4 transitions).
+- smolagents does not replay the model's tool call. It writes each call into
+  history as a Python-style text dump that includes the server's random call
+  ID: 52 to 66 tokens for a call the model generated in 19 to 36. So even with
+  a template that kept the cue, this harness's replies could not be reused, and
+  identical calls never produce identical history.
+
+### 3.5 Shared caches and the eviction threshold
 
 Concurrent sessions on one 14,016-token cache evicted each other in 2 of 9
 seeded runs, losing 17% to 18% of recomputed tokens (25% in an earlier run).
@@ -150,7 +170,7 @@ up, and eviction grows steadily below. Engine points on the CPU and the T4 sit
 on the predicted curve, including 32 tokens lost at 487 blocks and none at 488
 ([sweep](records/cache-sweep-20261107.md)).
 
-### 3.5 What eviction costs in time
+### 3.6 What eviction costs in time
 
 ![Time to first token by cache size](figures/gpu-ttft.svg)
 
@@ -161,7 +181,7 @@ blocks (+86%). A fit over 240 requests gives about 1.34 ms per recomputed token
 plus 64 ms per request. Time to first token is vLLM's per-request metric from
 scheduling; requests were sent one at a time.
 
-### 3.6 Scheduling to avoid eviction
+### 3.7 Scheduling to avoid eviction
 
 ![Scheduling orders](figures/scheduling.svg)
 
@@ -180,7 +200,7 @@ unchanged. Delay is how many positions later than recorded each request ran.
 Every order matched its prediction on all 39 requests. Two sessions at a time,
 or a greedy order, removed eviction and cut recomputation by 16.5%.
 
-### 3.7 A live concurrency limit
+### 3.8 A live concurrency limit
 
 Cachino's proxy can cap active sessions (`-max-active-sessions`; a session stays
 active between its turns for an idle period, and new sessions wait for a free
@@ -206,10 +226,10 @@ runs exactly.
 Changing the interleaving changes which sampled replies are generated, so
 trajectories, request counts and recomputed totals differ between paired runs;
 eviction is the comparable measure. A fixed cap pays off only when the combined
-working set exceeds the cache, which the capture-based threshold (3.4)
+working set exceeds the cache, which the capture-based threshold (3.5)
 predicts. Timing is on the Mac CPU and compares conditions only.
 
-### 3.8 Proxy overhead
+### 3.9 Proxy overhead
 
 Forwarding adds about 0.24 ms to a JSON exchange and 0.4 ms to the first SSE
 event. Capture adds about 15 ms per request on macOS, because each event and
@@ -233,8 +253,8 @@ raw capture. Search records: [first check](records/related-work-check-20261101.m
 
 ## 5. Limitations
 
-- One task, one harness and small models (0.6B to 1.7B). The shares describe
-  this setup, not production traffic.
+- One task, two harnesses (the second for one session) and small models (0.6B
+  to 1.7B). The shares describe this setup, not production traffic.
 - Commands were never executed, so trajectories differ from a real environment,
   and task success was not measured.
 - Timing comes from one sequential replay on one GPU.
@@ -245,7 +265,7 @@ raw capture. Search records: [first check](records/related-work-check-20261101.m
 
 ## 6. Future work
 
-A second harness and real tasks with execution; a cap that switches on only
+More sessions with the second harness and real tasks with execution; a cap that switches on only
 when the predicted working set exceeds the cache; larger models on faster GPUs;
 and a comparison with vLLM's native simulator once it is merged.
 

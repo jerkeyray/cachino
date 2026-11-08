@@ -10,7 +10,7 @@ change, block rounding, eviction, or reuse from another session.
 
 ## Findings
 
-Measured with mini-swe-agent and Qwen3 on a frozen coding task, on vLLM for the
+Measured with mini-swe-agent (and smolagents for comparison) and Qwen3 on a frozen coding task, on vLLM for the
 Mac CPU and a Tesla T4. Full study: **[report](docs/report.md)**.
 
 | Finding | Evidence |
@@ -18,6 +18,7 @@ Mac CPU and a Tesla T4. Full study: **[report](docs/report.md)**.
 | Predictions match the engine exactly | Every sequential request on CPU and GPU; 259 of 265 under live concurrency, the rest within a few blocks |
 | Single sessions recompute mostly new content | 64% to 91% of recomputed tokens; the rest is block rounding and, with Qwen3, the previous reply |
 | Qwen3's template re-prefills each reply | It drops the empty thinking cue from history; a template without the mismatch let vLLM reuse a 442-token reply |
+| A second harness loses replies differently | smolagents rewrites each tool call into history as text about twice as long, with a random ID, so replies are never reusable |
 | Shared caches evict past a predictable threshold | 17% to 25% of recomputation when sessions outgrew the cache; the capture predicted which runs would, 9 of 9 |
 | Eviction costs time | About 1.34 ms of time to first token per recomputed token on a T4; +31% and +86% below the threshold |
 | Scheduling can remove it | At most two sessions at a time cut recomputation 16.5% on an evicting trace; live, the proxy's session cap removed eviction where it occurred but cost waiting time elsewhere |

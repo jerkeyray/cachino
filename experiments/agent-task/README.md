@@ -60,5 +60,9 @@ python3.14 -B experiments/agent-task/live_concurrent.py \
   --spec experiments/agent-task/live-cpu-concurrent.json --sessions 3 --out artifacts/concurrent-NEW
 ```
 
+`smol_cpu.py` runs the second harness, smolagents 1.26.0 `ToolCallingAgent`,
+with read-only tools over the same snapshot (spec `smol-cpu.json`; the engine
+needs `--enable-auto-tool-choice --tool-call-parser hermes`).
+
 The pinned harness checkout and its locked environment
 (`wire-requirements.lock`) live in ignored `.project/`.

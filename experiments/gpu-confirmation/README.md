@@ -67,7 +67,7 @@ on the T4 (compute capability 7.5) with torch 2.14.0 for CUDA 13.0 under driver
 580.178.04. If the server fails to start on another card, keep its log. The model weights (Qwen3-0.6B, about 1.5 GB) download from Hugging Face
 on first start.
 
-Result of the first run, on a Kaggle Tesla T4: [report, section 3.5](../../docs/report.md#35-what-eviction-costs-in-time).
+Result of the first run, on a Kaggle Tesla T4: [report, section 3.6](../../docs/report.md#36-what-eviction-costs-in-time).
 
 ## What to look for
 
