@@ -31,7 +31,7 @@ def pipeline():
     W, H = 900, 404
     b = []
     b.append(text(24, 88, "ONLINE", "small muted b", extra=' letter-spacing="1"'))
-    b.append(text(24, 228, "OFFLINE ANALYSIS", "small muted b", extra=' letter-spacing="1"'))
+    b.append(text(24, 228, "OFFLINE", "small muted b", extra=' letter-spacing="1"'))
     w, h = 168, 76
     b.append(box(24, 98, w, h, "Coding agent", ["mini-swe-agent, smolagents", "OpenAI-compatible client"]))
     b.append(box(366, 98, w, h, "Cachino proxy", ["Go, standard library", "forwards bytes unchanged"], accent=True))
@@ -54,8 +54,8 @@ def pipeline():
         b.append(box(x, 238, w2, h, n, ls, accent=n == "Check"))
     for x in xs[:-1]:
         b.append(arrow([(x + w2, 276), (x + w2 + 38, 276)]))
-    b.append(arrow([(450, 174), (450, 194), (94, 194), (94, 238)]))
-    b.append(text(272, 189, "write-ahead capture", "small ink2", "middle"))
+    b.append(arrow([(450, 174), (450, 194), (124, 194), (124, 238)]))
+    b.append(text(287, 189, "write-ahead capture", "small ink2", "middle"))
     b.append(arrow([(792, 174), (792, 238)]))
     b.append(text(800, 210, "ground truth", "small ink2"))
     b.append(line(24, 344, W - 24, 344))

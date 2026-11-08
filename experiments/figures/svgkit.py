@@ -2,7 +2,9 @@
 
 Every figure uses one theme: CSS custom properties for the light chart surface,
 redefined under prefers-color-scheme: dark, so the same file reads correctly in
-GitHub's light and dark themes. Colors are referenced by role (series slot,
+GitHub's light and dark themes. Figures have no background of their own; the
+surface colors match GitHub's page (#ffffff, #0d1117), so marker rings and
+gaps, which are drawn in the surface color, disappear into the page. Colors are referenced by role (series slot,
 ink, grid), never as raw hex in figure code. The three series slots are the
 first three of a validated categorical order (blue, orange, aqua), which pass
 adjacent and all-pairs colorblind separation in both modes; aqua sits below
@@ -17,10 +19,10 @@ series color. Only the standard library is used.
 from html import escape
 
 STYLE = """<style>
-svg{--surface:#fcfcfb;--ink:#0b0b0b;--ink2:#52514e;--muted:#898781;--grid:#e1e0d9;--axis:#c3c2b7;
+svg{--surface:#ffffff;--ink:#0b0b0b;--ink2:#52514e;--muted:#898781;--grid:#e1e0d9;--axis:#c3c2b7;
 --panel:#f3f2ee;--s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s1wash:#2a78d61f;--s2wash:#eb68341f;--on:#ffffff}
-@media (prefers-color-scheme: dark){svg{--surface:#1a1a19;--ink:#f0efec;--ink2:#c3c2b7;--muted:#898781;
---grid:#2c2c2a;--axis:#383835;--panel:#242422;--s1:#3987e5;--s2:#d95926;--s3:#199e70;--s1wash:#3987e526;
+@media (prefers-color-scheme: dark){svg{--surface:#0d1117;--ink:#f0efec;--ink2:#c3c2b7;--muted:#898781;
+--grid:#21262d;--axis:#3d444d;--panel:#161b22;--s1:#3987e5;--s2:#d95926;--s3:#199e70;--s1wash:#3987e526;
 --s2wash:#d9592626;--on:#ffffff}}
 .bg{fill:var(--surface)}.panel{fill:var(--panel)}
 .ink{fill:var(--ink)}.ink2{fill:var(--ink2)}.muted{fill:var(--muted)}
@@ -38,14 +40,14 @@ text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,san
 
 
 def svg(width, height, title, subtitle, body, desc=None):
-    """Wrap a figure body with the theme, a background and a title block."""
+    """Wrap a figure body with the theme and a title block, on a transparent background."""
     head = '<text x="24" y="30" class="t ink">%s</text>' % escape(title)
     if subtitle:
         head += '<text x="24" y="49" class="st ink2">%s</text>' % escape(subtitle)
     return ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" role="img" aria-labelledby="title desc">'
             '<title id="title">%s</title><desc id="desc">%s</desc>%s'
-            '<rect class="bg" width="%d" height="%d" rx="0"/>%s%s</svg>\n'
-            % (width, height, escape(title), escape(desc or subtitle or title), STYLE, width, height, head, body))
+            '%s%s</svg>\n'
+            % (width, height, escape(title), escape(desc or subtitle or title), STYLE, head, body))
 
 
 def text(x, y, s, cls="lab ink", anchor="start", extra=""):
