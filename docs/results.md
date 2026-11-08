@@ -1,8 +1,8 @@
 # Results
 
-All engine results come from vLLM at commit `2173d712`, built for the Mac CPU,
-with Qwen3-0.6B, Qwen3-1.7B or Qwen2.5-0.5B-Instruct and 32-token blocks. They
-measure tokens, not latency. Each section links to its dated run record in
+All engine results come from vLLM at commit `2173d712` with 32-token blocks:
+built for the Mac CPU with Qwen3-0.6B, Qwen3-1.7B or Qwen2.5-0.5B-Instruct, and
+for one confirmation run on a Tesla T4 GPU. Timing comes from the GPU run only. Each section links to its dated run record in
 [archive](archive/).
 
 **Main claim:** from a raw capture, Cachino predicts how much prefix reuse each
@@ -22,6 +22,7 @@ engine-validated attribution is the contribution.
 | Concurrent sessions, 9 seeded runs | 259 / 265 (misses only under eviction, 1 to 3 blocks) | [stage 2](archive/stage2-results-20261108.md) |
 | 5 scheduling orders | 39 / 39 each | this page |
 | Timed overlap replay, 3 evicting runs | 93 / 98 | this page |
+| Fixed trace on a Tesla T4 GPU, 4 cache sizes | 30 / 30 at each | this page |
 
 Engine prompt token IDs equalled the local render on every replayed request.
 
@@ -125,6 +126,32 @@ positions of delay. Every order matched its prediction exactly. This evaluates
 capture-guided scheduling on one trace; CacheWise's prefix-aware scheduling is
 the closest published approach.
 
+## GPU confirmation (stage 5)
+
+The cache-sweep trace (one three-session run, 30 requests) was replayed on a
+free Kaggle Tesla T4 (driver 580.178.04) with the pinned vLLM wheel, torch
+2.14.0 built for CUDA 13.0, Qwen3-0.6B in FP16 and capture off
+(`experiments/gpu-confirmation`). Each size ran twice after a reset; the
+printed summary was saved, not the per-request rows.
+
+| Cache (blocks) | Cached tokens | Lost to eviction | Exact | Time to first token, total | Versus no eviction |
+| --- | --- | --- | --- | --- | --- |
+| 640 | 93,344 | 0 | 30 / 30 | 23.5 s, 24.0 s | baseline |
+| 488 | 93,344 | 0 | 30 / 30 | 23.4 s, 23.7 s | same |
+| 438 | 88,832 | 4,512 | 30 / 30 | 31.1 s, 30.7 s | +31% |
+| 384 | 80,512 | 12,832 | 30 / 30 | 44.0 s, 43.8 s | +86% |
+
+- **The CPU results hold on GPU.** Cached tokens at every size are identical to
+  the CPU engine's, the predictor was exact on every request, prompt-ID parity
+  held, and the threshold is again 488 blocks.
+- **Recomputed tokens cost time in proportion.** A least-squares fit over 240
+  requests gives about 1.34 ms of time to first token per recomputed token plus
+  about 64 ms per request, on this card and model. Below the threshold, the
+  evicted tokens added 31% and 86% to total time to first token.
+
+Time to first token is vLLM's per-request metric, measured from scheduling;
+requests were sent one at a time, so there was no queueing.
+
 ## Proxy overhead
 
 Forwarding adds about 0.24 ms to a JSON exchange and 0.4 ms to the first SSE
@@ -136,6 +163,7 @@ after each write, so latency passes run with capture off
 
 - One task, one harness, small models, one machine. Shares are not typical of
   production traffic.
-- Token counts on CPU only; no latency claims.
+- Timing comes from one GPU run: one card, one small model, one trace, sequential
+  requests.
 - The scheduling test replays sequentially, without overlap or generated tokens,
   and measures delay in positions, not time.

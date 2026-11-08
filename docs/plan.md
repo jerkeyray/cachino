@@ -9,18 +9,13 @@ Updated 2026-11-08. The original research plan and stage plan are in
 | 2. Evidence that holds up | Done: seeded repetitions, threshold located, control template ([results](results.md)) |
 | 3. Choose the finding | Done: main claim in [results](results.md) |
 | 4. One intervention | Done: capture-guided scheduling ([results](results.md#scheduling-stage-4)) |
-| 5. GPU confirmation | Open |
+| 5. GPU confirmation | Done: Tesla T4, exact at 4 sizes, 1.34 ms per recomputed token ([results](results.md#gpu-confirmation-stage-5)) |
 | 6. Write-up | Open |
 
 ## Open work
 
-1. **GPU confirmation.** One short run on free GPU time (such as a Kaggle T4):
-   replay one trace above and below its threshold with capture off and compare
-   time to first token with recomputed tokens. Check first that the pinned vLLM
-   build runs on the card. Prepared 2026-11-08 and tested on the CPU build
-   ([GPU confirmation](../experiments/gpu-confirmation/README.md)). Needs a
-   Kaggle account, and approval to upload the token-ID bundle, which discloses
-   the prompt text.
+1. **GPU confirmation.** Done 2026-11-08 on a Kaggle T4. A larger model, a
+   faster card or concurrent requests remain untested.
 2. **Simulator comparison.** Run vLLM's native simulator (PR #47922) on the same
    captures. It needs `triton-cpu`, which the pinned requirements provide only
    on x86_64 Linux, so it cannot run on this Mac.

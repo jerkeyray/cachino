@@ -62,11 +62,12 @@ Stop here if CUDA is unavailable or the vLLM version is not
 
 5. Download `/kaggle/working/gpu-result/result.json` and the `vllm-*.log` files.
 
-The T4 has no BF16, so the replay uses FP16, as on the CPU. vLLM's support for
-the T4 (compute capability 7.5) at this pin is unverified. If the server fails to
-start, keep its log: the attention backend chosen for that card is the likely
-cause. The model weights (Qwen3-0.6B, about 1.5 GB) download from Hugging Face
+The T4 has no BF16, so the replay uses FP16, as on the CPU. The pinned wheel ran
+on the T4 (compute capability 7.5) with torch 2.14.0 for CUDA 13.0 under driver
+580.178.04. If the server fails to start on another card, keep its log. The model weights (Qwen3-0.6B, about 1.5 GB) download from Hugging Face
 on first start.
+
+Result of the first run, on a Kaggle Tesla T4: [results](../../docs/results.md#gpu-confirmation-stage-5).
 
 ## What to look for
 

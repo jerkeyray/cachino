@@ -21,6 +21,9 @@ backend:
   exceeds it. The threshold is predictable from the capture, and limiting
   concurrency removed the eviction on one trace, cutting recomputation 16.5%.
 
+On a Tesla T4 the same trace gave identical counts, and each recomputed token
+cost about 1.34 ms of time to first token.
+
 Both mechanisms are known; exact, engine-validated attribution is Cachino's
 part. Details: [results](docs/results.md), [method](docs/method.md),
 [related work](docs/related-work.md), [plan](docs/plan.md).
