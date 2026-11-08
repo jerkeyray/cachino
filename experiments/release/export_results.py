@@ -26,6 +26,9 @@ sys.path.insert(0, str(ROOT / "analysis"))
 
 from matrix_summary import run_row  # noqa: E402
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from claims import CLAIMS  # noqa: E402
+
 ENGINE = "vLLM 0.33.0rc1.dev595+g2173d7121, prefix caching, 32-token blocks, SHA-256 block hashes"
 
 
@@ -184,6 +187,26 @@ def schedules():
         "date_utc": "2026-11-08", "report": "3.7"})
 
 
+def claims_manifest():
+    """Write results/claims.json: each claim with the checksum and row count of every table it rests on."""
+    out = []
+    for claim in CLAIMS:
+        entry = dict(claim)
+        entry["artifacts"] = []
+        for name in claim["artifacts"]:
+            data = (OUT / name).read_bytes()
+            rows = len(data.decode("utf-8").splitlines()) - 1  # minus the header
+            entry["artifacts"].append({"path": name, "sha256": hashlib.sha256(data).hexdigest(), "rows": rows})
+        out.append(entry)
+    manifest = {"schema_version": 1, "published_date": "2026-11-09",
+                "scope": "Per-request token counts, cache hits, predictions, bounds, parity and engine timings",
+                "raw_source_visibility": "private",
+                "excludes": ["prompt and reply text", "token IDs and their hashes", "absolute timestamps",
+                             "source-machine paths", "credentials"],
+                "claims": out}
+    (OUT / "claims.json").write_text(json.dumps(manifest, indent=1) + "\n")
+
+
 def checksums():
     files = sorted(p for p in OUT.rglob("*") if p.is_file() and p.name not in ("SHA256SUMS", "README.md"))
     lines = ["%s  %s" % (hashlib.sha256(p.read_bytes()).hexdigest(), p.relative_to(OUT).as_posix()) for p in files]
@@ -193,6 +216,7 @@ def checksums():
 def main():
     for step in (cache_sweep, gpu, concurrency, single_sessions, overlap, schedules):
         step()
+    claims_manifest()
     checksums()
     print("wrote", ", ".join(sorted(p.relative_to(OUT).as_posix() for p in OUT.rglob("*.csv"))))
 

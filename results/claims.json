@@ -1,0 +1,320 @@
+{
+ "schema_version": 1,
+ "published_date": "2026-11-09",
+ "scope": "Per-request token counts, cache hits, predictions, bounds, parity and engine timings",
+ "raw_source_visibility": "private",
+ "excludes": [
+  "prompt and reply text",
+  "token IDs and their hashes",
+  "absolute timestamps",
+  "source-machine paths",
+  "credentials"
+ ],
+ "claims": [
+  {
+   "id": "threshold-487-488",
+   "claim": "From the capture alone, the predictor put this trace's eviction threshold at 488 blocks, with exactly 32 tokens lost at 487; vLLM matched both on all 30 requests.",
+   "report": "3.5",
+   "card": "docs/result-card-487-488.md",
+   "level": "recalculable",
+   "runs": [
+    "cache-sweep-20261108-01",
+    "live-concurrent-20261107-01"
+   ],
+   "code_commit": "d75a09a",
+   "engine": "vLLM 0.33.0rc1.dev595+g2173d7121, Mac CPU (Apple M5)",
+   "model": "Qwen3-0.6B replay of Qwen3-1.7B capture",
+   "artifacts": [
+    {
+     "path": "cache-sweep/requests.csv",
+     "sha256": "5544d247d1309e47548d7745a1475d78e4ca4be390b8c62c3382f675ceea2bbb",
+     "rows": 210
+    }
+   ],
+   "demonstrates": [
+    "the predictor locates one trace's threshold at the engine's resolution of one block",
+    "prompt-ID parity on every replayed request"
+   ],
+   "does_not_demonstrate": [
+    "overlapping requests",
+    "thresholds for other traffic",
+    "larger models or other engines",
+    "487 blocks on the T4"
+   ]
+  },
+  {
+   "id": "predictions-match-engine",
+   "claim": "The free-queue predictor matched vLLM's reported cached tokens on every sequential request on CPU and T4, and on 710 of 738 requests under live concurrency.",
+   "report": "3.1",
+   "level": "recalculable",
+   "runs": [
+    "cache-sweep-20261107-01",
+    "cache-sweep-20261108-01",
+    "gpu-bundle-20261108-01",
+    "concurrency-matrix-20261107",
+    "limit-matrix-20261108",
+    "overlap-replay-20261108-01",
+    "schedule-replay-20261108-01"
+   ],
+   "engine": "vLLM 0.33.0rc1.dev595+g2173d7121, Mac CPU (Apple M5) and Tesla T4",
+   "model": "Qwen3-0.6B and Qwen3-1.7B",
+   "artifacts": [
+    {
+     "path": "cache-sweep/requests.csv",
+     "sha256": "5544d247d1309e47548d7745a1475d78e4ca4be390b8c62c3382f675ceea2bbb",
+     "rows": 210
+    },
+    {
+     "path": "gpu-t4/sizes.csv",
+     "sha256": "20074d686ec23de18028d10a3e9b7c62dfb690fa0aff05536fd9cc436cde6cc5",
+     "rows": 4
+    },
+    {
+     "path": "concurrency-matrix/requests.csv",
+     "sha256": "7e318729cb1cddc233a39e7a0c42cc49eeb164479689c020ac2dab185415676c",
+     "rows": 265
+    },
+    {
+     "path": "session-limits/requests.csv",
+     "sha256": "2bc6b565cf03a73dbc4be0e98264c7405a20ad9106e338c5d80fb89e1e9413b3",
+     "rows": 699
+    },
+    {
+     "path": "overlap-replay/requests.csv",
+     "sha256": "04b780515b70231e1c28a15421b16cccace6484a0aa1ab20a83fe6809740f5db",
+     "rows": 98
+    },
+    {
+     "path": "schedule-replay/requests.csv",
+     "sha256": "9f87500e9158b26cfa6a8aa6739b27153c00ec9a897322ddbe75ebc6f1fd030c",
+     "rows": 195
+    }
+   ],
+   "demonstrates": [
+    "exact per-request hit prediction for sequential replay on one vLLM build",
+    "the remaining overlap error is small and concentrated in evicting runs"
+   ],
+   "does_not_demonstrate": [
+    "other vLLM versions",
+    "the cause of the overlap misses, which needs engine-side events",
+    "agreement with vLLM's native simulator, which was not run"
+   ]
+  },
+  {
+   "id": "residency-baseline",
+   "claim": "A baseline that assumes matching blocks stay cached was exact on 256 of 265 concurrent requests with 8,320 tokens of total error, against 259 and 352 for the overlap predictor.",
+   "report": "3.1",
+   "level": "recalculable",
+   "runs": [
+    "concurrency-matrix-20261107"
+   ],
+   "engine": "vLLM 0.33.0rc1.dev595+g2173d7121, Mac CPU (Apple M5)",
+   "model": "Qwen3-1.7B",
+   "artifacts": [
+    {
+     "path": "concurrency-matrix/requests.csv",
+     "sha256": "7e318729cb1cddc233a39e7a0c42cc49eeb164479689c020ac2dab185415676c",
+     "rows": 265
+    }
+   ],
+   "demonstrates": [
+    "modeling residency accounts for the baseline's error, which equals the evicted reuse"
+   ],
+   "does_not_demonstrate": [
+    "cause attribution under overlap",
+    "workloads without eviction, where the two agree"
+   ]
+  },
+  {
+   "id": "single-session-recompute",
+   "claim": "Single sessions reused 95%, 95% and 79% of prompt tokens from turn 1, and new content was 68%, 64% and 91% of what they recomputed.",
+   "report": "3.2",
+   "level": "recalculable",
+   "runs": [
+    "live-cpu-readonly-20261107-01",
+    "live-cpu-sampled-20261107-01",
+    "live-cpu-1.7b-20261107-02"
+   ],
+   "engine": "vLLM 0.33.0rc1.dev595+g2173d7121, Mac CPU (Apple M5)",
+   "model": "Qwen3-0.6B and Qwen3-1.7B",
+   "artifacts": [
+    {
+     "path": "single-sessions/turns.csv",
+     "sha256": "b3ee535985ac6b17fd9d743b4fe3d14dbe806353b930b443f38fb41dc6b0b054",
+     "rows": 70
+    }
+   ],
+   "demonstrates": [
+    "the split of recomputation by cause for three sessions with no eviction"
+   ],
+   "does_not_demonstrate": [
+    "other tasks or harnesses",
+    "sessions with real command execution"
+   ]
+  },
+  {
+   "id": "template-boundary",
+   "claim": "With thinking off, Qwen3's template drops the 4-token empty thinking cue from history, so every turn that kept its reply diverged inside the cue; serving the cue kept removed the re-prefill but changed the model's next action.",
+   "report": "3.3",
+   "level": "documented",
+   "runs": [
+    "live-cpu-readonly-20261107-01",
+    "live-cpu-sampled-20261107-01",
+    "live-cpu-1.7b-20261107-02",
+    "live-cpu-control-20261108-01",
+    "exec-matrix-20261108"
+   ],
+   "engine": "vLLM 0.33.0rc1.dev595+g2173d7121, Mac CPU (Apple M5)",
+   "model": "Qwen3-0.6B, Qwen3-1.7B, Qwen2.5-0.5B-Instruct",
+   "artifacts": [],
+   "records": [
+    "docs/records/cue-counterfactual-20261107.md",
+    "docs/records/control-template-20261108.md"
+   ],
+   "demonstrates": [
+    "the boundary in every Qwen3 capture and in none of the Qwen2.5 control"
+   ],
+   "does_not_demonstrate": [
+    "an effect on task success: no session solved the task"
+   ]
+  },
+  {
+   "id": "harness-serialization",
+   "claim": "smolagents 1.26.0 writes each tool call into history as text of 52 to 66 tokens with a random call ID, for calls generated in 19 to 36 tokens, so its replies cannot be reused.",
+   "report": "3.4",
+   "level": "documented",
+   "runs": [
+    "smol-cpu-20261108-01",
+    "smol-matrix-20261108"
+   ],
+   "engine": "vLLM 0.33.0rc1.dev595+g2173d7121, Mac CPU (Apple M5)",
+   "model": "Qwen3-1.7B",
+   "artifacts": [],
+   "demonstrates": [
+    "one harness version's serialization and its effect on reuse"
+   ],
+   "does_not_demonstrate": [
+    "other harness versions or configurations"
+   ]
+  },
+  {
+   "id": "eviction-threshold",
+   "claim": "Two of nine concurrent runs evicted, losing 3,680 and 4,640 tokens; the fixed trace lost 12,832 and 4,512 tokens at 384 and 438 blocks and none from 488 up, identically on CPU and T4.",
+   "report": "3.5",
+   "level": "recalculable",
+   "runs": [
+    "concurrency-matrix-20261107",
+    "cache-sweep-20261107-01",
+    "cache-sweep-20261108-01",
+    "gpu-bundle-20261108-01"
+   ],
+   "engine": "vLLM 0.33.0rc1.dev595+g2173d7121, Mac CPU (Apple M5) and Tesla T4",
+   "model": "Qwen3-0.6B and Qwen3-1.7B",
+   "artifacts": [
+    {
+     "path": "concurrency-matrix/requests.csv",
+     "sha256": "7e318729cb1cddc233a39e7a0c42cc49eeb164479689c020ac2dab185415676c",
+     "rows": 265
+    },
+    {
+     "path": "cache-sweep/requests.csv",
+     "sha256": "5544d247d1309e47548d7745a1475d78e4ca4be390b8c62c3382f675ceea2bbb",
+     "rows": 210
+    },
+    {
+     "path": "gpu-t4/sizes.csv",
+     "sha256": "20074d686ec23de18028d10a3e9b7c62dfb690fa0aff05536fd9cc436cde6cc5",
+     "rows": 4
+    }
+   ],
+   "demonstrates": [
+    "eviction appears only below the trace's working set, as predicted"
+   ],
+   "does_not_demonstrate": [
+    "the per-run threshold calls (9 of 9), which need the captures; see the repetitions record"
+   ]
+  },
+  {
+   "id": "eviction-cost-t4",
+   "claim": "On a Tesla T4 the 30 requests took 43.9 s, 30.9 s and 23.6 s of total time to first token at 384, 438 and 488 blocks: 86% and 31% more where blocks were evicted.",
+   "report": "3.6",
+   "level": "recalculable",
+   "runs": [
+    "gpu-bundle-20261108-01"
+   ],
+   "engine": "vLLM 0.33.0rc1.dev595+g2173d7121, Kaggle Tesla T4, torch 2.14.0+cu130",
+   "model": "Qwen3-0.6B",
+   "artifacts": [
+    {
+     "path": "gpu-t4/sizes.csv",
+     "sha256": "20074d686ec23de18028d10a3e9b7c62dfb690fa0aff05536fd9cc436cde6cc5",
+     "rows": 4
+    }
+   ],
+   "demonstrates": [
+    "the measured cost of eviction for one trace sent one request at a time"
+   ],
+   "does_not_demonstrate": [
+    "concurrent serving latency",
+    "the per-token slope's per-request basis, which was not retained",
+    "other GPUs or models"
+   ]
+  },
+  {
+   "id": "scheduling",
+   "claim": "Replaying one evicting trace with at most two sessions at a time, greedily, or one at a time removed eviction and cut recomputation from 26,363 to 22,011 tokens.",
+   "report": "3.7",
+   "level": "recalculable",
+   "runs": [
+    "schedule-replay-20261108-01"
+   ],
+   "engine": "vLLM 0.33.0rc1.dev595+g2173d7121, Mac CPU (Apple M5)",
+   "model": "Qwen3-0.6B replay",
+   "artifacts": [
+    {
+     "path": "schedule-replay/requests.csv",
+     "sha256": "9f87500e9158b26cfa6a8aa6739b27153c00ec9a897322ddbe75ebc6f1fd030c",
+     "rows": 195
+    }
+   ],
+   "demonstrates": [
+    "what reordering one fixed trace does to eviction and recomputation"
+   ],
+   "does_not_demonstrate": [
+    "wall-clock delay, which is counted in positions",
+    "effects on live sampled sessions"
+   ]
+  },
+  {
+   "id": "session-limits",
+   "claim": "Live, a two-session cap removed eviction in every seed, cutting seed 4's wall clock from 1,242.8 s to 299.0 s; the second token-budget version lost 3,456 and 3,616 tokens in seeds 4 and 5.",
+   "report": "3.8",
+   "level": "recalculable",
+   "runs": [
+    "limit-matrix-20261108"
+   ],
+   "engine": "vLLM 0.33.0rc1.dev595+g2173d7121, Mac CPU (Apple M5)",
+   "model": "Qwen3-1.7B",
+   "artifacts": [
+    {
+     "path": "session-limits/requests.csv",
+     "sha256": "2bc6b565cf03a73dbc4be0e98264c7405a20ad9106e338c5d80fb89e1e9413b3",
+     "rows": 699
+    },
+    {
+     "path": "session-limits/runs.csv",
+     "sha256": "b09d62b9da83b3517fe227ad3350ba7046d4c7892a7a694c1c34c4dd5726770a",
+     "rows": 18
+    }
+   ],
+   "demonstrates": [
+    "eviction under each limit, per seed",
+    "the waiting a cap adds where nothing would be evicted"
+   ],
+   "does_not_demonstrate": [
+    "GPU latency",
+    "paired comparisons of totals, since sampled trajectories differ"
+   ]
+  }
+ ]
+}
