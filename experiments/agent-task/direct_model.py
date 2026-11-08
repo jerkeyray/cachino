@@ -81,7 +81,7 @@ class DirectTextModel:
     """
 
     def __init__(self, *, model_name, api_base, api_key, max_tokens=64, temperature=0, timeout=10,
-                 observation_template=None):
+                 observation_template=None, session=None):
         url = urlsplit(api_base)
         if (url.scheme != "http" or url.hostname != "127.0.0.1" or url.port is None
                 or url.username is not None or url.password is not None
@@ -97,6 +97,8 @@ class DirectTextModel:
         # The default template is the minimal wire-check form. Live sessions pass
         # the pinned config's template, which truncates long outputs.
         self._observation_template = observation_template or OBSERVATION_TEMPLATE
+        # Optional Cachino session label, so sessions sharing one proxy stay distinct.
+        self._session = session
         self.config = {"model_name": model_name, "api_base": api_base, "max_tokens": max_tokens,
                        "temperature": temperature, "timeout": timeout}
         self._api_key = api_key
@@ -109,7 +111,8 @@ class DirectTextModel:
                 "n": 1, "stream": False}
         request = Request(self.config["api_base"] + "/chat/completions",
                           data=json.dumps(body, ensure_ascii=False, allow_nan=False).encode("utf-8"),
-                          headers={"Content-Type": "application/json", "Authorization": "Bearer " + self._api_key})
+                          headers=dict({"Content-Type": "application/json", "Authorization": "Bearer " + self._api_key},
+                                       **({"X-Cachino-Session": self._session} if self._session else {})))
         try:
             with self._opener.open(request, timeout=self.config["timeout"]) as reply:
                 data = reply.read(RESPONSE_LIMIT + 1)

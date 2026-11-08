@@ -45,13 +45,22 @@ from tokenizer_assets import load_pin  # noqa: E402
 
 def load_requests(run_dir, tokenizer, pin):
     """Return completed requests from every session with timing and token IDs."""
-    rows = []
-    for session_dir in sorted(Path(run_dir).resolve().glob("session-*")):
-        capture = (session_dir / "capture").resolve()
+    run_dir = Path(run_dir).resolve()
+    shared = (run_dir / "capture").is_dir()
+    # A shared proxy writes one capture for every session; separate proxies
+    # write one per session directory.
+    captures = [(run_dir / "capture", None)] if shared else \
+        [((d / "capture").resolve(), d.name) for d in sorted(run_dir.glob("session-*"))]
+    # With the active-session limit, a captured request starts on arrival but is
+    # forwarded only after its logged wait; the engine sees the later time.
+    waits = {}
+    if (run_dir / "result.json").exists():
+        waits = {w["request_id"]: w["waited_ms"] for w in json.loads((run_dir / "result.json").read_text()).get("waits", [])}
+    rows, turns = [], {}
+    for capture, label in captures:
         records, warnings = read_events(capture)
         if warnings:
             raise ValueError("capture warnings in %s" % capture)
-        turn = 0
         for record in records:
             if record.get("http_status") != 200:
                 continue
@@ -61,11 +70,13 @@ def load_requests(run_dir, tokenizer, pin):
                 if integrity != "verified":
                     raise ValueError("unverified body in %s" % capture)
                 bodies.append(json.loads(data))
-            start = datetime.fromisoformat(record["started_at"].replace("Z", "+00:00")).timestamp()
-            rows.append({"session": session_dir.name, "turn": turn, "start": start,
-                         "end": start + record["duration_ms"] / 1000.0,
+            session = label or record.get("session_id")
+            waited = waits.get(record["request_id"], 0.0)
+            arrival = datetime.fromisoformat(record["started_at"].replace("Z", "+00:00")).timestamp()
+            rows.append({"session": session, "turn": turns.get(session, 0), "start": arrival + waited / 1000.0,
+                         "end": arrival + record["duration_ms"] / 1000.0, "waited_ms": waited,
                          "ids": render(tokenizer, bodies[0], pin)[1], **details(bodies[1])})
-            turn += 1
+            turns[session] = turns.get(session, 0) + 1
     return sorted(rows, key=lambda row: row["start"])
 
 

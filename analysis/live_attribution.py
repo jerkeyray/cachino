@@ -72,7 +72,9 @@ def details(response):
     d = usage.get("prompt_tokens_details")
     return {"prompt_tokens": usage.get("prompt_tokens"), "completion_tokens": usage.get("completion_tokens"),
             "cached_tokens": d.get("cached_tokens") if isinstance(d, dict) else None,
-            "created_cache_tokens": d.get("created_cache_tokens") if isinstance(d, dict) else None}
+            "created_cache_tokens": d.get("created_cache_tokens") if isinstance(d, dict) else None,
+            # Engine time from scheduling to first token; None when metrics are off.
+            "engine_ttft_ms": (response.get("metrics") or {}).get("time_to_first_token_ms")}
 
 
 def attribute(rows, tokenizer, pin, num_blocks, block, generated=True):

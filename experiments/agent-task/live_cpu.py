@@ -170,6 +170,7 @@ def worker(checkout, out):
         agent = DefaultAgent(model, env, system_template=block_scalar(text, "system_template"),
                              instance_template=block_scalar(text, "instance_template"),
                              **spec["agent_bounds"], output_path=out / "trajectory.json")
+        result["started_at"] = time.time()
         exit_info = agent.run((HERE / "prompt.txt").read_text())
         result.update(status="completed", exit_status=exit_info.get("exit_status"))
     except Exception as error:
@@ -177,12 +178,18 @@ def worker(checkout, out):
         # captured are still valid evidence of the turns that happened.
         result.update(status="ended_by_error", error_type=type(error).__name__, error=str(error)[:2000])
     finally:
-        result.update(agent_calls=getattr(agent, "n_calls", None), actions=env.actions, blocked_network_attempts=denied)
+        result.update(agent_calls=getattr(agent, "n_calls", None), actions=env.actions, blocked_network_attempts=denied,
+                      ended_at=time.time())
         write_json(out / "worker-result.json", result)
 
 
-def run(checkout, python, out, engine, spec_path):
-    """Verify pins, start Cachino in front of the running engine and run one session."""
+def run(checkout, python, out, engine, spec_path, external_proxy=False):
+    """Verify pins, start Cachino in front of the running engine and run one session.
+
+    With external_proxy, the spec's proxy is already running (shared by several
+    sessions); this run neither builds nor stops it and leaves its capture to
+    the caller.
+    """
     manifest = json.loads((HERE / "manifest.json").read_text())
     harness_hashes = verify_checkout(checkout, manifest)
     spec = json.loads(spec_path.read_text())
@@ -202,11 +209,13 @@ def run(checkout, python, out, engine, spec_path):
     spec["proxy"]["upstream"] = engine
     write_json(out / "effective-spec.json", spec)
     binary = out / "cachino"
-    subprocess.run(["go", "build", "-o", str(binary), "./cmd/cachino"], cwd=ROOT,
-                   env=dict(os.environ, GOTOOLCHAIN="local"), check=True, timeout=120)
+    if not external_proxy:
+        subprocess.run(["go", "build", "-o", str(binary), "./cmd/cachino"], cwd=ROOT,
+                       env=dict(os.environ, GOTOOLCHAIN="local"), check=True, timeout=120)
     write_json(out / "provenance.json", {
         "harness_revision": manifest["harness"]["revision"], "harness_source_sha256": harness_hashes,
-        "template_git_blob_sha": template_blob, "binary_sha256": hashlib.sha256(binary.read_bytes()).hexdigest(),
+        "template_git_blob_sha": template_blob,
+        "binary_sha256": None if external_proxy else hashlib.sha256(binary.read_bytes()).hexdigest(),
         "code_commit": subprocess.check_output(["git", "-C", str(ROOT), "rev-parse", "HEAD"], text=True).strip(),
         "served_models": served, "commands_executed": False})
     proxy_spec = spec["proxy"]
@@ -220,11 +229,12 @@ def run(checkout, python, out, engine, spec_path):
     proxy = None
     try:
         with (out / "proxy.log").open("x") as proxy_log, (out / "worker.log").open("x") as worker_log:
-            proxy = subprocess.Popen(command, cwd=out, stdout=proxy_log, stderr=subprocess.STDOUT,
-                                     env=clean_environment(home, python))
+            if not external_proxy:
+                proxy = subprocess.Popen(command, cwd=out, stdout=proxy_log, stderr=subprocess.STDOUT,
+                                         env=clean_environment(home, python))
             deadline = time.monotonic() + 5
             while True:
-                if proxy.poll() is not None:
+                if proxy is not None and proxy.poll() is not None:
                     raise RuntimeError("proxy exited before readiness")
                 try:
                     with socket.create_connection((host, int(port)), timeout=0.1):
@@ -241,9 +251,10 @@ def run(checkout, python, out, engine, spec_path):
         stop(proxy)
     if verify_checkout(checkout, manifest) != harness_hashes:
         raise ValueError("harness changed during the session")
-    sys.path.insert(0, str(ROOT / "analysis"))
-    from report import inspect
-    write_json(out / "capture-report.json", inspect(out / "capture"))
+    if not external_proxy:
+        sys.path.insert(0, str(ROOT / "analysis"))
+        from report import inspect
+        write_json(out / "capture-report.json", inspect(out / "capture"))
     return json.loads((out / "worker-result.json").read_text())
 
 
