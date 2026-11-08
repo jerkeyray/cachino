@@ -39,6 +39,8 @@ threshold was located at the engine's own resolution.
   trace on a Tesla T4 at 384, 438, 488 and 640 blocks: identical cached-token
   totals to the CPU, and 30 of 30 exact at each size. 487 blocks was not run on
   the T4.
+- [`results/claims.json`](../results/claims.json), claim `threshold-487-488`, states
+  this claim, its runs and scope as data, with the checksum of the table it rests on.
 - `figures/data.json` (`reuse_curve.predicted_487_488`) holds the predicted
   values, regenerated from the capture by `experiments/figures/make_figures.py`.
 

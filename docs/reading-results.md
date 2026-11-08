@@ -45,6 +45,9 @@ describes the 0.6B model.
 | Recalculable | Anyone can recompute it from files in this repository: `python3 analysis/validate_results.py` rebuilds it from the [released tables](../results/README.md) | Exactness counts and the baseline (3.1), single-session shares (3.2), the threshold and 487/488 (3.5), T4 totals (3.6), scheduling orders (3.7), session limits (3.8); the [examples](../examples/README.md) |
 | Documented | Measured from private captures; the [run record](records/) gives conditions and numbers, but the capture is needed to check them | Template-check transition counts (3.3), smolagents serialization (3.4), sandboxed sessions (3.9), proxy overhead (3.10), and that any run happened as recorded |
 
+Each claim's level, runs and scope are also listed as data in
+[`results/claims.json`](../results/claims.json).
+
 A result can be both engine-checked and recalculable: the engine checked the
 prediction when the run happened, and the released rows let anyone redo the
 arithmetic. Raw captures stay private because they hold prompt and reply text.
