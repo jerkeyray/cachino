@@ -10,8 +10,12 @@ any earlier prompt, and compares three numbers:
   the blocks the previous replies occupied. bound - predicted is eviction.
 - engine: cached_tokens as reported in the captured response.
 
-The predictor gives generated tokens unique IDs, so engine > predicted would
-mean the engine reused KV computed during generation. The script also decodes
+By default the predictor gives generated tokens unique IDs, so engine >
+predicted would mean the engine reused KV computed during generation.
+--reply-ids instead models each reply as its re-tokenized text followed by the
+end-of-turn token, which lets a later prompt reuse the reply's full blocks when
+the template renders the history exactly as it was generated. Live captures
+hold reply text, not generated IDs, so this assumes re-tokenization matches. The script also decodes
 the tokens on each side of the first divergence from the previous prompt, so a
 template boundary is shown rather than inferred.
 
@@ -77,11 +81,21 @@ def details(response):
             "engine_ttft_ms": (response.get("metrics") or {}).get("time_to_first_token_ms")}
 
 
-def attribute(rows, tokenizer, pin, num_blocks, block, generated=True, chat_template=None):
+def reply_ids(tokenizer, response):
+    """Return the reply's re-tokenized IDs plus end of turn, or None if it did not stop."""
+    choice = (response.get("choices") or [{}])[0]
+    content = (choice.get("message") or {}).get("content")
+    if content is None or choice.get("finish_reason") != "stop":
+        return None
+    return tokenizer.encode(content, add_special_tokens=False) + [tokenizer.convert_tokens_to_ids("<|im_end|>")]
+
+
+def attribute(rows, tokenizer, pin, num_blocks, block, generated=True, chat_template=None, use_reply_ids=False):
     """Return per-request attribution rows; generated=False models prompt-only traffic."""
     model = FreeQueuePredictor(num_blocks, block)
     earlier, out = [], []
     previous_reply = None  # (content, completion_tokens) of the previous response
+    previous_prompt = 0  # length of the previous prompt, to tell whether its reply was matched
     for index, (request, response) in enumerate(rows):
         ids = render(tokenizer, request, pin, chat_template=chat_template)[1]
         seen = details(response)
@@ -91,6 +105,11 @@ def attribute(rows, tokenizer, pin, num_blocks, block, generated=True, chat_temp
         # A reply of g tokens leaves KV for prompt + g - 1 tokens. generated=1
         # (also used for max_tokens-1 replay) therefore models the prompt alone.
         g = max(seen["completion_tokens"] or 1, 1) if generated else 1
+        if generated and use_reply_ids:
+            tail = reply_ids(tokenizer, response)
+            # Use the text only when its length agrees with the engine's count.
+            if tail is not None and len(tail) == g:
+                g = tail
         predicted = model.request(ids, generated=g)
         row = {"index": index, "messages": len(request["messages"]), "prompt_tokens_local": len(ids),
                **seen, "best_lcp": best, "adjacent_lcp": adjacent, "prompt_bound": bound,
@@ -107,6 +126,8 @@ def attribute(rows, tokenizer, pin, num_blocks, block, generated=True, chat_temp
         # re-tokenized text matches the generated IDs (true where checked).
         assistants = [m["content"] for m in request["messages"] if m["role"] == "assistant"]
         reply_tokens = previous_reply[1] if previous_reply and assistants and assistants[-1] == previous_reply[0] else 0
+        if use_reply_ids and best > previous_prompt:
+            reply_tokens = 0  # the shared prefix runs into the previous reply's own KV
         row["split"] = {"recomputed": len(ids) - (seen["cached_tokens"] or 0),
                         "previous_reply": reply_tokens,
                         "new_content": len(ids) - best - reply_tokens,
@@ -119,7 +140,10 @@ def attribute(rows, tokenizer, pin, num_blocks, block, generated=True, chat_temp
         row["parity_count"] = seen["prompt_tokens"] == len(ids) if seen["prompt_tokens"] is not None else None
         row["matches_prediction"] = (seen["cached_tokens"] == predicted["cached_tokens"]) if seen["cached_tokens"] is not None else None
         out.append(row)
-        earlier.append(ids)
+        # With reply IDs, the earlier sequence is everything the request left
+        # in KV: the prompt and all but the last generated token.
+        earlier.append(ids + g[:-1] if isinstance(g, list) else ids)
+        previous_prompt = len(ids)
     return out
 
 
@@ -155,13 +179,15 @@ def main():
     parser.add_argument("--pin", type=Path, default=PIN, help="tokenizer pin naming the session's model")
     parser.add_argument("--assets", type=Path, default=ASSETS, help="tokenizer snapshot for that pin")
     parser.add_argument("--chat-template", type=Path, help="template file the server was launched with, if not the pinned one")
+    parser.add_argument("--reply-ids", action="store_true", help="model replies as re-tokenized text so their blocks can be reused")
     args = parser.parse_args()
     pin = load_pin(args.pin)
     tokenizer = _load_tokenizer(args.assets, pin)[0]
     rows = load_session(args.capture)
     template = args.chat_template.read_text() if args.chat_template else None
     args.out.mkdir(mode=0o700, parents=True)
-    live = attribute(rows, tokenizer, pin, args.num_blocks, args.block_size, generated=True, chat_template=template)
+    live = attribute(rows, tokenizer, pin, args.num_blocks, args.block_size, generated=True, chat_template=template,
+                     use_reply_ids=args.reply_ids)
     (args.out / "live.json").write_text(json.dumps(live, indent=2, ensure_ascii=False) + "\n")
     summary = {"requests": len(rows), "live": live}
     if args.replay:
