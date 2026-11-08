@@ -25,7 +25,7 @@ On a Tesla T4 the same trace gave identical counts, and each recomputed token
 cost about 1.34 ms of time to first token.
 
 Both mechanisms are known; exact, engine-validated attribution is Cachino's
-part. Details: [results](docs/results.md), [method](docs/method.md),
+part. Start with the [summary](docs/summary.md); details: [results](docs/results.md), [method](docs/method.md),
 [related work](docs/related-work.md), [plan](docs/plan.md).
 
 ## Quick start
@@ -68,6 +68,7 @@ Forwarding, capture and session limits are described in the
 | `experiments/cache-eviction/` | Cache predictor and eviction probes ([README](experiments/cache-eviction/README.md)) |
 | `experiments/agent-task/` | Frozen task, agent sessions, attribution, sweeps and scheduling ([README](experiments/agent-task/README.md)) |
 | `experiments/proxy-overhead/` | Paired latency measurement ([README](experiments/proxy-overhead/README.md)) |
+| `experiments/figures/` | Regenerates the write-up figures |
 | `experiments/gpu-confirmation/` | Token-ID bundle and GPU replay ([README](experiments/gpu-confirmation/README.md)) |
 | `docs/` | Results, method, related work, plan and the dated archive |
 

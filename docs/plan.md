@@ -10,7 +10,7 @@ Updated 2026-11-08. The original research plan and stage plan are in
 | 3. Choose the finding | Done: main claim in [results](results.md) |
 | 4. One intervention | Done: capture-guided scheduling ([results](results.md#scheduling-stage-4)) |
 | 5. GPU confirmation | Done: Tesla T4, exact at 4 sizes, 1.34 ms per recomputed token ([results](results.md#gpu-confirmation-stage-5)) |
-| 6. Write-up | Open |
+| 6. Write-up | Done: [summary](summary.md) with generated figures |
 
 ## Open work
 
@@ -23,8 +23,8 @@ Updated 2026-11-08. The original research plan and stage plan are in
    ([results](results.md#overlap-replay)).
 4. **Scheduling under real overlap.** Repeat the scheduling test with live
    concurrent sessions and wall-clock delay rather than sequential replay.
-5. **Write-up.** Figures regenerated from captures by script, and a short
-   summary. Publication beyond this repository needs separate approval.
+5. **Write-up.** Done 2026-11-08. Publication beyond this repository needs
+   separate approval.
 
 Housekeeping: record the CPU-first method change in the shared Malacca
 `DECISIONS.md` (needs approval), and rename the local folder to `cachino`.
