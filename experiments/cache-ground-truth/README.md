@@ -3,7 +3,7 @@
 Checks that a running vLLM server sees exactly the token IDs Cachino predicts
 locally, that its prefix-cache reset works, and that reported reuse follows
 the block rule. Results from the first run are in
-[M4 CPU results](../../docs/archive/m4-cpu-results-20261107.md).
+[M4 CPU results](../../docs/records/m4-cpu-results-20261107.md).
 
 ## Files
 
@@ -17,7 +17,7 @@ the block rule. Results from the first run are in
 ## Reproduce on a Mac CPU
 
 Setup (vLLM source build, Qwen3-0.6B weights) is in the
-[CPU build plan](../../docs/archive/m4-cpu-build-plan.md). Then:
+[CPU build plan](../../docs/records/m4-cpu-build-plan.md). Then:
 
 ```sh
 uv run --project analysis --offline --no-python-downloads python \

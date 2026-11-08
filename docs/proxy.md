@@ -11,7 +11,7 @@ Behavior of the `cachino` command and its capture, for anyone running it.
 - `-upstream` takes an HTTP(S) origin without `/v1`, credentials, query or
   fragment. The incoming route and query are preserved.
   `-messages-prefix /anthropic` prepends that path only to Messages and
-  token-count routes ([Claude Code capture](../experiments/claude-capture/README.md)).
+  token-count routes .
 - Request bytes pass through unparsed. Status, body and end-to-end headers pass
   back; hop-by-hop headers are removed and Host targets the upstream.
   Authorization is forwarded and never logged. A transport failure before a
@@ -39,7 +39,7 @@ go run ./cmd/cachino -upstream http://127.0.0.1:8081 \
   text is raw and may be private. Traces stay gitignored.
 - Each event and body is synced to disk, so a crash leaves a complete record up
   to that point. This costs about 15 ms per request on macOS; forwarding alone
-  adds under 0.5 ms ([overhead](archive/proxy-overhead-20261107.md)). Run
+  adds under 0.5 ms ([overhead](records/proxy-overhead-20261107.md)). Run
   latency passes with capture off.
 
 Report and SQLite index:
@@ -51,7 +51,7 @@ uv run --project analysis --offline --no-python-downloads python analysis/report
 
 The report verifies stored bytes and hashes, keeps unfinished requests, detects
 incomplete SSE and keeps missing usage and cache counts null. Field definitions:
-[trace format](archive/trace-format.md).
+[trace format](records/trace-format.md).
 
 ## Bounded sessions
 

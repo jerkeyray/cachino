@@ -129,4 +129,4 @@ launch must set `--enable-prompt-tokens-details`,
 loopback server, with one worker and no offload connector. Block size, hash
 settings and prefix-caching state are read from the running server into the
 manifest. The concrete RunPod procedure is in the
-[M4 RunPod runbook](m4-runpod-runbook.md).
+M4 RunPod runbook.

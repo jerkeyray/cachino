@@ -1,6 +1,6 @@
 # Related work for the CPU findings
 
-Stage 1 of the [next stages plan](next-stages-plan.md), done 2026-11-07. It
+Stage 1 of the next stages plan, done 2026-11-07. It
 extends the [first related-work check](related-work-check-20261101.md), which
 already found that request capture, harness comparisons and prefix-reuse cost
 are studied. This check compares each CPU finding with current work. It is a

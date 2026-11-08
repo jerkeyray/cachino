@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 300" font-family="system-ui, sans-serif">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title>Cachino pipeline</title>
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#59636e"/></marker></defs>
+<g font-size="13" fill="#1f2328" text-anchor="middle">
+<rect x="20" y="30" width="150" height="56" rx="8" fill="#f6f8fa" stroke="#d0d7de"/>
+<text x="95" y="54">Coding agent</text><text x="95" y="72" font-size="11" fill="#59636e">mini-swe-agent</text>
+<rect x="305" y="30" width="150" height="56" rx="8" fill="#ddeaf8" stroke="#2f6fb5"/>
+<text x="380" y="54" font-weight="600">Cachino proxy</text><text x="380" y="72" font-size="11" fill="#59636e">forwards unchanged</text>
+<rect x="590" y="30" width="150" height="56" rx="8" fill="#f6f8fa" stroke="#d0d7de"/>
+<text x="665" y="54">vLLM, pinned</text><text x="665" y="72" font-size="11" fill="#59636e">prefix cache</text>
+<rect x="20" y="200" width="150" height="64" rx="8" fill="#ddeaf8" stroke="#2f6fb5"/>
+<text x="95" y="226" font-weight="600">Capture</text><text x="95" y="244" font-size="11" fill="#59636e">exact request bytes</text>
+<rect x="205" y="200" width="150" height="64" rx="8" fill="#ddeaf8" stroke="#2f6fb5"/>
+<text x="280" y="226" font-weight="600">Render</text><text x="280" y="244" font-size="11" fill="#59636e">exact token IDs</text>
+<rect x="390" y="200" width="150" height="64" rx="8" fill="#ddeaf8" stroke="#2f6fb5"/>
+<text x="465" y="226" font-weight="600">Predict</text><text x="465" y="244" font-size="11" fill="#59636e">free-queue cache model</text>
+<rect x="575" y="200" width="165" height="64" rx="8" fill="#fbe9d7" stroke="#d9822b"/>
+<text x="657" y="222" font-weight="600">Attribute</text><text x="657" y="239" font-size="11" fill="#59636e">prompt change, rounding,</text><text x="657" y="253" font-size="11" fill="#59636e">eviction, cross-session</text>
+</g>
+<g stroke="#59636e" stroke-width="1.6" fill="none" marker-end="url(#a)">
+<line x1="170" y1="58" x2="303" y2="58"/><line x1="455" y1="58" x2="588" y2="58"/>
+<line x1="380" y1="86" x2="110" y2="198"/>
+<line x1="170" y1="232" x2="203" y2="232"/><line x1="355" y1="232" x2="388" y2="232"/><line x1="540" y1="232" x2="573" y2="232"/>
+<path d="M665 86 L665 198" stroke-dasharray="5 4"/>
+</g>
+<text x="655" y="140" font-size="11" fill="#59636e" text-anchor="end">reported cached_tokens</text>
+<text x="655" y="154" font-size="11" fill="#59636e" text-anchor="end">checked against prediction</text>
+<text x="290" y="140" font-size="11" fill="#59636e">stored on disk</text>
+</svg>

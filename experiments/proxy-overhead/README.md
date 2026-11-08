@@ -2,7 +2,7 @@
 
 Measures how much latency Cachino adds when forwarding, with capture off and
 on. The fake model is the upstream, so engine noise does not hide the proxy's
-cost. Results: [proxy overhead note](../../docs/archive/proxy-overhead-20261107.md).
+cost. Results: [proxy overhead note](../../docs/records/proxy-overhead-20261107.md).
 
 ```sh
 python3 -B experiments/proxy-overhead/measure.py --out artifacts/proxy-overhead-NEW

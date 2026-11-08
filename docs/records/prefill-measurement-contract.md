@@ -2,7 +2,7 @@
 
 Status: M1 specification grounded in existing Cachino and read-only vLLM source
 inspection on 2026-11-03. No vLLM runtime, cache state or performance was tested.
-See [the execution plan](research-plan.md) for milestones and
+See the execution plan for milestones and
 [the pinned source paths](vllm-source-paths.md) for the observation mechanisms.
 
 ## Supported initial experiment

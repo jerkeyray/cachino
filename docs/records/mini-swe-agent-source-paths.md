@@ -6,7 +6,7 @@ file was fetched by that commit. That initial inspection used no checkout or
 imports. The [task manifest](../../experiments/agent-task/manifest.json) now
 records 18 inspected files and their Git blob identities. License: MIT.
 Subsequently, after user approval, the pinned source checkout and hash-locked
-dependencies passed the [real SDK wire check](mini-wire-observations.md) against
+dependencies passed the real SDK wire check against
 a local fixed-response fixture. No model inference or agent shell action ran.
 On 2026-11-05 the active path changed to the
 [direct model adapter](direct-harness-observations.md), preserving the pinned

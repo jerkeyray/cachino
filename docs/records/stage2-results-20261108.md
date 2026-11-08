@@ -1,6 +1,6 @@
 # Stage 2 results: repeated concurrency and the eviction threshold, 2026-11-08
 
-Stage 2 of the [next stages plan](next-stages-plan.md). It tests whether the
+Stage 2 of the next stages plan. It tests whether the
 concurrent-session findings hold over independent runs, and whether the
 eviction threshold can be predicted from a capture alone.
 

@@ -14,7 +14,7 @@ hit lookup and eviction run in vLLM's engine core, which is shared by the CPU
 and GPU platforms. CPU timings say nothing about GPU latency, so latency claims
 still need a GPU run later. This note applies the same measurement contract as
 the [M4 calibration package](m4-calibration-plan.md); the
-[RunPod runbook](m4-runpod-runbook.md) stays as the GPU path.
+RunPod runbook stays as the GPU path.
 
 ## Source-checked facts at vLLM `2173d712`
 

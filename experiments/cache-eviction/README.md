@@ -2,12 +2,12 @@
 
 Holds a prompt fixed, sends unrelated filler prompts in between, and checks
 that the engine's reuse matches a free-queue model of the pinned vLLM build.
-Design: [E4 plan](../../docs/archive/e4-eviction-plan.md). Results:
-[E4 CPU results](../../docs/archive/e4-cpu-results-20261107.md).
+Design: [E4 plan](../../docs/records/e4-eviction-plan.md). Results:
+[E4 CPU results](../../docs/records/e4-cpu-results-20261107.md).
 
 ## Files
 
-- `predict.py`: replays the pinned eviction rules on block labels. Given each
+- [`analysis/predict.py`](../../analysis/predict.py): replays the pinned eviction rules on block labels. Given each
   prompt's token IDs (and optionally generated IDs), it predicts `cached_tokens`
   and `created_cache_tokens`. Tests: `analysis/test_eviction_predict.py`.
 - `e4.json`: the seven conditions (C0 to C4, M1, M2) as a sequence for `calibrate.py`.
@@ -24,7 +24,7 @@ HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 uv run --project analysis/tokenizer --fr
   --num-blocks 96 --block-size 32 --out artifacts/e4-probes-NEW
 ```
 
-Launch vLLM as in the [CPU build plan](../../docs/archive/m4-cpu-build-plan.md), but with
+Launch vLLM as in the [CPU build plan](../../docs/records/m4-cpu-build-plan.md), but with
 `--max-model-len 2048 --kv-cache-memory-bytes 352321536`. The log should report
 3,072 tokens. Record 96 as `num_gpu_blocks` in the manifest, then:
 
