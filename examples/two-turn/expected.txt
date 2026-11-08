@@ -1,0 +1,8 @@
+== qwen3
+turn 2: generation-prompt-dropped | diverges at token 12 | 4 turn-1 tokens not shared
+  turn 1 continues: '<think>\n\n</think>\n\n'
+  turn 2 continues: 'Hello from the fake model.'
+== qwen2.5
+turn 2: append-only | diverges at token 33 | 0 turn-1 tokens not shared
+  turn 1 continues: ''
+  turn 2 continues: 'Hello from the fake model.'

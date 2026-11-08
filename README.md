@@ -51,6 +51,14 @@ Then `analysis/report.py traces/demo` verifies and summarizes the capture. Point
 `-upstream` at a vLLM server to capture real traffic. Proxy details:
 [reference](docs/proxy.md). Full reproduction: [reproduce](docs/reproduce.md).
 
+## Try it without an engine
+
+[Two synthetic examples](examples/README.md) reproduce small versions of the
+study's results on a fresh checkout: a one-block eviction threshold
+(`python3 examples/one-block/run.py`, standard library only) and Qwen3's
+template boundary in a captured two-turn chat (`examples/two-turn/run.sh`,
+needs the pinned tokenizers).
+
 ## Analyze a capture
 
 `analysis/cachino_analyze.py` runs every analysis command; those that render
@@ -75,6 +83,7 @@ history changed. Other commands: `attribute`, `concurrent`, `curve`, `sweep`,
 | `cmd/`, `internal/` | Proxy, capture, fake upstream and demo (Go) |
 | `analysis/` | Rendering, cache predictor, attribution and replays (Python) |
 | `experiments/` | Calibration, eviction probes, agent task and sessions, proxy overhead, GPU confirmation, figures |
+| `examples/` | [Synthetic checks](examples/README.md) a fresh checkout can run |
 | `docs/` | [Report](docs/report.md), [reproduce](docs/reproduce.md), [proxy reference](docs/proxy.md), [run records](docs/records/) |
 
 ## Tests

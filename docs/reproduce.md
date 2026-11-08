@@ -91,7 +91,13 @@ HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 $T experiments/figures/make_figures.py
 It reads the run directories named in the [records](records/) and rewrites
 `docs/figures/`.
 
-## 6. Tests
+## 6. Examples
+
+[examples/](../examples/README.md) holds two synthetic checks with committed
+expected output: a one-block eviction threshold and a two-turn template
+boundary. Neither needs an engine.
+
+## 7. Tests
 
 ```sh
 go build ./... && go vet ./... && go test -race ./...

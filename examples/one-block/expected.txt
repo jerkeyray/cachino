@@ -1,0 +1,15 @@
+18 requests, 5791 prompt tokens, 32-token blocks
+
+| Cache blocks | Reused tokens | Lost to eviction |
+| --- | --- | --- |
+| 32 | 4192 | 128 |
+| 33 | 4256 | 64 |
+| 34 | 4288 | 32 |
+| 35 | 4320 | 0 |
+| 36 | 4320 | 0 |
+
+No eviction from 35 blocks up.
+At 34 blocks, s2 turn 5 reuses 352 tokens instead of 384.
+
+At 34 blocks, a predictor that assumes every matching prefix is still cached
+agrees with the free-queue prediction on 17 of 18 requests; total difference 32 tokens.
