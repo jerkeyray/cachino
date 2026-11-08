@@ -1,0 +1,15 @@
+{
+ "trace": "live-concurrent-20261107-01, 30 requests, bundle gpu-bundle-20261108-01",
+ "protocol": "sequential replay, two rounds per size after a reset, capture off",
+ "engine": "vLLM 0.33.0rc1.dev595+g2173d7121, prefix caching, 32-token blocks, SHA-256 block hashes; Kaggle Tesla T4 (one of two used), driver 580.178.04, torch 2.14.0+cu130",
+ "replay_model": "Qwen/Qwen3-0.6B at c1899de289a04d12100db370d81485cdf75e47ca, FP16",
+ "ttft": "sum of vLLM's per-request time_to_first_token_ms over the 30 requests",
+ "ttft_fit": {
+  "intercept_ms": 64.36491976992613,
+  "ms_per_recomputed_token": 1.344823377035331,
+  "points": 240
+ },
+ "per_request_rows": "not retained: only the printed summary was saved",
+ "date_utc": "2026-11-08",
+ "report": "3.6"
+}

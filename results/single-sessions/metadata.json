@@ -1,0 +1,12 @@
+{
+ "runs": {
+  "qwen3-0.6b-greedy": "live-cpu-readonly-20261107-01",
+  "qwen3-0.6b-sampled": "live-cpu-sampled-20261107-01",
+  "qwen3-1.7b-varied": "live-cpu-1.7b-20261107-02"
+ },
+ "protocol": "live single session, mini-swe-agent, read-only observations",
+ "counting": "turn 0 starts from a cold cache; the report's reuse and split shares count from turn 1",
+ "engine": "vLLM 0.33.0rc1.dev595+g2173d7121, prefix caching, 32-token blocks, SHA-256 block hashes; Mac CPU (Apple M5)",
+ "date_utc": "2026-11-07",
+ "report": "3.2"
+}

@@ -1,0 +1,14 @@
+{
+ "run": "limit-matrix-20261108: engine seeds 1-5, four sessions through one shared proxy",
+ "limits": {
+  "none": "no limit",
+  "cap-2": "-max-active-sessions 2",
+  "budget-v1": "-session-token-budget 14016, first version",
+  "budget-v2": "-session-token-budget 14016, waits for younger in-flight requests (the report's table)"
+ },
+ "protocol": "live run: Qwen3-1.7B mini-swe-agent sessions, temperature 0.7, read-only observations",
+ "engine": "vLLM 0.33.0rc1.dev595+g2173d7121, prefix caching, 32-token blocks, SHA-256 block hashes; Mac CPU (Apple M5); 438 blocks (14,016 tokens)",
+ "timing": "engine_ttft_ms is vLLM's per-request metric; wall_clock_s is the harness's; Mac CPU timing compares conditions only",
+ "date_utc": "2026-11-08",
+ "report": "3.8"
+}

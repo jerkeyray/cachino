@@ -1,0 +1,5 @@
+num_blocks,requests,prompt_tokens,cached_tokens,recomputed_tokens,eviction_tokens,predictor_exact,parity_requests,ttft_round1_s,ttft_round2_s
+384,30,110271,80512,29759,12832,30,30,43.9835,43.7502
+438,30,110271,88832,21439,4512,30,30,31.0933,30.6896
+488,30,110271,93344,16927,0,30,30,23.437,23.7387
+640,30,110271,93344,16927,0,30,30,23.5496,23.9655

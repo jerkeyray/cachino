@@ -1,0 +1,8 @@
+{
+ "run": "overlap-replay-20261108-01: three evicting runs replayed at their recorded offsets",
+ "protocol": "timed overlap replay with ignore_eos and recorded completion lengths, Qwen3-0.6B, 438 blocks",
+ "engine": "vLLM 0.33.0rc1.dev595+g2173d7121, prefix caching, 32-token blocks, SHA-256 block hashes; Mac CPU (Apple M5)",
+ "predictors": "decode blocks taken at admission, at completion, or ignored (prompt only)",
+ "date_utc": "2026-11-08",
+ "report": "3.1"
+}

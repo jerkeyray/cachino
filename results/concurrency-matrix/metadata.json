@@ -1,0 +1,8 @@
+{
+ "run": "concurrency-matrix-20261107: engine seeds 1-3 x 2, 3, 4 concurrent sessions",
+ "protocol": "live run: Qwen3-1.7B mini-swe-agent sessions, temperature 0.7, step limit 10, read-only observations, one proxy per session",
+ "engine": "vLLM 0.33.0rc1.dev595+g2173d7121, prefix caching, 32-token blocks, SHA-256 block hashes; Mac CPU (Apple M5); 438 blocks (14,016 tokens)",
+ "order": "rows in proxy start order; start_s and end_s are seconds since the run's first request",
+ "date_utc": "2026-11-07",
+ "report": "3.1, 3.5"
+}

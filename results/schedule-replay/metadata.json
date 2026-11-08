@@ -1,0 +1,7 @@
+{
+ "run": "schedule-replay-20261108-01: trace concurrency-matrix-20261107 s2-n4 in five orders",
+ "protocol": "reordered sequential replay; each session keeps its turn order; delay counts positions",
+ "engine": "vLLM 0.33.0rc1.dev595+g2173d7121, prefix caching, 32-token blocks, SHA-256 block hashes; Mac CPU (Apple M5); Qwen3-0.6B replay; 438 blocks",
+ "date_utc": "2026-11-08",
+ "report": "3.7"
+}
