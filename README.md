@@ -20,7 +20,7 @@ Mac CPU and a Tesla T4. Full study: **[report](docs/report.md)**.
 | Qwen3's template re-prefills each reply | It drops the empty thinking cue from history; a template without the mismatch let vLLM reuse a 442-token reply |
 | Shared caches evict past a predictable threshold | 17% to 25% of recomputation when sessions outgrew the cache; the capture predicted which runs would, 9 of 9 |
 | Eviction costs time | About 1.34 ms of time to first token per recomputed token on a T4; +31% and +86% below the threshold |
-| Scheduling can remove it | At most two sessions at a time cut recomputation 16.5% on an evicting trace |
+| Scheduling can remove it | At most two sessions at a time cut recomputation 16.5% on an evicting trace; live, the proxy's session cap removed eviction where it occurred but cost waiting time elsewhere |
 
 ![Eviction against cache size](docs/figures/eviction-curve.svg)
 

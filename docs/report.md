@@ -174,7 +174,36 @@ unchanged. Delay is how many positions later than recorded each request ran.
 Every order matched its prediction on all 39 requests. Two sessions at a time,
 or a greedy order, removed eviction and cut recomputation by 16.5%.
 
-### 3.7 Proxy overhead
+### 3.7 A live concurrency limit
+
+Cachino's proxy can cap active sessions (`-max-active-sessions`; a session stays
+active between its turns for an idle period, and new sessions wait for a free
+slot). Four concurrent Qwen3-1.7B sessions shared one proxy and one 438-block
+cache, with the cap off and at 2, over three engine seeds (run
+`limit-matrix-20261108`). Runs without the cap reproduced the earlier seeded
+runs exactly.
+
+| Seed | Cap | Requests | Lost to eviction | Engine time to first token | Wall clock | Waits |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | off | 40 | 0 | 77.1 s | 201.8 s | none |
+| 1 | 2 | 30 | 0 | 55.5 s | 189.3 s | 101 s, 117 s |
+| 2 | off | 39 | 4,640 | 337.8 s | 387.5 s | none |
+| 2 | 2 | 40 | 0 | 212.2 s | 373.7 s | 197 s, 217 s |
+| 3 | off | 40 | 0 | 139.2 s | 241.6 s | none |
+| 3 | 2 | 37 | 0 | 191.0 s | 303.6 s | 120 s, 140 s |
+
+- The cap removed eviction in the one seed whose sessions outgrew the cache.
+- Where nothing would have been evicted, it only made two sessions wait, and
+  total wall clock rose by up to 26%.
+- The predictor was exact on 223 of 226 requests, all misses in the evicting run.
+
+Changing the interleaving changes which sampled replies are generated, so
+trajectories, request counts and recomputed totals differ between paired runs;
+eviction is the comparable measure. A fixed cap pays off only when the combined
+working set exceeds the cache, which the capture-based threshold (3.4)
+predicts. Timing is on the Mac CPU and compares conditions only.
+
+### 3.8 Proxy overhead
 
 Forwarding adds about 0.24 ms to a JSON exchange and 0.4 ms to the first SSE
 event. Capture adds about 15 ms per request on macOS, because each event and
@@ -203,16 +232,16 @@ raw capture. Search records: [first check](records/related-work-check-20261101.m
 - Commands were never executed, so trajectories differ from a real environment,
   and task success was not measured.
 - Timing comes from one sequential replay on one GPU.
-- The scheduling result is a sequential replay with delay in positions, not a
-  live system measured in wall-clock time.
+- The scheduling replay counts delay in positions; the live cap test measures
+  wall-clock time, but only on the Mac CPU, over three seeds, with one task.
 - vLLM's native simulator could not run on the Mac (it needs `triton-cpu` on
   x86_64 Linux), so the predictor was not compared with it.
 
 ## 6. Future work
 
-A second harness and real tasks with execution; scheduling under live overlap
-with wall-clock delay; larger models on faster GPUs; and a comparison with
-vLLM's native simulator once it is merged.
+A second harness and real tasks with execution; a cap that switches on only
+when the predicted working set exceeds the cache; larger models on faster GPUs;
+and a comparison with vLLM's native simulator once it is merged.
 
 ## 7. Reproducing
 
