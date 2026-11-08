@@ -110,6 +110,12 @@ def environment():
     return info
 
 
+
+def total(values):
+    """Sum values, or return None if any is None: a missing count is unknown, never zero."""
+    values = list(values)
+    return None if any(v is None for v in values) else sum(values)
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--bundle", type=Path, default=HERE)
@@ -160,14 +166,18 @@ def main():
             process.wait(timeout=60)
         first = rounds[0]
         prompt = sum(r["prompt_tokens"] for r in first)
-        cached = sum(r["cached"] or 0 for r in first)
+        cached = total(r["cached"] for r in first)
+        # Totals that need a missing engine value are unknown (None), not zero.
         result["sizes"].append({
             "requested_blocks": size, "num_blocks": num_blocks, "requests": len(first), "prompt_tokens": prompt,
-            "cached_tokens": cached, "recomputed_tokens": prompt - cached,
-            "eviction_tokens": sum(max(r["session_bound"] - (r["cached"] or 0), 0) for r in first),
+            "cached_tokens": cached, "recomputed_tokens": None if cached is None else prompt - cached,
+            "eviction_tokens": total(None if r["cached"] is None else max(r["session_bound"] - r["cached"], 0)
+                                     for r in first),
+            "cached_missing": sum(r["cached"] is None for r in first),
             "predictor_exact": sum(r["cached"] == r["predicted"] for r in first),
             "parity": sum(r["parity"] for r in first),
-            "ttft_ms_total_by_round": [round(sum(r["ttft_ms"] or 0 for r in rows), 1) for rows in rounds],
+            "ttft_ms_total_by_round": [None if (t := total(r["ttft_ms"] for r in rows)) is None else round(t, 1)
+                                       for rows in rounds],
             "rounds": rounds})
     a, b = fit(points) if points else (None, None)
     result["ttft_fit"] = {"intercept_ms": a, "ms_per_recomputed_token": b, "points": len(points)}

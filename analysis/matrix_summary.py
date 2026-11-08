@@ -28,10 +28,13 @@ def run_row(path):
             "cross_session": sum(max(r["cached_tokens"] - r["session_bound"], 0) for r in rows),
             "overlap_exact": sum(r["cached_tokens"] == r["predicted_overlap"] for r in rows),
             "sequential_exact": sum(r["cached_tokens"] == r["predicted_sequential"] for r in rows),
-            # Timing fields exist only for runs recorded with wall-clock times.
-            "engine_ttft_total_s": round(sum(r.get("engine_ttft_ms") or 0 for r in rows) / 1000, 1),
+            # Timing fields exist only for runs recorded with wall-clock times;
+            # the total is unknown (None) unless every request has one.
+            "engine_ttft_total_s": None if any(r.get("engine_ttft_ms") is None for r in rows)
+                                   else round(sum(r["engine_ttft_ms"] for r in rows) / 1000, 1),
             "wall_clock_s": raw.get("wall_clock_s"),
             "mean_session_s": round(sum(spans) / len(spans), 1) if spans else None,
+            # The limiter logs only requests that waited, so an absent wait is zero.
             "total_wait_s": round(sum(w["waited_ms"] for w in raw.get("waits", [])) / 1000, 1)}
 
 

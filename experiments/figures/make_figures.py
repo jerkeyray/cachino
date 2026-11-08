@@ -83,6 +83,8 @@ def split_totals(path):
     totals = {k: 0 for k in ("new_content", "previous_reply", "block_rounding", "eviction")}
     for row in live[1:]:
         for k in totals:
+            if row["split"][k] is None:
+                raise ValueError("%s: request %s has an unknown %s" % (path, row["index"], k))
             totals[k] += row["split"][k]
     return totals
 

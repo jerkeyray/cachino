@@ -133,7 +133,10 @@ def main():
                "parity": sum(r["parity"] for r in rows),
                "engine_eviction": sum(max(r["session_bound"] - r["engine"], 0) for r in rows),
                "exact": {v: sum(r["engine"] == r["predicted_" + v] for r in rows) for v in variants},
-               "abs_error_tokens": {v: sum(abs(r["engine"] - (r["predicted_" + v] or 0)) for r in rows) for v in variants},
+               # Error over requests the variant predicted; unpredicted ones are counted, not scored as 0.
+               "abs_error_tokens": {v: sum(abs(r["engine"] - r["predicted_" + v]) for r in rows
+                                           if r["predicted_" + v] is not None) for v in variants},
+               "unpredicted": {v: sum(r["predicted_" + v] is None for r in rows) for v in variants},
                "max_overlap": max(sum(1 for o in rows if o["send"] < r["recv"] and o["recv"] > r["send"]) for r in rows)}
     for row in rows:
         row["prompt_tokens"] = len(row.pop("ids"))

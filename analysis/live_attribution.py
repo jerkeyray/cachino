@@ -104,6 +104,8 @@ def attribute(rows, tokenizer, pin, num_blocks, block, generated=True, chat_temp
         bound = min(best, len(ids) - 1) // block * block
         # A reply of g tokens leaves KV for prompt + g - 1 tokens. generated=1
         # (also used for max_tokens-1 replay) therefore models the prompt alone.
+        # A missing completion count is modeled as one generated token; this is
+        # a predictor input, and a wrong guess shows up as a prediction miss.
         g = max(seen["completion_tokens"] or 1, 1) if generated else 1
         if generated and use_reply_ids:
             tail = reply_ids(tokenizer, response)
@@ -128,15 +130,17 @@ def attribute(rows, tokenizer, pin, num_blocks, block, generated=True, chat_temp
         reply_tokens = previous_reply[1] if previous_reply and assistants and assistants[-1] == previous_reply[0] else 0
         if use_reply_ids and best > previous_prompt:
             reply_tokens = 0  # the shared prefix runs into the previous reply's own KV
-        row["split"] = {"recomputed": len(ids) - (seen["cached_tokens"] or 0),
+        # A missing engine count leaves the parts that need it unknown (None).
+        row["split"] = {"recomputed": None if seen["cached_tokens"] is None else len(ids) - seen["cached_tokens"],
                         "previous_reply": reply_tokens,
-                        "new_content": len(ids) - best - reply_tokens,
+                        "new_content": None if reply_tokens is None else len(ids) - best - reply_tokens,
                         # Includes the final prompt token, which is never served from cache.
                         "block_rounding": best - bound,
                         "eviction": bound - predicted["cached_tokens"]}
         choice = (response.get("choices") or [{}])[0]
         content = (choice.get("message") or {}).get("content")
-        previous_reply = (content, seen["completion_tokens"] or 0) if content is not None else None
+        # The reply's size stays None when the engine did not report it.
+        previous_reply = (content, seen["completion_tokens"]) if content is not None else None
         row["parity_count"] = seen["prompt_tokens"] == len(ids) if seen["prompt_tokens"] is not None else None
         row["matches_prediction"] = (seen["cached_tokens"] == predicted["cached_tokens"]) if seen["cached_tokens"] is not None else None
         out.append(row)

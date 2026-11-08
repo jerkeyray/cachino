@@ -71,6 +71,7 @@ def load_requests(run_dir, tokenizer, pin):
                     raise ValueError("unverified body in %s" % capture)
                 bodies.append(json.loads(data))
             session = label or record.get("session_id")
+            # The limiter logs only requests that waited, so absent means none.
             waited = waits.get(record["request_id"], 0.0)
             arrival = datetime.fromisoformat(record["started_at"].replace("Z", "+00:00")).timestamp()
             rows.append({"session": session, "turn": turns.get(session, 0), "start": arrival + waited / 1000.0,

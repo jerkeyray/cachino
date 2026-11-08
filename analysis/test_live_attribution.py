@@ -61,5 +61,30 @@ class ReplyIdsTests(unittest.TestCase):
         self.assertEqual(rows[1]["split"]["previous_reply"], 0)
 
 
+class MissingCountTests(unittest.TestCase):
+    """A count the engine did not report stays unknown in the split, never zero."""
+
+    def attribute(self, rows):
+        with mock.patch.object(live_attribution, "render", fake_render):
+            return live_attribution.attribute(rows, FakeTokenizer(), None, 64, BLOCK)
+
+    def test_missing_cached_tokens_leave_recomputed_unknown(self):
+        request, response = exchange(list(range(1, 7)), [20], 0)
+        del response["usage"]["prompt_tokens_details"]
+        row = self.attribute([(request, response)])[0]
+        self.assertIsNone(row["split"]["recomputed"])
+        self.assertIsNone(row["matches_prediction"])
+
+    def test_missing_reply_size_leaves_reply_and_new_content_unknown(self):
+        first = exchange(list(range(1, 7)), [20, 21], 0)
+        del first[1]["usage"]["completion_tokens"]
+        second = exchange(list(range(1, 7)) + [30, 31, 32], [50], 4)
+        second[0]["messages"] = [{"role": "user", "content": "x"}, {"role": "assistant", "content": "20 21"}]
+        row = self.attribute([first, second])[1]
+        self.assertIsNone(row["split"]["previous_reply"])
+        self.assertIsNone(row["split"]["new_content"])
+        self.assertEqual(row["split"]["recomputed"], 5)
+
+
 if __name__ == "__main__":
     unittest.main()
