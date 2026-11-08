@@ -1,4 +1,4 @@
-# Offline capture milestone
+# Offline capture demo
 
 Run from the repository root, with Go, Python 3.9+ and uv installed:
 

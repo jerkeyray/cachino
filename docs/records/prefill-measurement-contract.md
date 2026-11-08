@@ -1,8 +1,8 @@
 # Prefill measurement contract, version 1
 
-Status: M1 specification grounded in existing Cachino and read-only vLLM source
+Status: specification grounded in existing Cachino and read-only vLLM source
 inspection on 2026-11-03. No vLLM runtime, cache state or performance was tested.
-See the execution plan for milestones and
+See the [report](../report.md) for results and
 [the pinned source paths](vllm-source-paths.md) for the observation mechanisms.
 
 ## Supported initial experiment

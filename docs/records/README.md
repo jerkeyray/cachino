@@ -20,7 +20,7 @@ and `traces/`.
 | [concurrent-results-20261107](concurrent-results-20261107.md) | Three concurrent sessions and repetitions |
 | [cache-sweep-20261107](cache-sweep-20261107.md) | Fixed trace at six cache sizes |
 | [related-work-check-20261101](related-work-check-20261101.md), [-20261107](related-work-check-20261107.md) | Prior-work checks and search records |
-| [stage2-results-20261108](stage2-results-20261108.md) | Seeded repetitions and threshold location |
+| [repetitions-20261108](repetitions-20261108.md) | Seeded repetitions and threshold location |
 | [control-template-20261108](control-template-20261108.md) | Qwen2.5 control template |
 | [direct-harness-observations](direct-harness-observations.md) | Harness adapter wire check |
 | [prefill-measurement-contract](prefill-measurement-contract.md), [vllm-source-paths](vllm-source-paths.md), [mini-swe-agent-source-paths](mini-swe-agent-source-paths.md), [trace-format](trace-format.md) | Measurement contract and source references |

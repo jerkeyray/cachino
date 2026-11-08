@@ -96,7 +96,7 @@ evicting runs with their recorded timing, a predictor that takes decode blocks
 at admission was exact on 93 of 98 requests, one that takes them at completion
 on 92, and one that ignores them on 88. The engine allocates as it decodes,
 between the first two, so the remaining error is decode-block timing, not the
-eviction rules ([stage 2](records/stage2-results-20261108.md)).
+eviction rules ([repetitions](records/repetitions-20261108.md)).
 
 ### 3.2 Single sessions: mostly new content
 
@@ -135,7 +135,7 @@ Concurrent sessions on one 14,016-token cache evicted each other in 2 of 9
 seeded runs, losing 17% to 18% of recomputed tokens (25% in an earlier run).
 Session count did not predict which runs evicted; the threshold computed from
 each capture did, for all 9 runs ([concurrent](records/concurrent-results-20261107.md),
-[stage 2](records/stage2-results-20261108.md)).
+[repetitions](records/repetitions-20261108.md)).
 
 ![Eviction against cache size](figures/eviction-curve.svg)
 

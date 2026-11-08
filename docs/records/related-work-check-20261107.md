@@ -1,6 +1,6 @@
 # Related work for the CPU findings
 
-Stage 1 of the next stages plan, done 2026-11-07. It
+Done 2026-11-07. It
 extends the [first related-work check](related-work-check-20261101.md), which
 already found that request capture, harness comparisons and prefix-reuse cost
 are studied. This check compares each CPU finding with current work. It is a
@@ -77,12 +77,12 @@ cross-session reuse from a raw capture.
 
 ## Decision
 
-Per the research plan's stopping table ("closest work covers the result:
+Per the study's stopping rule ("closest work covers the result:
 position it as reproduction and tooling"), Cachino is a **measurement and
 attribution tool with validated reproductions**, not a source of new
 mechanisms.
 
-Working claim, replacing the residency-first framing in the next stages plan:
+Working claim:
 
 > From a raw capture of agent traffic, Cachino attributes every request's lost
 > prefix reuse to prompt changes, block rounding, eviction or cross-session
@@ -97,17 +97,6 @@ It would be withdrawn or narrowed if:
 - exact agreement fails on independent runs or another engine build;
 - independent repetitions put the template share or the eviction cliff
   outside the ranges reported.
-
-## Consequences for the next stages
-
-- **Stage 2** stays, with two additions: compare our predictor against vLLM's
-  native simulator branch on the same captures (it needs `triton-cpu` and a new
-  checkout), and compare with PrefixSim's policies on our traces.
-- **Stage 4:** CacheWise, Continuum and Penelope already propose eviction and
-  scheduling interventions. A new policy would compete with them. Better: use
-  Cachino's attribution to evaluate one existing policy or setting on our
-  traces, or test the published template fix with a task-level check.
-- Novelty claims are dropped from any write-up.
 
 ## Search record
 

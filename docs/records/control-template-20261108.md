@@ -1,6 +1,6 @@
 # Control template without the thinking cue, 2026-11-08
 
-Part of Stage 2 in the next stages plan. Qwen3's
+Qwen3's
 template adds an empty `<think></think>` cue to the generation prompt but
 leaves it out of assistant history, so each turn diverges from the previous
 generation context ([live session](live-cpu-results-20261107.md),
