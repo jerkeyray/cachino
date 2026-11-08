@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use these measurements or this software, cite the repository and the commit you used."
+title: "Cachino: where coding agents lose prefix reuse"
+abstract: >-
+  An engine-validated measurement study of vLLM prefix caching under coding-agent
+  traffic. Cachino captures agent requests byte for byte, rebuilds exact prompt
+  token IDs, predicts each request's prefix-cache hit from a pinned vLLM build's
+  rules, attributes recomputed tokens to their causes, and checks every
+  prediction against the engine.
+type: software
+authors:
+  - alias: jerkeyray
+repository-code: "https://github.com/jerkeyray/cachino"
+url: "https://github.com/jerkeyray/cachino"
+date-released: 2026-11-08
+keywords:
+  - vllm
+  - prefix caching
+  - kv cache
+  - coding agents
+  - llm serving
+  - measurement

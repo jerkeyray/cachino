@@ -3,6 +3,8 @@
 | Document | Read it for |
 | --- | --- |
 | [Report](report.md) | The study: question, method, results with figures, related work, limitations |
+| [How to read the results](reading-results.md) | Units, protocols, evidence levels and comparison limits, before quoting a number |
+| [Result card: 487 vs 488 blocks](result-card-487-488.md) | The headline result: claim, conditions, evidence, scope |
 | [Reproduce](reproduce.md) | Environments, the pinned engine launch and every experiment, in order |
 | [Proxy reference](proxy.md) | Forwarding, capture format, session limits and their flags |
 | [Run records](records/README.md) | Dated records behind each result, with run directories, spec hashes and commits |

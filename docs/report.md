@@ -233,6 +233,7 @@ each capture did, for all 9 runs ([concurrent](records/concurrent-results-202611
 ![Eviction against cache size](figures/eviction-curve.svg)
 
 *Figure 4. Predicted eviction for one captured trace at every cache size, with engine measurements on the CPU and the T4.*
+The 487 and 488 block pair has its own [result card](result-card-487-488.md).
 
 One three-session trace replayed at each size: nothing is lost from 488 blocks
 up, and eviction grows steadily below. Engine points on the CPU and the T4 sit
