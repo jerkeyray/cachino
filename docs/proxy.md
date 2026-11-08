@@ -76,6 +76,14 @@ each wait is logged with the session, capture request ID and duration. The
 limit sits inside capture, so captured durations include the wait. It keeps
 admitted sessions' prefixes resident in a shared cache at the cost of waiting.
 
+`-session-token-budget T` adds a size limit, alone or with the count limit.
+Each active session's KV footprint is estimated from its latest request's
+`Content-Length` times `-tokens-per-byte` (default 0.25, measured on the
+study's captures). A turn proceeds if its footprint plus those of the active
+sessions admitted before it fit within T; the oldest session always proceeds.
+A younger session whose next turn does not fit is suspended between turns and
+waits ahead of sessions that have not started, keeping its age when it resumes.
+
 ## Fake model and demo
 
 `fake-model` returns a fixed JSON or SSE chat completion. It needs a model and

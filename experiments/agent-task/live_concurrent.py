@@ -9,6 +9,8 @@ modes:
   serves every session, which sends its own X-Cachino-Session label. Its
   capture holds all sessions, and --max-active N turns on the proxy's
   active-session limit, so the limit's effect can be measured live.
+  --token-budget T turns on its size limit instead or as well: younger
+  sessions wait while active sessions' estimated footprints exceed T tokens.
 
 Sessions start together and run in threads; each records its wall-clock start
 and end in its worker result.
@@ -48,7 +50,7 @@ def session_specs(base, count, first_port, shared_port=None):
     return specs
 
 
-def start_shared_proxy(out, engine, port, max_active, idle):
+def start_shared_proxy(out, engine, port, max_active, idle, budget=0, per_byte=0.25):
     """Build Cachino and start it in front of the engine; return the process."""
     binary = out / "cachino"
     subprocess.run(["go", "build", "-o", str(binary), "./cmd/cachino"], cwd=ROOT,
@@ -56,7 +58,11 @@ def start_shared_proxy(out, engine, port, max_active, idle):
     command = [str(binary), "-listen", "127.0.0.1:%d" % port, "-upstream", engine,
                "-trace-dir", str(out / "capture"), "-session", "unlabeled"]
     if max_active:
-        command += ["-max-active-sessions", str(max_active), "-session-idle", idle]
+        command += ["-max-active-sessions", str(max_active)]
+    if budget:
+        command += ["-session-token-budget", str(budget), "-tokens-per-byte", str(per_byte)]
+    if max_active or budget:
+        command += ["-session-idle", idle]
     log = (out / "proxy.log").open("x")
     process = subprocess.Popen(command, stdout=log, stderr=subprocess.STDOUT)
     deadline = time.monotonic() + 10
@@ -87,18 +93,21 @@ def main():
     parser.add_argument("--first-port", type=int, default=18090)
     parser.add_argument("--shared-proxy", action="store_true")
     parser.add_argument("--max-active", type=int, default=0, help="with --shared-proxy: active-session limit")
+    parser.add_argument("--token-budget", type=int, default=0, help="with --shared-proxy: KV budget in tokens")
+    parser.add_argument("--tokens-per-byte", type=float, default=0.25)
     parser.add_argument("--session-idle", default="5s")
     parser.add_argument("--engine", default="http://127.0.0.1:18000")
     parser.add_argument("--harness", type=Path, default=ROOT / ".project/checkouts/mini-swe-agent")
     parser.add_argument("--python", type=Path, default=ROOT / ".project/envs/mini-wire/bin/python")
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
-    if args.max_active and not args.shared_proxy:
-        parser.error("--max-active needs --shared-proxy")
+    if (args.max_active or args.token_budget) and not args.shared_proxy:
+        parser.error("--max-active and --token-budget need --shared-proxy")
     out = args.out.resolve()
     out.mkdir(mode=0o700, parents=True)
     base = json.loads(args.spec.read_text())
-    proxy = start_shared_proxy(out, args.engine, args.first_port, args.max_active, args.session_idle) \
+    proxy = start_shared_proxy(out, args.engine, args.first_port, args.max_active, args.session_idle,
+                               args.token_budget, args.tokens_per_byte) \
         if args.shared_proxy else None
     results, threads = {}, []
     started = time.time()
@@ -124,7 +133,8 @@ def main():
         if proxy is not None:
             proxy.terminate()
             proxy.wait(timeout=30)
-    summary = {"shared_proxy": args.shared_proxy, "max_active": args.max_active, "session_idle": args.session_idle,
+    summary = {"shared_proxy": args.shared_proxy, "max_active": args.max_active, "token_budget": args.token_budget,
+               "tokens_per_byte": args.tokens_per_byte, "session_idle": args.session_idle,
                "wall_clock_s": round(time.time() - started, 1), "sessions": results}
     if args.shared_proxy:
         summary["waits"] = waits_from_log(out / "proxy.log")

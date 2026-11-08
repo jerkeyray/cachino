@@ -6,6 +6,7 @@ import (
 	"errors"
 	"flag"
 	"log"
+	"math"
 	"net/http"
 	"os/signal"
 	"syscall"
@@ -32,7 +33,9 @@ func run() error {
 	bodyLimit := flag.Int64("trace-body-limit", 16<<20, "maximum stored bytes per request or response body")
 	session := flag.String("session", "", "default capture session label (caller may override X-Cachino-Session)")
 	maxActive := flag.Int("max-active-sessions", 0, "opt-in limit on concurrently active sessions; others wait (0 disables)")
-	sessionIdle := flag.Duration("session-idle", 5*time.Second, "how long a session stays active after its last request, with -max-active-sessions")
+	sessionIdle := flag.Duration("session-idle", 5*time.Second, "how long a session stays active after its last request, with -max-active-sessions or -session-token-budget")
+	tokenBudget := flag.Int("session-token-budget", 0, "opt-in KV budget in tokens; younger sessions wait while active sessions' estimated footprints exceed it (0 disables)")
+	tokensPerByte := flag.Float64("tokens-per-byte", 0.25, "estimated prompt tokens per request byte, with -session-token-budget")
 	flag.Parse()
 	handler, err := proxy.New(*upstream, proxy.WithMessagesPrefix(*messagesPrefix))
 	if err != nil {
@@ -49,10 +52,19 @@ func run() error {
 	}
 	// The active-session limit sits inside capture, so a captured request's
 	// duration includes any wait and the wait log can name its request ID.
-	if *maxActive != 0 {
-		limiter, err := activelimit.New(*maxActive, *sessionIdle, *session)
+	if *maxActive != 0 || *tokenBudget != 0 {
+		count := *maxActive
+		if count == 0 {
+			count = math.MaxInt // the budget alone limits admission
+		}
+		limiter, err := activelimit.New(count, *sessionIdle, *session)
 		if err != nil {
 			return err
+		}
+		if *tokenBudget != 0 {
+			if err := limiter.SetBudget(*tokenBudget, *tokensPerByte); err != nil {
+				return err
+			}
 		}
 		handler = limiter.Wrap(handler)
 	}

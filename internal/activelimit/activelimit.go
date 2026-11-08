@@ -8,6 +8,18 @@
 // sessions are active. Holding whole sessions rather than single requests keeps
 // each admitted session's prefix resident between turns, which is the point of
 // the limit: it trades waiting for less eviction in a shared prefix cache.
+//
+// With a token budget (SetBudget), the count limit is joined by a size limit.
+// Each active session's KV footprint is estimated from its latest request's
+// Content-Length, since a request carries the whole conversation; the proxy
+// does not tokenize. A turn proceeds only if its session's footprint, plus
+// those of the active sessions admitted before it, fits the budget. The oldest
+// active session always proceeds, so some session can always make progress. A
+// younger session whose turn does not fit is suspended: it leaves the active
+// set and waits at the front of the queue, before sessions that never started,
+// until an older session's idle expiry frees room. A session is only stopped
+// between its own turns, never while a request is in flight, and requests
+// without a Content-Length count as zero bytes.
 package activelimit
 
 import (
@@ -26,20 +38,32 @@ type Limiter struct {
 	fallback string
 	logf     func(format string, args ...any)
 
+	// budget is the KV budget in tokens (0 disables the size limit), and
+	// perByte converts request bytes to estimated tokens.
+	budget  int
+	perByte float64
+
 	mu       sync.Mutex
 	sessions map[string]*session
 	waiters  []*waiter
+	admitted int // admission counter, giving each session its age
 }
 
 type session struct {
-	inflight int
-	expiry   *time.Timer
+	order     int // admission order; lower is older
+	footprint int // estimated tokens of the session's latest request
+	inflight  int
+	expiry    *time.Timer
 	// generation invalidates an idle timer when the session became busy again.
 	generation int
 }
 
 type waiter struct {
 	label string
+	size  int
+	// order is a suspended session's original admission order, kept so it
+	// resumes with its age; -1 for a session that has not started.
+	order int
 	ready chan struct{}
 }
 
@@ -51,6 +75,17 @@ func New(max int, idle time.Duration, fallback string) (*Limiter, error) {
 		return nil, fmt.Errorf("active session limit requires max >= 1 and a positive idle period")
 	}
 	return &Limiter{max: max, idle: idle, fallback: fallback, logf: log.Printf, sessions: map[string]*session{}}, nil
+}
+
+// SetBudget enables the size limit: tokens is the shared KV budget, and
+// perByte the estimated prompt tokens per request byte. Call it before Wrap
+// serves requests.
+func (l *Limiter) SetBudget(tokens int, perByte float64) error {
+	if tokens < 1 || perByte <= 0 {
+		return fmt.Errorf("token budget requires tokens >= 1 and a positive tokens-per-byte ratio")
+	}
+	l.budget, l.perByte = tokens, perByte
+	return nil
 }
 
 // Active reports the number of active sessions, for tests and diagnostics.
@@ -71,7 +106,11 @@ func (l *Limiter) Wrap(next http.Handler) http.Handler {
 			label = l.fallback
 		}
 		started := time.Now()
-		if wait := l.acquire(label); wait != nil {
+		size := 0
+		if l.budget > 0 && r.ContentLength > 0 {
+			size = int(float64(r.ContentLength) * l.perByte)
+		}
+		if wait := l.acquire(label, size); wait != nil {
 			select {
 			case <-wait.ready:
 			case <-r.Context().Done():
@@ -89,26 +128,67 @@ func (l *Limiter) Wrap(next http.Handler) http.Handler {
 // acquire counts the request against its session if the session is active or a
 // slot is free, returning nil; otherwise it queues and returns a waiter whose
 // channel is closed once the session has been admitted and the request counted.
-func (l *Limiter) acquire(label string) *waiter {
+func (l *Limiter) acquire(label string, size int) *waiter {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	if s, ok := l.sessions[label]; ok {
-		l.busy(s)
+		if s.inflight > 0 || l.fits(l.older(s.order), size) {
+			s.footprint = max(s.footprint, size)
+			l.busy(s)
+			return nil
+		}
+		// Suspend between turns: free the slot and wait ahead of new sessions.
+		if s.expiry != nil {
+			s.expiry.Stop()
+		}
+		delete(l.sessions, label)
+		w := &waiter{label: label, size: size, order: s.order, ready: make(chan struct{})}
+		l.waiters = append([]*waiter{w}, l.waiters...)
+		return w
+	}
+	if len(l.sessions) < l.max && len(l.waiters) == 0 && l.fits(l.older(l.admitted), size) {
+		l.busy(l.open(label, size, -1))
 		return nil
 	}
-	if len(l.sessions) < l.max && len(l.waiters) == 0 {
-		l.busy(l.open(label))
-		return nil
-	}
-	w := &waiter{label: label, ready: make(chan struct{})}
+	w := &waiter{label: label, size: size, order: -1, ready: make(chan struct{})}
 	l.waiters = append(l.waiters, w)
 	return w
 }
 
-func (l *Limiter) open(label string) *session {
-	s := &session{}
+// older sums the footprints of active sessions admitted before order.
+func (l *Limiter) older(order int) int {
+	total := 0
+	for _, s := range l.sessions {
+		if s.order < order {
+			total += s.footprint
+		}
+	}
+	return total
+}
+
+// fits reports whether a session of size fits after older tokens. With no
+// older session it always fits, so the oldest session is never held.
+func (l *Limiter) fits(older, size int) bool {
+	return l.budget == 0 || older == 0 || older+size <= l.budget
+}
+
+// open activates a session; order -1 gives it the next admission order.
+func (l *Limiter) open(label string, size, order int) *session {
+	if order < 0 {
+		order = l.admitted
+		l.admitted++
+	}
+	s := &session{order: order, footprint: size}
 	l.sessions[label] = s
 	return s
+}
+
+// ageOf is the admission order a waiter would hold if admitted now.
+func (l *Limiter) ageOf(w *waiter) int {
+	if w.order >= 0 {
+		return w.order
+	}
+	return l.admitted
 }
 
 // busy records one more request in flight and cancels any idle expiry.
@@ -154,10 +234,10 @@ func (l *Limiter) admit() {
 		w := l.waiters[0]
 		s, ok := l.sessions[w.label]
 		if !ok {
-			if len(l.sessions) >= l.max {
+			if len(l.sessions) >= l.max || !l.fits(l.older(l.ageOf(w)), w.size) {
 				return
 			}
-			s = l.open(w.label)
+			s = l.open(w.label, w.size, w.order)
 		}
 		l.busy(s)
 		l.waiters = l.waiters[1:]
