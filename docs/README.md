@@ -20,5 +20,5 @@ follows one theme that switches with the reader's light or dark setting.
 
 | Figure | Generator | Source data |
 | --- | --- | --- |
-| `reuse-loss.svg`, `pipeline.svg`, `banner.svg` | `experiments/figures/make_diagrams.py` | None: explanatory diagrams and the README banner |
+| `reuse-loss.svg`, `pipeline.svg`, `banner.svg` | `experiments/figures/make_diagrams.py` | None: explanatory diagrams and the README header |
 | `eviction-curve.svg`, `recompute-split.svg`, `gpu-ttft.svg`, `scheduling.svg`, `session-cap.svg` | `experiments/figures/make_figures.py` | Private run directories under `artifacts/`; every plotted number is written to `figures/data.json` |

@@ -116,53 +116,27 @@ def reuse_loss():
 
 
 def banner():
-    """README banner: the wordmark beside five agent turns drawn as KV blocks.
+    """README header: type only, on a transparent background.
 
-    Unlike the figures it carries its own dark background, so it reads the same
-    in GitHub's light and dark themes; its block colors are the dark-mode series
-    steps, validated for a dark surface.
+    The text takes the page's own ink in GitHub's light and dark themes, so the
+    header has no box of its own. It does not repeat the project name, which
+    GitHub already shows above the README.
     """
-    W, H = 1280, 320
-    bg, ink, ink2, muted, edge = "#0f1a2b", "#f0efec", "#c3c2b7", "#8b95a5", "#3d4b60"
-    reused, recomputed, evicted = "#3987e5", "#d95926", "#199e70"
-    font = 'font-family="-apple-system,BlinkMacSystemFont,&quot;Segoe UI&quot;,Helvetica,Arial,sans-serif"'
-    out = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" role="img" aria-labelledby="t d">' % (W, H),
-           '<title id="t">Cachino</title><desc id="d">Cachino: where coding agents lose prefix reuse. Five agent turns '
-           'drawn as KV-cache blocks: most of each prompt is reused, the end is recomputed, and one turn loses '
-           'blocks to eviction.</desc>',
-           '<rect width="%d" height="%d" rx="18" fill="%s"/>' % (W, H, bg)]
-    out.append('<text x="72" y="150" %s font-size="96" font-weight="700" letter-spacing="-2" fill="%s">Cachino</text>'
-               % (font, ink))
-    out.append('<text x="76" y="196" %s font-size="27" fill="%s">Where coding agents lose prefix reuse</text>' % (font, ink2))
-    out.append('<text x="76" y="244" %s font-size="17" fill="%s">Per-request, engine-validated prefix-cache '
-               'attribution for vLLM</text>' % (font, muted))
-    # Each turn's prompt grows; ("r" reused, "k" rounding, "c" recomputed, "e" evicted).
-    turns = ["cccccccc", "rrrrrrrkcc", "rrrrrrrrrkcc", "rrrrreeeeeekcc", "rrrrrrrrrrrrrkcc"]
-    size, gap, x0, y0 = 24, 6, 740, 66
-    fills = {"r": reused, "c": recomputed, "e": evicted}
-    for i, row in enumerate(turns):
-        y = y0 + i * (size + 10)
-        out.append('<text x="%d" y="%d" %s font-size="13" fill="%s" text-anchor="end">turn %d</text>'
-                   % (x0 - 14, y + 17, font, muted, i + 1))
-        for j, kind in enumerate(row):
-            x = x0 + j * (size + gap)
-            if kind == "k":
-                out.append('<rect x="%d" y="%d" width="%d" height="%d" rx="5" fill="none" stroke="%s" stroke-width="1.5"/>'
-                           % (x, y, size, size, edge))
-            else:
-                out.append('<rect x="%d" y="%d" width="%d" height="%d" rx="5" fill="%s"/>' % (x, y, size, size, fills[kind]))
-    ly = y0 + len(turns) * (size + 10) + 18
-    cx = x0
-    for color, label in ((reused, "reused"), (recomputed, "recomputed"), (evicted, "evicted"), (None, "block rounding")):
-        if color:
-            out.append('<rect x="%d" y="%d" width="12" height="12" rx="3" fill="%s"/>' % (cx, ly - 11, color))
-        else:
-            out.append('<rect x="%d" y="%d" width="12" height="12" rx="3" fill="none" stroke="%s" stroke-width="1.5"/>'
-                       % (cx, ly - 11, edge))
-        out.append('<text x="%d" y="%d" %s font-size="14" fill="%s">%s</text>' % (cx + 19, ly, font, ink2, label))
-        cx += 19 + 8 * len(label) + 26
-    out.append("</svg>\n")
-    return "".join(out)
+    W, H = 1280, 230
+    serif = 'font-family="&quot;Iowan Old Style&quot;,&quot;Palatino Linotype&quot;,Palatino,Georgia,serif"'
+    sans = 'font-family="-apple-system,BlinkMacSystemFont,&quot;Segoe UI&quot;,Helvetica,Arial,sans-serif"'
+    style = ("<style>svg{--ink:#1f2328;--ink2:#59636e;--rule:#d1d9e0}"
+             "@media (prefers-color-scheme: dark){svg{--ink:#f0f6fc;--ink2:#9198a1;--rule:#3d444d}}"
+             ".ink{fill:var(--ink)}.ink2{fill:var(--ink2)}.rule{stroke:var(--rule)}</style>")
+    return ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" role="img" aria-labelledby="t d">'
+            '<title id="t">Where coding agents lose prefix reuse</title>'
+            '<desc id="d">A measurement study of vLLM prefix caching under coding-agent traffic, November 2026.</desc>%s'
+            '<text x="0" y="44" %s font-size="17" letter-spacing="3" class="ink2">A MEASUREMENT STUDY · NOVEMBER 2026</text>'
+            '<text x="-3" y="126" %s font-size="66" class="ink">Where coding agents lose prefix reuse</text>'
+            '<text x="0" y="180" %s font-size="25" class="ink2">Per-request, engine-validated attribution of '
+            'vLLM prefix-cache misses</text>'
+            '<line x1="0" y1="222" x2="%d" y2="222" class="rule" stroke-width="1"/></svg>\n'
+            % (W, H, style, sans, serif, sans, W))
 
 
 def main():
