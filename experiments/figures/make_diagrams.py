@@ -130,8 +130,8 @@ def banner():
              ".ink{fill:var(--ink)}.ink2{fill:var(--ink2)}.rule{stroke:var(--rule)}</style>")
     return ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" role="img" aria-labelledby="t d">'
             '<title id="t">Where coding agents lose prefix reuse</title>'
-            '<desc id="d">A measurement study of vLLM prefix caching under coding-agent traffic, November 2026.</desc>%s'
-            '<text x="0" y="44" %s font-size="17" letter-spacing="3" class="ink2">A MEASUREMENT STUDY · NOVEMBER 2026</text>'
+            '<desc id="d">A measurement study of vLLM prefix caching under coding-agent traffic.</desc>%s'
+            '<text x="0" y="44" %s font-size="17" letter-spacing="3" class="ink2">A MEASUREMENT STUDY</text>'
             '<text x="-3" y="126" %s font-size="66" class="ink">Where coding agents lose prefix reuse</text>'
             '<text x="0" y="180" %s font-size="25" class="ink2">Per-request, engine-validated attribution of '
             'vLLM prefix-cache misses</text>'
