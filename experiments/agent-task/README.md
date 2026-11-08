@@ -51,6 +51,8 @@ engine, each with its own proxy and capture.
 | `live-cpu-1.7b.json` | Qwen3-1.7B, 30-turn limit |
 | `live-cpu-control.json` | Qwen2.5-0.5B-Instruct control template |
 | `live-cpu-concurrent.json` | Base spec for concurrent Qwen3-1.7B sessions |
+| `live-cpu-exec-default.json` | Qwen3-1.7B, sandboxed command execution, scored |
+| `live-cpu-exec-keep-cue.json` | As above, engine serving the cue-kept template |
 
 ```sh
 curl -s -X POST 127.0.0.1:18000/reset_prefix_cache
@@ -59,6 +61,13 @@ python3.14 -B experiments/agent-task/live_cpu.py --run \
 python3.14 -B experiments/agent-task/live_concurrent.py \
   --spec experiments/agent-task/live-cpu-concurrent.json --sessions 3 --out artifacts/concurrent-NEW
 ```
+
+The two `exec` specs use `sandbox_env.py` instead: commands really run, under
+macOS `sandbox-exec`, in a throwaway copy of the baseline tree with no network,
+writes only inside the copy and no reads elsewhere under `/Users`. After the
+session the driver scores the edited copy with `evaluate.py --run`.
+`make_keep_cue_template.py` derives the cue-kept Qwen3 template that the second
+arm's engine serves with `--chat-template`.
 
 `smol_cpu.py` runs the second harness, smolagents 1.26.0 `ToolCallingAgent`,
 with read-only tools over the same snapshot (spec `smol-cpu.json`; the engine

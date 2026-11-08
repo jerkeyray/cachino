@@ -77,13 +77,13 @@ def details(response):
             "engine_ttft_ms": (response.get("metrics") or {}).get("time_to_first_token_ms")}
 
 
-def attribute(rows, tokenizer, pin, num_blocks, block, generated=True):
+def attribute(rows, tokenizer, pin, num_blocks, block, generated=True, chat_template=None):
     """Return per-request attribution rows; generated=False models prompt-only traffic."""
     model = FreeQueuePredictor(num_blocks, block)
     earlier, out = [], []
     previous_reply = None  # (content, completion_tokens) of the previous response
     for index, (request, response) in enumerate(rows):
-        ids = render(tokenizer, request, pin)[1]
+        ids = render(tokenizer, request, pin, chat_template=chat_template)[1]
         seen = details(response)
         best = max((lcp(ids, other) for other in earlier), default=0)
         adjacent = lcp(ids, earlier[-1]) if earlier else 0
@@ -123,7 +123,7 @@ def attribute(rows, tokenizer, pin, num_blocks, block, generated=True):
     return out
 
 
-def replay(rows, tokenizer, pin, engine):
+def replay(rows, tokenizer, pin, engine, chat_template=None):
     """Resend prompts with return_token_ids and max_tokens 1 after one reset."""
     opener = build_opener(ProxyHandler({}))
 
@@ -138,7 +138,7 @@ def replay(rows, tokenizer, pin, engine):
     for request, _ in rows:
         body = dict(request, max_tokens=1, return_token_ids=True)
         response = post("/v1/chat/completions", json.dumps(body, ensure_ascii=False).encode("utf-8"))
-        ids = render(tokenizer, request, pin)[1]
+        ids = render(tokenizer, request, pin, chat_template=chat_template)[1]
         engine_ids = response.get("prompt_token_ids")
         results.append({"parity": engine_ids == ids, "first_mismatch": None if engine_ids == ids else lcp(engine_ids or [], ids),
                         **details(response)})
@@ -154,21 +154,23 @@ def main():
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--pin", type=Path, default=PIN, help="tokenizer pin naming the session's model")
     parser.add_argument("--assets", type=Path, default=ASSETS, help="tokenizer snapshot for that pin")
+    parser.add_argument("--chat-template", type=Path, help="template file the server was launched with, if not the pinned one")
     args = parser.parse_args()
     pin = load_pin(args.pin)
     tokenizer = _load_tokenizer(args.assets, pin)[0]
     rows = load_session(args.capture)
+    template = args.chat_template.read_text() if args.chat_template else None
     args.out.mkdir(mode=0o700, parents=True)
-    live = attribute(rows, tokenizer, pin, args.num_blocks, args.block_size, generated=True)
+    live = attribute(rows, tokenizer, pin, args.num_blocks, args.block_size, generated=True, chat_template=template)
     (args.out / "live.json").write_text(json.dumps(live, indent=2, ensure_ascii=False) + "\n")
     summary = {"requests": len(rows), "live": live}
     if args.replay:
-        replayed = replay(rows, tokenizer, pin, args.replay)
+        replayed = replay(rows, tokenizer, pin, args.replay, chat_template=template)
         expected = attribute([(req, {"usage": {"prompt_tokens": r["prompt_tokens"], "completion_tokens": 1,
                                                "prompt_tokens_details": {"cached_tokens": r["cached_tokens"],
                                                                          "created_cache_tokens": r["created_cache_tokens"]}}})
                               for (req, _), r in zip(rows, replayed)], tokenizer, pin, args.num_blocks, args.block_size,
-                             generated=True)
+                             generated=True, chat_template=template)
         for row, r in zip(expected, replayed):
             row["engine_parity"] = r["parity"]
             row["first_mismatch"] = r["first_mismatch"]

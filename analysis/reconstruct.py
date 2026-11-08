@@ -132,18 +132,22 @@ def lcp(previous, current):
     return min(len(previous), len(current))
 
 
-def render(tokenizer, request, pin, remap=False):
+def render(tokenizer, request, pin, remap=False, chat_template=None):
     """Render one supported request and cross-check both tokenization paths.
 
     The template supplies special tokens. Adding special tokens again during
     encoding would change the sequence, so the text path disables that step.
     Agreement here checks the local library paths, not engine token identity.
+    chat_template overrides the snapshot's template, for servers launched with
+    a different --chat-template.
     """
     messages, tools = prompt_inputs(request, pin["model_id"], remap)
     template_controls(request, pin)
     options = {"add_generation_prompt": pin["add_generation_prompt"], "enable_thinking": pin["enable_thinking"]}
     if tools is not None:
         options["tools"] = tools
+    if chat_template is not None:
+        options["chat_template"] = chat_template
     text = tokenizer.apply_chat_template(messages, tokenize=False, **options)
     ids = tokenizer.encode(text, add_special_tokens=False)
     direct = tokenizer.apply_chat_template(messages, tokenize=True, **options)

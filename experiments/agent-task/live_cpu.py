@@ -150,7 +150,12 @@ def worker(checkout, out):
                        key=lambda item: item["name"].lower())
     write_json(out / "installed-packages.json", inventory)
     result = {"status": "failed", "commands_executed": False}
-    if spec["environment"]["class"] == "SnapshotEnvironment":
+    if spec["environment"]["class"] == "SandboxEnvironment":
+        from sandbox_env import SandboxEnvironment
+        files = json.loads((out / "task-snapshot.json").read_text())["files"]
+        env = SandboxEnvironment(out / "sandbox", files, spec["environment"]["python"],
+                                 spec["environment"]["template_vars"], spec["environment"]["timeout_seconds"])
+    elif spec["environment"]["class"] == "SnapshotEnvironment":
         sys.path.insert(0, str(HERE))
         files = json.loads((out / "task-snapshot.json").read_text())["files"]
         env = SnapshotEnvironment(files, spec["environment"]["template_vars"])
@@ -201,7 +206,7 @@ def run(checkout, python, out, engine, spec_path, external_proxy=False):
     if spec["model_config"]["model_name"] not in served:
         raise ValueError("engine does not serve the configured model")
     out.mkdir(mode=0o700, parents=True)
-    if spec["environment"]["class"] == "SnapshotEnvironment":
+    if spec["environment"]["class"] in ("SnapshotEnvironment", "SandboxEnvironment"):
         revision, files = load_snapshot(manifest, ROOT / spec["environment"]["task_checkout"])
         write_json(out / "task-snapshot.json", {"revision": revision, "files": files})
     home = out / "home"
@@ -255,6 +260,13 @@ def run(checkout, python, out, engine, spec_path, external_proxy=False):
         sys.path.insert(0, str(ROOT / "analysis"))
         from report import inspect
         write_json(out / "capture-report.json", inspect(out / "capture"))
+    if spec["environment"]["class"] == "SandboxEnvironment":
+        # Score whatever the agent left in its workspace with the frozen
+        # evaluator and the sealed original tests, as in the task preflight.
+        subprocess.run([spec["environment"]["python"], "-B", str(HERE / "evaluate.py"),
+                        "--repo", str(out / "sandbox/task"), "--frozen-tests", str(ROOT / spec["environment"]["frozen_tests"]),
+                        "--expect", "candidate", "--run", "--out", str(out / "evaluation.json")],
+                       cwd=ROOT, capture_output=True, timeout=300)
     return json.loads((out / "worker-result.json").read_text())
 
 
