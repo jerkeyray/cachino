@@ -65,6 +65,17 @@ restart. `-session-protocol messages` (default) admits Messages routes;
 requests are never rewritten. This mode buffers request bodies, so leave it off
 for streaming or overhead measurements.
 
+## Active-session limit
+
+`-max-active-sessions N` lets at most N sessions be active at once. A session is
+identified by `X-Cachino-Session` (or `-session` when the header is absent) and
+stays active while it has a request in flight and for `-session-idle` (default
+5s) after its last one, which covers the gap between an agent's turns. A request
+from an inactive session waits, first come first served, until a slot frees;
+each wait is logged with the session, capture request ID and duration. The
+limit sits inside capture, so captured durations include the wait. It keeps
+admitted sessions' prefixes resident in a shared cache at the cost of waiting.
+
 ## Fake model and demo
 
 `fake-model` returns a fixed JSON or SSE chat completion. It needs a model and

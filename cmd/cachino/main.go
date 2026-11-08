@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/jerkeyray/cachino/internal/activelimit"
 	"github.com/jerkeyray/cachino/internal/proxy"
 	"github.com/jerkeyray/cachino/internal/sessionlimit"
 	"github.com/jerkeyray/cachino/internal/trace"
@@ -30,6 +31,8 @@ func run() error {
 	traceDir := flag.String("trace-dir", "", "new directory for private raw capture (disabled by default)")
 	bodyLimit := flag.Int64("trace-body-limit", 16<<20, "maximum stored bytes per request or response body")
 	session := flag.String("session", "", "default capture session label (caller may override X-Cachino-Session)")
+	maxActive := flag.Int("max-active-sessions", 0, "opt-in limit on concurrently active sessions; others wait (0 disables)")
+	sessionIdle := flag.Duration("session-idle", 5*time.Second, "how long a session stays active after its last request, with -max-active-sessions")
 	flag.Parse()
 	handler, err := proxy.New(*upstream, proxy.WithMessagesPrefix(*messagesPrefix))
 	if err != nil {
@@ -43,6 +46,15 @@ func run() error {
 		if err != nil {
 			return err
 		}
+	}
+	// The active-session limit sits inside capture, so a captured request's
+	// duration includes any wait and the wait log can name its request ID.
+	if *maxActive != 0 {
+		limiter, err := activelimit.New(*maxActive, *sessionIdle, *session)
+		if err != nil {
+			return err
+		}
+		handler = limiter.Wrap(handler)
 	}
 	if *traceDir != "" {
 		store, err := trace.New(*traceDir, *bodyLimit, *session)
