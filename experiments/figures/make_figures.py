@@ -14,7 +14,7 @@ from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path[:0] = [str(ROOT / "analysis"), str(ROOT / "experiments/cache-eviction"), str(ROOT / "experiments/agent-task")]
+sys.path.insert(0, str(ROOT / "analysis"))
 
 from concurrent_attribution import load_requests  # noqa: E402
 from reconstruct import _load_tokenizer  # noqa: E402

@@ -2,7 +2,7 @@ from pathlib import Path
 import sys
 import unittest
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "experiments/agent-task"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "analysis"))
 
 from schedule_replay import SCHEDULES, evaluate, totals  # noqa: E402
 

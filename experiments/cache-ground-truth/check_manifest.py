@@ -4,7 +4,7 @@ The manifest records the actual machine, engine install, model and launch
 configuration of one calibration run. This checker does not contact a server or
 verify the values; it only reports which fields are still unknown and which
 recorded values contradict the first measurement model in
-docs/archive/prefill-measurement-contract.md. A clean result means the manifest is
+docs/records/prefill-measurement-contract.md. A clean result means the manifest is
 complete enough to run the probes, not that the engine behaves as recorded.
 """
 import argparse
@@ -13,7 +13,7 @@ from pathlib import Path
 import sys
 
 # Values the first calibration model depends on. Each comes from the pinned
-# vLLM source read recorded in docs/archive/m4-calibration-plan.md:
+# vLLM source read recorded in docs/records/m4-calibration-plan.md:
 # cached-token details and per-request timing are off unless enabled, the reset
 # route exists only in dev mode, and one worker keeps a single cache namespace.
 REQUIRED = {

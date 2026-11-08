@@ -16,7 +16,7 @@ import sys
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
-sys.path[:0] = [str(ROOT / "analysis"), str(ROOT / "experiments/agent-task")]
+sys.path.insert(0, str(ROOT / "analysis"))
 
 from concurrent_attribution import load_requests  # noqa: E402
 from reconstruct import _load_tokenizer  # noqa: E402
@@ -43,7 +43,7 @@ def main():
     args.out.mkdir(mode=0o700, parents=True)
     data = json.dumps(bundle, separators=(",", ":")).encode()
     (args.out / "requests.json").write_bytes(data)
-    for source in (ROOT / "experiments/cache-eviction/predict.py", HERE / "gpu_replay.py"):
+    for source in (ROOT / "analysis/predict.py", HERE / "gpu_replay.py"):
         shutil.copy(source, args.out / source.name)
     manifest = {name: hashlib.sha256((args.out / name).read_bytes()).hexdigest()
                 for name in ("requests.json", "predict.py", "gpu_replay.py")}
