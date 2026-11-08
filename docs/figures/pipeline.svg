@@ -1,30 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 300" font-family="system-ui, sans-serif">
-<rect width="100%" height="100%" fill="#ffffff"/>
-<title>Cachino pipeline</title>
-<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#59636e"/></marker></defs>
-<g font-size="13" fill="#1f2328" text-anchor="middle">
-<rect x="20" y="30" width="150" height="56" rx="8" fill="#f6f8fa" stroke="#d0d7de"/>
-<text x="95" y="54">Coding agent</text><text x="95" y="72" font-size="11" fill="#59636e">mini-swe-agent</text>
-<rect x="305" y="30" width="150" height="56" rx="8" fill="#ddeaf8" stroke="#2f6fb5"/>
-<text x="380" y="54" font-weight="600">Cachino proxy</text><text x="380" y="72" font-size="11" fill="#59636e">forwards unchanged</text>
-<rect x="590" y="30" width="150" height="56" rx="8" fill="#f6f8fa" stroke="#d0d7de"/>
-<text x="665" y="54">vLLM, pinned</text><text x="665" y="72" font-size="11" fill="#59636e">prefix cache</text>
-<rect x="20" y="200" width="150" height="64" rx="8" fill="#ddeaf8" stroke="#2f6fb5"/>
-<text x="95" y="226" font-weight="600">Capture</text><text x="95" y="244" font-size="11" fill="#59636e">exact request bytes</text>
-<rect x="205" y="200" width="150" height="64" rx="8" fill="#ddeaf8" stroke="#2f6fb5"/>
-<text x="280" y="226" font-weight="600">Render</text><text x="280" y="244" font-size="11" fill="#59636e">exact token IDs</text>
-<rect x="390" y="200" width="150" height="64" rx="8" fill="#ddeaf8" stroke="#2f6fb5"/>
-<text x="465" y="226" font-weight="600">Predict</text><text x="465" y="244" font-size="11" fill="#59636e">free-queue cache model</text>
-<rect x="575" y="200" width="165" height="64" rx="8" fill="#fbe9d7" stroke="#d9822b"/>
-<text x="657" y="222" font-weight="600">Attribute</text><text x="657" y="239" font-size="11" fill="#59636e">prompt change, rounding,</text><text x="657" y="253" font-size="11" fill="#59636e">eviction, cross-session</text>
-</g>
-<g stroke="#59636e" stroke-width="1.6" fill="none" marker-end="url(#a)">
-<line x1="170" y1="58" x2="303" y2="58"/><line x1="455" y1="58" x2="588" y2="58"/>
-<line x1="380" y1="86" x2="110" y2="198"/>
-<line x1="170" y1="232" x2="203" y2="232"/><line x1="355" y1="232" x2="388" y2="232"/><line x1="540" y1="232" x2="573" y2="232"/>
-<path d="M665 86 L665 198" stroke-dasharray="5 4"/>
-</g>
-<text x="655" y="140" font-size="11" fill="#59636e" text-anchor="end">reported cached_tokens</text>
-<text x="655" y="154" font-size="11" fill="#59636e" text-anchor="end">checked against prediction</text>
-<text x="290" y="140" font-size="11" fill="#59636e">stored on disk</text>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 404" role="img" aria-labelledby="title desc"><title id="title">How Cachino measures prefix reuse</title><desc id="desc">Pipeline: agent, proxy and pinned vLLM online; capture, render, predict, attribute and check offline, with the engine as ground truth for the check.</desc><style>
+svg{--surface:#fcfcfb;--ink:#0b0b0b;--ink2:#52514e;--muted:#898781;--grid:#e1e0d9;--axis:#c3c2b7;
+--panel:#f3f2ee;--s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s1wash:#2a78d61f;--s2wash:#eb68341f;--on:#ffffff}
+@media (prefers-color-scheme: dark){svg{--surface:#1a1a19;--ink:#f0efec;--ink2:#c3c2b7;--muted:#898781;
+--grid:#2c2c2a;--axis:#383835;--panel:#242422;--s1:#3987e5;--s2:#d95926;--s3:#199e70;--s1wash:#3987e526;
+--s2wash:#d9592626;--on:#ffffff}}
+.bg{fill:var(--surface)}.panel{fill:var(--panel)}
+.ink{fill:var(--ink)}.ink2{fill:var(--ink2)}.muted{fill:var(--muted)}
+.grid{stroke:var(--grid);stroke-width:1}.axis{stroke:var(--axis);stroke-width:1}
+.box{fill:var(--surface);stroke:var(--axis);stroke-width:1}
+.f1{fill:var(--s1)}.f2{fill:var(--s2)}.f3{fill:var(--s3)}.fm{fill:var(--axis)}
+.l1{stroke:var(--s1)}.l2{stroke:var(--s2)}.l3{stroke:var(--s3)}.lm{stroke:var(--muted)}
+.w1{fill:var(--s1wash)}.w2{fill:var(--s2wash)}
+.ring{stroke:var(--surface);stroke-width:2}.on{fill:var(--on)}
+.arrow{stroke:var(--muted);stroke-width:1.5;fill:none}.head{fill:var(--muted)}
+text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;font-variant-numeric:tabular-nums}
+.t{font-size:15px;font-weight:600}.st{font-size:12px}.lab{font-size:12px}.tick{font-size:11px}.small{font-size:10.5px}
+.b{font-weight:600}
+</style><rect class="bg" width="900" height="404" rx="0"/><text x="24" y="30" class="t ink">How Cachino measures prefix reuse</text><text x="24" y="49" class="st ink2">The proxy records agent traffic unchanged; offline, every request&#x27;s cache hit is predicted, attributed and checked.</text><text x="24.0" y="88.0" class="small muted b" text-anchor="start" letter-spacing="1">ONLINE</text><text x="24.0" y="228.0" class="small muted b" text-anchor="start" letter-spacing="1">OFFLINE ANALYSIS</text><rect x="24.0" y="98.0" width="168.0" height="76.0" rx="8" class="box"/><text x="40.0" y="122.0" class="lab ink b" text-anchor="start">Coding agent</text><text x="40.0" y="140.0" class="small ink2" text-anchor="start">mini-swe-agent, smolagents</text><text x="40.0" y="155.0" class="small ink2" text-anchor="start">OpenAI-compatible client</text><rect x="366.0" y="98.0" width="168.0" height="76.0" rx="8" class="box"/><rect x="366.0" y="108.0" width="4" height="56.0" rx="2" class="f1"/><text x="382.0" y="122.0" class="lab ink b" text-anchor="start">Cachino proxy</text><text x="382.0" y="140.0" class="small ink2" text-anchor="start">Go, standard library</text><text x="382.0" y="155.0" class="small ink2" text-anchor="start">forwards bytes unchanged</text><rect x="708.0" y="98.0" width="168.0" height="76.0" rx="8" class="box"/><text x="724.0" y="122.0" class="lab ink b" text-anchor="start">vLLM, pinned</text><text x="724.0" y="140.0" class="small ink2" text-anchor="start">commit 2173d712</text><text x="724.0" y="155.0" class="small ink2" text-anchor="start">prefix caching on</text><path d="M192.0 128.0 L359.0 128.0" class="arrow"/><path d="M366.0 128.0L359.0 132.0L359.0 124.0Z" class="head"/><path d="M366.0 146.0 L199.0 146.0" class="arrow"/><path d="M192.0 146.0L199.0 142.0L199.0 150.0Z" class="head"/><text x="279.0" y="121.0" class="small ink2" text-anchor="middle">request</text><text x="279.0" y="162.0" class="small ink2" text-anchor="middle">response</text><path d="M534.0 128.0 L701.0 128.0" class="arrow"/><path d="M708.0 128.0L701.0 132.0L701.0 124.0Z" class="head"/><path d="M708.0 146.0 L541.0 146.0" class="arrow"/><path d="M534.0 146.0L541.0 142.0L541.0 150.0Z" class="head"/><text x="621.0" y="121.0" class="small ink2" text-anchor="middle">same bytes</text><text x="621.0" y="162.0" class="small ink2" text-anchor="middle">cached_tokens</text><rect x="24.0" y="238.0" width="140.0" height="76.0" rx="8" class="box"/><text x="40.0" y="262.0" class="lab ink b" text-anchor="start">Capture</text><text x="40.0" y="280.0" class="small ink2" text-anchor="start">request, response bytes</text><text x="40.0" y="295.0" class="small ink2" text-anchor="start">events, SHA-256 hashes</text><rect x="202.0" y="238.0" width="140.0" height="76.0" rx="8" class="box"/><text x="218.0" y="262.0" class="lab ink b" text-anchor="start">Render</text><text x="218.0" y="280.0" class="small ink2" text-anchor="start">exact token IDs</text><text x="218.0" y="295.0" class="small ink2" text-anchor="start">pinned tokenizer, template</text><rect x="380.0" y="238.0" width="140.0" height="76.0" rx="8" class="box"/><text x="396.0" y="262.0" class="lab ink b" text-anchor="start">Predict</text><text x="396.0" y="280.0" class="small ink2" text-anchor="start">vLLM free-queue rules</text><text x="396.0" y="295.0" class="small ink2" text-anchor="start">hit per request</text><rect x="558.0" y="238.0" width="140.0" height="76.0" rx="8" class="box"/><text x="574.0" y="262.0" class="lab ink b" text-anchor="start">Attribute</text><text x="574.0" y="280.0" class="small ink2" text-anchor="start">each recomputed token</text><text x="574.0" y="295.0" class="small ink2" text-anchor="start">to one cause</text><rect x="736.0" y="238.0" width="140.0" height="76.0" rx="8" class="box"/><rect x="736.0" y="248.0" width="4" height="56.0" rx="2" class="f1"/><text x="752.0" y="262.0" class="lab ink b" text-anchor="start">Check</text><text x="752.0" y="280.0" class="small ink2" text-anchor="start">replay IDs to engine,</text><text x="752.0" y="295.0" class="small ink2" text-anchor="start">compare hit and IDs</text><path d="M164.0 276.0 L195.0 276.0" class="arrow"/><path d="M202.0 276.0L195.0 280.0L195.0 272.0Z" class="head"/><path d="M342.0 276.0 L373.0 276.0" class="arrow"/><path d="M380.0 276.0L373.0 280.0L373.0 272.0Z" class="head"/><path d="M520.0 276.0 L551.0 276.0" class="arrow"/><path d="M558.0 276.0L551.0 280.0L551.0 272.0Z" class="head"/><path d="M698.0 276.0 L729.0 276.0" class="arrow"/><path d="M736.0 276.0L729.0 280.0L729.0 272.0Z" class="head"/><path d="M450.0 174.0 L450.0 194.0 L94.0 194.0 L94.0 231.0" class="arrow"/><path d="M94.0 238.0L90.0 231.0L98.0 231.0Z" class="head"/><text x="272.0" y="189.0" class="small ink2" text-anchor="middle">write-ahead capture</text><path d="M792.0 174.0 L792.0 231.0" class="arrow"/><path d="M792.0 238.0L788.0 231.0L796.0 231.0Z" class="head"/><text x="800.0" y="210.0" class="small ink2" text-anchor="start">ground truth</text><line x1="24.0" y1="344.0" x2="876.0" y2="344.0" class="grid"/><text x="24.0" y="366.0" class="small ink2" text-anchor="start">Missing cache metrics are recorded as unknown, never zero. Equal token counts are never taken as equal tokens.</text><text x="24.0" y="384.0" class="small ink2" text-anchor="start">Prediction and check run on CPU and on a Tesla T4; the same rules, cited to source lines, drive every result.</text></svg>
