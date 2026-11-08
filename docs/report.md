@@ -101,8 +101,17 @@ evicting cap runs, where they reached 26 blocks. Replaying three
 evicting runs with their recorded timing, a predictor that takes decode blocks
 at admission was exact on 93 of 98 requests, one that takes them at completion
 on 92, and one that ignores them on 88. The engine allocates as it decodes,
-between the first two, so the remaining error is decode-block timing, not the
-eviction rules ([repetitions](records/repetitions-20261108.md)).
+between the first two, so decode-block timing is the likely source of the
+remaining error; confirming it would need engine-side allocation events
+([repetitions](records/repetitions-20261108.md)).
+
+A naive predictor that takes the longest prefix shared with any earlier
+prompt and assumes it is still cached was exact on 256 of the 265 concurrent
+requests, against 259 for the overlap predictor; total absolute error fell
+from 8,320 tokens to 352. Every miss was in the two evicting runs, where the
+naive error equals the reuse lost to eviction. On the ten session-cap runs the
+error fell from 74,752 to 5,184 tokens. Without eviction the two agree; the
+cache model matters where residency does ([baseline](records/baseline-20261108.md)).
 
 ### 3.2 Single sessions: mostly new content
 
