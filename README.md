@@ -1,4 +1,6 @@
-# Cachino
+<p align="center">
+  <img src="docs/figures/banner.svg" alt="Cachino: where coding agents lose prefix reuse" width="100%">
+</p>
 
 **Where coding agents lose prefix reuse: an engine-validated measurement study.**
 
