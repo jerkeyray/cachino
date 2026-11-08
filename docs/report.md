@@ -129,6 +129,12 @@ generation context and re-prefills the reply just generated.
 - With either template, a reply the harness rejects for its format is dropped,
   and the next prompt diverges at the role marker.
 
+`analysis/template_check.py` detects this from a capture by rendering each
+prompt with and without its generation prompt. On every Qwen3 capture, each
+turn that kept its reply diverged inside the 4-token cue (28, 9 and 34
+transitions in three captures); on the Qwen2.5 capture, none did, and the only
+divergences were dropped replies.
+
 ### 3.4 Shared caches and the eviction threshold
 
 Concurrent sessions on one 14,016-token cache evicted each other in 2 of 9

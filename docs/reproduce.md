@@ -54,7 +54,8 @@ Read the block count back from the `KV cache size` line of the log. Add
 
 ## 4. Analysis
 
-All in `analysis/`, run with the tokenizer environment:
+All in `analysis/`, run with the tokenizer environment, directly or through
+`cachino_analyze.py <command>`:
 
 | Script | Produces |
 | --- | --- |
@@ -66,6 +67,7 @@ All in `analysis/`, run with the tokenizer environment:
 | `overlap_replay.py` | Engine replay with recorded timing, against three overlap models |
 | `schedule_replay.py` | Scheduling orders, predicted and on the engine |
 | `cue_counterfactual.py` | Sessions replayed with and without the thinking cue |
+| `template_check.py` | Each turn classified as append-only, generation prompt dropped, reply dropped or history changed |
 
 For example, the threshold of the first concurrent run:
 

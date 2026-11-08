@@ -50,6 +50,23 @@ Then `analysis/report.py traces/demo` verifies and summarizes the capture. Point
 `-upstream` at a vLLM server to capture real traffic. Proxy details:
 [reference](docs/proxy.md). Full reproduction: [reproduce](docs/reproduce.md).
 
+## Analyze a capture
+
+`analysis/cachino_analyze.py` runs every analysis command; those that render
+tokens need the tokenizer environment ([reproduce](docs/reproduce.md)). For
+example, to check whether a capture's history stays aligned with the chat
+template:
+
+```sh
+python -B analysis/cachino_analyze.py template --capture traces/demo/capture \
+  --pin experiments/tokenizer/qwen3-0.6b.json --assets artifacts/qwen3-0.6b-tokenizer
+```
+
+It classifies each turn as append-only, generation prompt dropped (the template
+renders history differently from how it prompted generation), reply dropped, or
+history changed. Other commands: `attribute`, `concurrent`, `curve`, `sweep`,
+`schedule`, `overlap`, `summary`.
+
 ## Repository
 
 | Path | Contents |
