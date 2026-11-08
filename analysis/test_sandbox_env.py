@@ -34,8 +34,10 @@ class SandboxTests(unittest.TestCase):
         self.assertNotEqual(result["returncode"], 0)
         self.assertFalse(outside.exists())
 
+    @unittest.skipUnless(str(Path.home()).startswith("/Users/"), "home directory is not under /Users")
     def test_reads_under_users_are_denied(self):
-        result = self.env.run("ls %s" % Path(__file__).resolve().parent)
+        # The home directory, not this checkout, which may live outside /Users.
+        result = self.env.run("ls %s" % Path.home())
         self.assertNotEqual(result["returncode"], 0)
 
     def test_network_is_denied(self):
