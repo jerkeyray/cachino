@@ -1,4 +1,4 @@
-<img src="docs/figures/banner.svg" alt="A measurement study: where coding agents lose prefix reuse" width="100%">
+<img src="docs/figures/banner.svg" alt="Cachino: where coding agents lose prefix reuse" width="100%">
 
 Coding agents resend their whole conversation on every turn. A serving engine
 skips the repeated part only if it matches an earlier prompt token for token

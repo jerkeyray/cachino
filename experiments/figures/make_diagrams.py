@@ -118,25 +118,27 @@ def reuse_loss():
 def banner():
     """README header: type only, on a transparent background.
 
+    The project name once, as the headline, over the question the study asks.
     The text takes the page's own ink in GitHub's light and dark themes, so the
-    header has no box of its own. It does not repeat the project name, which
-    GitHub already shows above the README.
+    header has no box of its own.
     """
-    W, H = 1280, 230
+    W, H = 1280, 270
     serif = 'font-family="&quot;Iowan Old Style&quot;,&quot;Palatino Linotype&quot;,Palatino,Georgia,serif"'
     sans = 'font-family="-apple-system,BlinkMacSystemFont,&quot;Segoe UI&quot;,Helvetica,Arial,sans-serif"'
     style = ("<style>svg{--ink:#1f2328;--ink2:#59636e;--rule:#d1d9e0}"
              "@media (prefers-color-scheme: dark){svg{--ink:#f0f6fc;--ink2:#9198a1;--rule:#3d444d}}"
              ".ink{fill:var(--ink)}.ink2{fill:var(--ink2)}.rule{stroke:var(--rule)}</style>")
     return ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" role="img" aria-labelledby="t d">'
-            '<title id="t">Where coding agents lose prefix reuse</title>'
-            '<desc id="d">A measurement study of vLLM prefix caching under coding-agent traffic.</desc>%s'
-            '<text x="0" y="44" %s font-size="17" letter-spacing="3" class="ink2">A MEASUREMENT STUDY</text>'
-            '<text x="-3" y="126" %s font-size="66" class="ink">Where coding agents lose prefix reuse</text>'
-            '<text x="0" y="180" %s font-size="25" class="ink2">Per-request, engine-validated attribution of '
+            '<title id="t">Cachino</title>'
+            '<desc id="d">Cachino: where coding agents lose prefix reuse. A measurement study of vLLM prefix caching '
+            'under coding-agent traffic.</desc>%s'
+            '<text x="0" y="40" %s font-size="17" letter-spacing="3" class="ink2">A MEASUREMENT STUDY</text>'
+            '<text x="-4" y="136" %s font-size="96" class="ink">Cachino</text>'
+            '<text x="0" y="188" %s font-size="36" class="ink">Where coding agents lose prefix reuse</text>'
+            '<text x="0" y="230" %s font-size="22" class="ink2">Per-request, engine-validated attribution of '
             'vLLM prefix-cache misses</text>'
-            '<line x1="0" y1="222" x2="%d" y2="222" class="rule" stroke-width="1"/></svg>\n'
-            % (W, H, style, sans, serif, sans, W))
+            '<line x1="0" y1="262" x2="%d" y2="262" class="rule" stroke-width="1"/></svg>\n'
+            % (W, H, style, sans, serif, serif, sans, W))
 
 
 def main():
