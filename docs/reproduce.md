@@ -95,13 +95,23 @@ data figures and `docs/figures/data.json`. The two diagrams need no data:
 python3 experiments/figures/make_diagrams.py
 ```
 
-## 6. Examples
+## 6. Released results
+
+```sh
+python3 experiments/release/export_results.py
+python3 analysis/validate_results.py
+```
+
+The first writes [`results/`](../results/README.md) from the private run
+directories, with checksums; the second needs only the released files.
+
+## 7. Examples
 
 [examples/](../examples/README.md) holds two synthetic checks with committed
 expected output: a one-block eviction threshold and a two-turn template
 boundary. Neither needs an engine.
 
-## 7. Tests
+## 8. Tests
 
 ```sh
 go build ./... && go vet ./... && go test -race ./...

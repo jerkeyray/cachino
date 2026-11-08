@@ -15,7 +15,8 @@ session. Every prediction is checked against the engine.
 
 **[Read the report](docs/report.md)** · [How to read the results](docs/reading-results.md) ·
 [Result card: 487 vs 488 blocks](docs/result-card-487-488.md) · [Reproduce](docs/reproduce.md) ·
-[Try it without an engine](examples/README.md) · [Run records](docs/records/)
+[Released results](results/README.md) · [Try it without an engine](examples/README.md) ·
+[Run records](docs/records/)
 
 > **Status · 8 November 2026.** The study is complete for its setup: one frozen
 > task, two harnesses, Qwen3 at 0.6B and 1.7B, vLLM at `2173d712`. Every number
@@ -48,7 +49,7 @@ That is one trace from small models, not a model of production caches.
 The mechanisms themselves were reported before: the Qwen3 template boundary
 upstream, and cache-aware scheduling for agents in CacheWise and Continuum.
 What Cachino adds is exact, per-request, engine-validated attribution from a raw
-capture ([related work](docs/report.md#4-related-work)).
+capture ([what is new here](docs/contribution.md)).
 
 ## Reading paths
 
@@ -132,6 +133,16 @@ python -B analysis/cachino_analyze.py template --capture traces/demo \
   --pin experiments/tokenizer/qwen3-0.6b.json --assets artifacts/qwen3-0.6b-tokenizer
 ```
 
+## Check the numbers
+
+The per-request rows behind the report are released as CSV in
+[`results/`](results/README.md), with token counts, hits and predictions but no
+prompt text. One command recomputes the report's headline numbers from them:
+
+```sh
+python3 analysis/validate_results.py
+```
+
 ## Reproducing the study
 
 [docs/reproduce.md](docs/reproduce.md) lists environments, the pinned engine
@@ -154,6 +165,7 @@ conditions only. Full list: [limitations](docs/report.md#5-limitations).
 | [`cmd/`](cmd), [`internal/`](internal) | Proxy, capture, session limits, fake upstream and demo (Go) |
 | [`analysis/`](analysis) | Rendering, cache predictor, attribution, replays and tests (Python) |
 | [`experiments/`](experiments) | Calibration, eviction probes, agent sessions, proxy overhead, GPU confirmation, figures |
+| [`results/`](results/README.md) | Released per-request tables, checksums and data dictionary |
 | [`examples/`](examples/README.md) | Synthetic checks a fresh checkout can run |
 | [`docs/`](docs/README.md) | Report, reproduction guide, proxy reference and run records |
 

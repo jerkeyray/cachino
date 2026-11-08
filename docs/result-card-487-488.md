@@ -42,11 +42,14 @@ threshold was located at the engine's own resolution.
 - `figures/data.json` (`reuse_curve.predicted_487_488`) holds the predicted
   values, regenerated from the capture by `experiments/figures/make_figures.py`.
 
-**What can be checked here.** The capture and per-request rows are private,
-because they hold prompt and reply text, so this result is engine-checked but
-not recalculable from the repository. [examples/one-block](../examples/README.md)
-runs the same predictor on a synthetic trace with the same shape, 34 versus 35
-blocks, using only the standard library.
+**What can be checked here.** The per-request rows for all seven CPU sizes are
+released in [results/cache-sweep](../results/cache-sweep/requests.csv), and
+`python3 analysis/validate_results.py` recomputes this table from them: the
+predictions, the engine's cached tokens, the bounds and the eviction totals.
+The capture itself stays private, because it holds prompt and reply text, so
+the rows can be checked for consistency but not traced back to the prompts.
+[examples/one-block](../examples/README.md) runs the same predictor on a
+synthetic trace with the same shape, 34 versus 35 blocks.
 
 ## Scope and limitations
 

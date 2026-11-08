@@ -42,10 +42,12 @@ describes the 0.6B model.
 | Level | Meaning | Results |
 | --- | --- | --- |
 | Engine-checked | The prediction was compared with vLLM's reported cached tokens and prompt IDs, request by request | Exactness (3.1), eviction threshold (3.5), scheduling orders (3.7), template boundary (3.3, 3.9) |
-| Recalculable | Anyone can recompute it from files in this repository | Figure values in `figures/data.json`; the [examples](../examples/README.md) |
-| Documented | Measured from private captures; the [run record](records/) gives conditions and numbers, but the capture is needed to check them | Attribution shares (3.2), baseline comparison (3.1), T4 timing (3.6), live limits (3.8), proxy overhead (3.10) |
+| Recalculable | Anyone can recompute it from files in this repository: `python3 analysis/validate_results.py` rebuilds it from the [released tables](../results/README.md) | Exactness counts and the baseline (3.1), single-session shares (3.2), the threshold and 487/488 (3.5), T4 totals (3.6), scheduling orders (3.7), session limits (3.8); the [examples](../examples/README.md) |
+| Documented | Measured from private captures; the [run record](records/) gives conditions and numbers, but the capture is needed to check them | Template-check transition counts (3.3), smolagents serialization (3.4), sandboxed sessions (3.9), proxy overhead (3.10), and that any run happened as recorded |
 
-Raw captures stay private because they hold prompt and reply text.
+A result can be both engine-checked and recalculable: the engine checked the
+prediction when the run happened, and the released rows let anyone redo the
+arithmetic. Raw captures stay private because they hold prompt and reply text.
 
 ## Comparison limits
 
@@ -74,6 +76,9 @@ Raw captures stay private because they hold prompt and reply text.
   session rejected at the 12,288-token context in seed 4, the first token-budget
   version that evicted as much as no limit, and every request the predictor
   missed.
+
+The choices behind these definitions, and how each was checked, are in
+[assumptions](assumptions.md).
 
 ## Before quoting a number
 
