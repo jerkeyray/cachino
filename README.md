@@ -21,7 +21,7 @@ Mac CPU and a Tesla T4. Full study: **[report](docs/report.md)**.
 | A second harness loses replies differently | smolagents rewrites each tool call into history as text about twice as long, with a random ID, so replies are never reusable |
 | Shared caches evict past a predictable threshold | 17% to 25% of recomputation when sessions outgrew the cache; the capture predicted which runs would, 9 of 9 |
 | Eviction costs time | About 1.34 ms of time to first token per recomputed token on a T4; +31% and +86% below the threshold |
-| Scheduling can remove it | At most two sessions at a time cut recomputation 16.5% on an evicting trace; live, the proxy's session cap removed eviction in all three seeds that evicted (wall clock 1,243 s to 299 s in one) but cost waiting time elsewhere |
+| Scheduling can remove it | At most two sessions at a time cut recomputation 16.5% on an evicting trace; live, the proxy's session cap removed eviction in all three seeds that evicted (wall clock 1,243 s to 299 s in one) but cost waiting time elsewhere; a size-based limit avoided needless waits, but sessions it paused lost their cache |
 
 ![Eviction against cache size](docs/figures/eviction-curve.svg)
 

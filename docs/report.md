@@ -259,6 +259,36 @@ eviction is the comparable measure. A fixed cap pays off only when the combined
 working set exceeds the cache, which the capture-based threshold (3.5)
 predicts. Timing is on the Mac CPU and compares conditions only.
 
+A size-aware limit was tried next (`-session-token-budget`, set to the 14,016
+tokens of the cache). The proxy estimates each session's footprint from its
+latest request's size (0.25 tokens per byte, measured on these captures). A
+turn proceeds if it fits after the sessions admitted before it; otherwise the
+session is suspended between turns. The first version let an older turn start
+beside younger requests already in flight, and on seed 2 it evicted as much as
+no limit (4,576 tokens): the oldest session's prompt jumped to 10,492 tokens
+while three younger requests were running. The second version makes such a
+turn wait for those requests to finish; the table shows that version.
+
+| Seed | Off: lost | Off: wall clock | Cap 2: wait | Cap 2: wall clock | Budget: lost | Budget: wait | Budget: wall clock |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | 0 | 201.8 s | 218 s | 189.3 s | 0 | none | 197.7 s |
+| 2 | 4,640 | 387.5 s | 414 s | 373.7 s | 0 | 125 s | 339.5 s |
+| 3 | 0 | 241.6 s | 259 s | 303.6 s | 0 | none | 228.2 s |
+| 4 | 66,528 | 1,242.8 s | 368 s | 299.0 s | 3,456 | 258 s | 579.6 s |
+| 5 | 256 | 306.0 s | 217 s | 233.4 s | 3,616 | 136 s | 376.8 s |
+
+- Where nothing would have been evicted (seeds 1 and 3) the budget never made
+  a session wait, unlike the fixed cap.
+- On seed 2 it removed eviction with a third of the cap's waiting.
+- On seeds 4 and 5 it lost 3,456 and 3,616 tokens, all from sessions it had
+  suspended: a suspended session's prefix is free to evict while it waits. On
+  seed 5 that was more than no limit lost.
+- The fixed cap holds sessions before they start, so it never pays that cost.
+  A started session is cheap to keep and costly to pause; a budget limit would
+  need to predict growth and act at admission, which request size alone cannot.
+
+The predictor was exact on 304 of 315 requests in these budget runs.
+
 ### 3.9 Keeping the cue in a sandboxed task
 
 The counterfactual in 3.3 changed the template after the fact. Here the engine
@@ -333,8 +363,9 @@ raw capture. Search records: [first check](records/related-work-check-20261101.m
 ## 6. Future work
 
 Models large enough to solve the task, so that a template change can be
-judged by success as well as reuse; a cap that switches on only
-when the predicted working set exceeds the cache; larger models on faster GPUs;
+judged by success as well as reuse; an admission limit that predicts each
+session's growth, so it holds sessions before they start instead of pausing
+them; larger models on faster GPUs;
 and a comparison with vLLM's native simulator once it is merged.
 
 ## 7. Reproducing
