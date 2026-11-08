@@ -82,7 +82,10 @@ Each active session's KV footprint is estimated from its latest request's
 study's captures). A turn proceeds if its footprint plus those of the active
 sessions admitted before it fit within T; the oldest session always proceeds.
 A younger session whose next turn does not fit is suspended between turns and
-waits ahead of sessions that have not started, keeping its age when it resumes.
+waits ahead of sessions that have not started, keeping its age when it resumes. A turn that
+fits after its older sessions but would overflow T alongside younger requests
+already in flight waits for them to finish, and no younger turn starts
+meanwhile, since an in-flight request cannot be paused.
 
 ## Fake model and demo
 

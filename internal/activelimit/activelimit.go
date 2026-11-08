@@ -14,18 +14,23 @@
 // Content-Length, since a request carries the whole conversation; the proxy
 // does not tokenize. A turn proceeds only if its session's footprint, plus
 // those of the active sessions admitted before it, fits the budget. The oldest
-// active session always proceeds, so some session can always make progress. A
+// active session always proceeds once younger requests in flight finish, so
+// some session can always make progress. A
 // younger session whose turn does not fit is suspended: it leaves the active
 // set and waits at the front of the queue, before sessions that never started,
 // until an older session's idle expiry frees room. A session is only stopped
-// between its own turns, never while a request is in flight, and requests
-// without a Content-Length count as zero bytes.
+// between its own turns, never while a request is in flight, so a turn that
+// fits after its older sessions but not alongside younger requests already in
+// flight waits for those to finish, and no younger turn starts meanwhile.
+// Requests without a Content-Length count as zero bytes.
 package activelimit
 
 import (
 	"fmt"
 	"log"
+	"math"
 	"net/http"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -47,6 +52,7 @@ type Limiter struct {
 	sessions map[string]*session
 	waiters  []*waiter
 	admitted int // admission counter, giving each session its age
+	arrivals int // queue arrival counter, ordering sessions that have not started
 }
 
 type session struct {
@@ -64,6 +70,7 @@ type waiter struct {
 	// order is a suspended session's original admission order, kept so it
 	// resumes with its age; -1 for a session that has not started.
 	order int
+	seq   int
 	ready chan struct{}
 }
 
@@ -125,34 +132,122 @@ func (l *Limiter) Wrap(next http.Handler) http.Handler {
 	})
 }
 
-// acquire counts the request against its session if the session is active or a
-// slot is free, returning nil; otherwise it queues and returns a waiter whose
-// channel is closed once the session has been admitted and the request counted.
+// acquire counts the request against its session at once when the session
+// already has a request in flight, returning nil. Otherwise it queues the
+// request and schedules; it returns nil if the request was admitted
+// immediately, or the waiter whose channel closes once it is admitted.
 func (l *Limiter) acquire(label string, size int) *waiter {
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	if s, ok := l.sessions[label]; ok {
-		if s.inflight > 0 || l.fits(l.older(s.order), size) {
-			s.footprint = max(s.footprint, size)
-			l.busy(s)
-			return nil
-		}
-		// Suspend between turns: free the slot and wait ahead of new sessions.
-		if s.expiry != nil {
-			s.expiry.Stop()
-		}
-		delete(l.sessions, label)
-		w := &waiter{label: label, size: size, order: s.order, ready: make(chan struct{})}
-		l.waiters = append([]*waiter{w}, l.waiters...)
-		return w
-	}
-	if len(l.sessions) < l.max && len(l.waiters) == 0 && l.fits(l.older(l.admitted), size) {
-		l.busy(l.open(label, size, -1))
+	s, active := l.sessions[label]
+	if active && s.inflight > 0 {
+		l.busy(s)
 		return nil
 	}
-	w := &waiter{label: label, size: size, order: -1, ready: make(chan struct{})}
+	w := &waiter{label: label, size: size, order: -1, seq: l.arrivals, ready: make(chan struct{})}
+	l.arrivals++
+	if active {
+		// A waiting turn keeps its session active, so it is not expired
+		// while it waits for younger requests to drain.
+		w.order = s.order
+		l.stopIdle(s)
+	}
 	l.waiters = append(l.waiters, w)
-	return w
+	l.schedule()
+	select {
+	case <-w.ready:
+		return nil
+	default:
+		return w
+	}
+}
+
+// schedule admits queued turns, oldest session first, then sessions that have
+// not started in arrival order. It holds the lock. With a token budget:
+//
+//   - an active session's turn that no longer fits after its older sessions
+//     is suspended, freeing its slot, and waits as an inactive session;
+//   - a turn that fits after its older sessions but would overflow the budget
+//     together with younger sessions' requests in flight waits for those to
+//     finish, and while it waits no younger turn starts. In-flight requests
+//     cannot be paused, so this is what keeps a growing older session from
+//     evicting the younger sessions' KV that is in use.
+//
+// Without a budget every check passes and only the count limit applies.
+func (l *Limiter) schedule() {
+	queue := append([]*waiter(nil), l.waiters...)
+	sort.SliceStable(queue, func(i, j int) bool { return l.rank(queue[i]) < l.rank(queue[j]) })
+	draining, newBlocked := false, false
+	for _, w := range queue {
+		if s, active := l.sessions[w.label]; active {
+			older := l.older(s.order)
+			if !l.fits(older, w.size) {
+				l.stopIdle(s)
+				delete(l.sessions, w.label)
+				continue
+			}
+			if draining || !l.drained(s.order, older+w.size) {
+				draining = true
+				continue
+			}
+			s.footprint = max(s.footprint, w.size)
+			l.grant(w, s)
+			continue
+		}
+		if draining || (w.order < 0 && newBlocked) {
+			continue
+		}
+		age := l.ageOf(w)
+		older := l.older(age)
+		if len(l.sessions) >= l.max || !l.fits(older, w.size) {
+			newBlocked = true // sessions that have not started wait behind it
+			continue
+		}
+		if !l.drained(age, older+w.size) {
+			draining = true
+			continue
+		}
+		l.grant(w, l.open(w.label, w.size, w.order))
+	}
+}
+
+// rank orders waiters by session age; sessions that have not started come
+// after every started one, in arrival order.
+func (l *Limiter) rank(w *waiter) int {
+	if s, active := l.sessions[w.label]; active {
+		return s.order
+	}
+	if w.order >= 0 {
+		return w.order
+	}
+	return math.MaxInt/2 + w.seq
+}
+
+// drained reports whether total tokens for a session of the given order fit
+// alongside the younger sessions' requests now in flight.
+func (l *Limiter) drained(order, total int) bool {
+	if l.budget == 0 {
+		return true
+	}
+	inflight := 0
+	for _, s := range l.sessions {
+		if s.order > order && s.inflight > 0 {
+			inflight += s.footprint
+		}
+	}
+	return inflight == 0 || total+inflight <= l.budget
+}
+
+// grant admits a queued request into its session.
+func (l *Limiter) grant(w *waiter, s *session) {
+	l.busy(s)
+	for i, queued := range l.waiters {
+		if queued == w {
+			l.waiters = append(l.waiters[:i], l.waiters[i+1:]...)
+			break
+		}
+	}
+	close(w.ready)
 }
 
 // older sums the footprints of active sessions admitted before order.
@@ -194,6 +289,11 @@ func (l *Limiter) ageOf(w *waiter) int {
 // busy records one more request in flight and cancels any idle expiry.
 func (l *Limiter) busy(s *session) {
 	s.inflight++
+	l.stopIdle(s)
+}
+
+// stopIdle cancels a pending idle expiry and invalidates any that already fired.
+func (l *Limiter) stopIdle(s *session) {
 	s.generation++
 	if s.expiry != nil {
 		s.expiry.Stop()
@@ -201,7 +301,14 @@ func (l *Limiter) busy(s *session) {
 	}
 }
 
-// release ends one request; the session stays active for the idle period.
+// startIdle keeps the session active for the idle period from now.
+func (l *Limiter) startIdle(label string, s *session) {
+	generation := s.generation
+	s.expiry = time.AfterFunc(l.idle, func() { l.expire(label, generation) })
+}
+
+// release ends one request; the session stays active for the idle period. A
+// finished request can let a draining older turn proceed, so it reschedules.
 func (l *Limiter) release(label string) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -210,12 +317,11 @@ func (l *Limiter) release(label string) {
 	if s.inflight > 0 {
 		return
 	}
-	generation := s.generation
-	s.expiry = time.AfterFunc(l.idle, func() { l.expire(label, generation) })
+	l.startIdle(label, s)
+	l.schedule()
 }
 
-// expire closes an idle session unless it became busy since, then admits
-// waiters in arrival order while slots are free.
+// expire closes an idle session unless it became busy since, then schedules.
 func (l *Limiter) expire(label string, generation int) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -224,34 +330,22 @@ func (l *Limiter) expire(label string, generation int) {
 		return
 	}
 	delete(l.sessions, label)
-	l.admit()
+	l.schedule()
 }
 
-// admit wakes queued requests, oldest first. A request whose session became
-// active while it waited joins that session without needing a new slot.
-func (l *Limiter) admit() {
-	for len(l.waiters) > 0 {
-		w := l.waiters[0]
-		s, ok := l.sessions[w.label]
-		if !ok {
-			if len(l.sessions) >= l.max || !l.fits(l.older(l.ageOf(w)), w.size) {
-				return
-			}
-			s = l.open(w.label, w.size, w.order)
-		}
-		l.busy(s)
-		l.waiters = l.waiters[1:]
-		close(w.ready)
-	}
-}
-
-// abandon removes a waiter whose client left. If it was admitted at the same
-// moment, its request was already counted, so it is released instead.
+// abandon removes a waiter whose client left, restarting its session's idle
+// period if the session is still active with nothing in flight. If it was
+// admitted at the same moment, its request was already counted, so it is
+// released instead.
 func (l *Limiter) abandon(w *waiter) {
 	l.mu.Lock()
 	for i, queued := range l.waiters {
 		if queued == w {
 			l.waiters = append(l.waiters[:i], l.waiters[i+1:]...)
+			if s, ok := l.sessions[w.label]; ok && s.inflight == 0 && s.expiry == nil {
+				l.startIdle(w.label, s)
+			}
+			l.schedule()
 			l.mu.Unlock()
 			return
 		}

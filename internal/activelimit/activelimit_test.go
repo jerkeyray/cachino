@@ -227,3 +227,40 @@ func TestGrowingYoungerSessionIsSuspendedAheadOfNewSessions(t *testing.T) {
 		t.Fatalf("admission order %v, want the suspended b before new c", order)
 	}
 }
+
+func TestOlderTurnWaitsForYoungerRequestsInFlight(t *testing.T) {
+	l := newLimiter(t, 4)
+	if err := l.SetBudget(100, 1); err != nil {
+		t.Fatal(err)
+	}
+	hold := make(chan struct{})
+	h := l.Wrap(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("X-Hold") != "" {
+			<-hold
+		}
+	}))
+	serveSized(h, "a", 10)
+	serveSized(h, "b", 40)
+	held := make(chan struct{})
+	go func() {
+		r := httptest.NewRequest("POST", "/v1/chat/completions", strings.NewReader(strings.Repeat("x", 40)))
+		r.Header.Set("X-Cachino-Session", "b")
+		r.Header.Set("X-Hold", "1")
+		h.ServeHTTP(httptest.NewRecorder(), r)
+		close(held)
+	}()
+	time.Sleep(idle / 8) // b's request is now in flight
+	admitted := make(chan struct{})
+	go func() { serveSized(h, "a", 70); close(admitted) }()
+	select {
+	case <-admitted:
+		t.Fatal("a's 70-token turn ran beside b's 40 tokens in flight under a 100-token budget")
+	case <-time.After(idle / 4):
+	}
+	close(hold)
+	<-held
+	<-admitted
+	if !waits(func() { serveSized(h, "b", 40) }) {
+		t.Fatal("b's next turn ran although it no longer fits after a")
+	}
+}

@@ -39,7 +39,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("base", type=Path)
     args = parser.parse_args()
-    runs = sorted(p for p in args.base.iterdir() if re.fullmatch(r"s\d+-n\d+(-limit\d+|-budget)?", p.name)
+    runs = sorted(p for p in args.base.iterdir() if re.fullmatch(r"s\d+-n\d+(-limit\d+|-budget|-drain)?", p.name)
                   and (p / "concurrent-attribution.json").exists())
     rows = [run_row(p) for p in runs]
     by_n = {}
