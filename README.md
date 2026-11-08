@@ -179,6 +179,10 @@ go build ./... && go vet ./... && go test -race ./...
 uv run --project analysis --offline --no-python-downloads python -m unittest discover -s analysis
 ```
 
+## License
+
+Code, documentation and released results are under the [MIT License](LICENSE).
+
 ## Citing
 
 Citation metadata is in [`CITATION.cff`](CITATION.cff); GitHub's *Cite this

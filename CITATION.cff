@@ -11,6 +11,7 @@ type: software
 authors:
   - alias: jerkeyray
 repository-code: "https://github.com/jerkeyray/cachino"
+license: MIT
 url: "https://github.com/jerkeyray/cachino"
 date-released: 2026-11-08
 keywords:
