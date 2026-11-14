@@ -1,53 +1,93 @@
 <img src="docs/figures/banner.svg" alt="Cachino: where coding agents lose prefix reuse" width="100%">
 
-Coding agents resend their whole conversation on every turn. A serving engine
-skips the repeated part only if it matches an earlier prompt token for token
-and is still in the prefix cache. When it does not, the engine recomputes it,
-and the server reports a single number, the cached tokens, with no cause.
+A coding agent resends its whole conversation on every turn, so most of what
+the serving engine does is prefill over tokens it has already seen. Prefix
+caching is supposed to skip that work. When it doesn't, vLLM reports one number
+per request: how many prompt tokens were cached. Say a 6,000-token prompt comes
+back with 4,000 cached. That number can't tell you whether the other 2,000 were
+new content, a prompt that rendered differently, or blocks that were evicted
+while the agent was away.
 
-Cachino recovers the cause. It captures agent traffic byte for byte, rebuilds
-the exact token IDs the model sees, replays a pinned vLLM build's prefix-cache
-rules to predict each request's hit, and attributes every recomputed token to
-new content, a changed prompt, block rounding, eviction or reuse from another
-session. Every prediction is checked against the engine.
+Cachino sits between the agent and vLLM and records what you need to tell those
+cases apart. It captures traffic byte for byte, rebuilds the exact prompt token
+IDs, and replays a pinned vLLM build's prefix-cache rules, including block
+allocation and the free queue, to predict each request's hit. Every prediction
+is checked against the count the engine reports.
+
+A missing hit comes down to two questions. **What changed in the token IDs?**
+Answering that needs the exact tokens. **What was still in memory when the next
+turn arrived?** Answering that needs to know what the engine served in between.
+The engine reports the result of both as the same field.
 
 **[Read the report](docs/report.md)** · [How to read the results](docs/reading-results.md) ·
 [Result card: 487 vs 488 blocks](docs/result-card-487-488.md) · [Reproduce](docs/reproduce.md) ·
 [Released results](results/README.md) · [Try it without an engine](examples/README.md) ·
 [Run records](docs/records/)
 
-> **Status · 8 November 2026.** The study is complete for its setup: one frozen
-> task, two harnesses, Qwen3 at 0.6B and 1.7B, vLLM at `2173d712`. Every number
-> below is a dated measurement from runs on 7 and 8 November 2026. Read
-> [how to read the results](docs/reading-results.md) before quoting one.
+> **Scope.** One frozen task, two harnesses (mini-swe-agent and smolagents),
+> Qwen3 at 0.6B and 1.7B, and vLLM at `2173d712`, run on a Mac CPU with timing
+> on one Tesla T4. Every number below is a dated measurement from runs on 7 and
+> 8 November 2026. Read [how to read the results](docs/reading-results.md)
+> before quoting one.
 
 ![Three ways an agent turn loses prefix reuse](docs/figures/reuse-loss.svg)
 
+## Explaining an uncached count
+
+| What happened | What it looks like | Where to look |
+| --- | --- | --- |
+| The turn added new context | Recomputation sits after the longest prefix shared with any earlier prompt or reply | The latest messages and tool output; `attribute` reports it as new content |
+| The match ended partway through a block | Up to 31 tokens short of the shared prefix; a fully cached prompt still recomputes its final token, and with it the last block | Block size and the final prompt position; `attribute` reports block rounding |
+| The conversation rendered differently | The first changed token ID sits before content that matches word for word, often right before the last reply | `template` finds the boundary from a capture; `attribute` reports a re-prefilled reply |
+| Matching KV was evicted | Token IDs match through a block that the engine reports as uncached | What else used the cache between requests; `concurrent`, `curve` and `sweep` |
+
+Work through the rows in order. The first three come from the tokens alone,
+and the fourth needs a model of what the cache held.
+
 ## Results
 
-The headline: on one captured three-session trace, Cachino predicted that a
-cache of 487 blocks would lose exactly 32 tokens to eviction and 488 none, and
-vLLM on a Mac CPU matched all 30 requests at both sizes; a Tesla T4 matched the
-same curve at 384, 438, 488 and 640 blocks ([result card](docs/result-card-487-488.md)).
-That is one trace from small models, not a model of production caches.
+1. **A single session mostly recomputes genuinely new content.** Without
+   eviction, 64% to 91% of the recomputed tokens were new context. The rest was
+   block rounding and, with Qwen3, the previous reply.
+2. **Qwen3's chat template drops a 4-token cue before every reply.** With
+   thinking off, the generation prompt ends with an empty `<think>` block that
+   history omits. So each turn re-prefills the reply the model just generated.
+   That averaged about 16 to 77 tokens a turn, depending on the session.
+3. **A harness can make replies unreusable.** smolagents writes each tool call
+   back into history as different text with a random call ID. A call generated
+   in 19 to 36 tokens comes back as 52 to 66.
+4. **Shared caches evict past a threshold the capture predicts.** On one
+   three-session trace, 488 blocks lost nothing to eviction. 487 blocks lost
+   exactly 32 tokens, as predicted, and vLLM matched all 30 requests at both
+   sizes ([result card](docs/result-card-487-488.md)).
+5. **Eviction costs time to first token.** Replaying that trace's 30 prompts on
+   a T4, total time to first token rose from 23.6 s to 30.9 s at 438 blocks
+   (+31%) and 43.9 s at 384 blocks (+86%).
+6. **Limiting concurrent sessions removes eviction, at a price.** A two-session
+   cap removed eviction in every seed that evicted, and it slowed runs that
+   would not have evicted. A size-based budget avoided needless waits, but the
+   sessions it paused lost their cache.
+7. **The predictions are exact, and modeling residency is what makes them
+   exact.** The predictor matched every sequential replay on CPU and T4, and
+   710 of 738 requests under live concurrency. A shortcut that assumes any
+   matching prefix is still cached had 8,320 tokens of total error against 352.
 
-| # | Finding | Evidence | Boundary | Report |
-| --- | --- | --- | --- | --- |
-| 1 | Per-request predictions match the engine | Every sequential request on CPU and T4; 710 of 738 under live concurrency | Exact only for sequential replay; overlap misses reach 26 blocks in the most evicting runs; one vLLM commit | [3.1](docs/report.md#31-the-predictions-are-exact) |
-| 2 | Modeling residency is what makes them exact | A baseline that assumes matching blocks stay cached has 24x the error (8,320 vs 352 tokens); its misses are exactly the evicted reuse | Hit prediction, not cause attribution: under overlap, a shortfall can also be blocks not yet stored | [3.1](docs/report.md#31-the-predictions-are-exact) |
-| 3 | A single session mostly recomputes new content | 64% to 91% of recomputation; the rest is block rounding and, with Qwen3, the previous reply | Three sessions on one task, read-only observations, no eviction | [3.2](docs/report.md#32-single-sessions-mostly-new-content) |
-| 4 | Qwen3's chat template re-prefills every reply | History omits the 4-token empty thinking cue; with the cue kept, no reply was re-prefilled, but the next action changed | Qwen3 with thinking off; no session solved the task, so its effect on success is unknown | [3.3](docs/report.md#33-the-template-boundary), [3.9](docs/report.md#39-keeping-the-cue-in-a-sandboxed-task) |
-| 5 | Harness serialization can make replies unreusable | smolagents rewrites each tool call as text about twice as long, with a random ID | One harness version (1.26.0), four sessions | [3.4](docs/report.md#34-a-second-harness) |
-| 6 | Shared caches evict past a threshold the capture predicts | 17% to 25% of recomputation in runs that outgrew the cache; the threshold called 9 of 9 runs | Sessions from one task on one cache size; threshold exact for sequential replay | [3.5](docs/report.md#35-shared-caches-and-the-eviction-threshold) |
-| 7 | Eviction costs time to first token | +31% and +86% on a T4 below the threshold | One T4, one trace, requests sent one at a time; the 1.34 ms per token slope is a fit, the totals are measured | [3.6](docs/report.md#36-what-eviction-costs-in-time) |
-| 8 | Limiting concurrency removes eviction, at a price | Replay: -16.5% recomputation. Live: a two-session cap removed eviction in all three seeds that evicted and added waiting elsewhere; a size-based budget avoided needless waits, but paused sessions lost their cache | Replay delay counted in positions; live timing on a Mac CPU over five seeds compares conditions only | [3.7](docs/report.md#37-scheduling-to-avoid-eviction), [3.8](docs/report.md#38-a-live-concurrency-limit) |
+| # | Evidence | Boundary | Report |
+| --- | --- | --- | --- |
+| 1 | Three single sessions, no eviction: 68%, 64% and 91% new content | One task, read-only observations | [3.2](docs/report.md#32-single-sessions-mostly-new-content) |
+| 2 | Every Qwen3 transition diverged inside the cue. With the cue kept, no reply was re-prefilled, but the next action changed | Qwen3 with thinking off; no session solved the task, so the effect on success is unknown | [3.3](docs/report.md#33-the-template-boundary), [3.9](docs/report.md#39-keeping-the-cue-in-a-sandboxed-task) |
+| 3 | Measured on every smolagents tool call | One harness version (1.26.0), four sessions | [3.4](docs/report.md#34-a-second-harness) |
+| 4 | Eviction took 17% to 25% of recomputation in runs that outgrew the cache. The capture threshold called 9 of 9 seeded runs | Sessions from one task. The threshold is exact for sequential replay | [3.5](docs/report.md#35-shared-caches-and-the-eviction-threshold) |
+| 5 | Two rounds per size, capture off | One T4, one trace, requests sent one at a time | [3.6](docs/report.md#36-what-eviction-costs-in-time) |
+| 6 | Replay: -16.5% recomputation. Live: five seeds, cap off, cap 2 and token budget | Live timing on a Mac CPU compares conditions only. Sampled replies differ between arms | [3.7](docs/report.md#37-scheduling-to-avoid-eviction), [3.8](docs/report.md#38-a-live-concurrency-limit) |
+| 7 | Engine prompt IDs equalled the local render on every replayed request | Under overlap, misses reach 26 blocks in the most evicting runs. The likely cause is decode-block timing, which is a hypothesis. One vLLM commit | [3.1](docs/report.md#31-the-predictions-are-exact) |
 
 ![Eviction against cache size](docs/figures/eviction-curve.svg)
 
-The mechanisms themselves were reported before: the Qwen3 template boundary
-upstream, and cache-aware scheduling for agents in CacheWise and Continuum.
-What Cachino adds is exact, per-request, engine-validated attribution from a raw
-capture ([what is new here](docs/contribution.md)).
+The mechanisms themselves were known before this study: the Qwen3 template
+boundary was reported upstream, and CacheWise and Continuum address
+cache-aware scheduling for agents. What Cachino adds is exact, per-request,
+engine-validated attribution from a raw capture ([what is new here](docs/contribution.md)).
 
 ## Reading paths
 
@@ -154,7 +194,7 @@ two diagrams with `experiments/figures/make_diagrams.py`.
 One task, two harnesses and models of 0.6B to 1.7B parameters: the shares
 describe this setup, not production traffic. GPU timing comes from one T4 and
 sequential replay; live concurrency timing is on a Mac CPU and compares
-conditions only. Full list: [limitations](docs/report.md#5-limitations).
+conditions only. Full list: [limitations](docs/report.md#6-limitations).
 
 ## Repository
 

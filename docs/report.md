@@ -3,38 +3,53 @@
 *An engine-validated measurement study with Cachino.* jerkeyray, November 2026.
 
 **Contents:** [Abstract](#abstract) · [1 Introduction](#1-introduction) ·
-[2 Method](#2-method) · [3 Results](#3-results) · [4 Related work](#4-related-work) ·
-[5 Limitations](#5-limitations) · [6 Future work](#6-future-work) ·
-[7 Reproducing](#7-reproducing)
+[2 Method](#2-method) · [3 Results](#3-results) ·
+[4 Explaining one cached-token count](#4-explaining-one-cached-token-count) ·
+[5 Related work](#5-related-work) · [6 Limitations](#6-limitations) ·
+[7 Future work](#7-future-work) · [8 Reproducing](#8-reproducing)
 
 ## Abstract
 
-Coding agents resend their whole conversation on every turn, and a serving
-engine skips the repeated part only if it matches an earlier prompt token for
-token and is still cached. Servers report how many prompt tokens were cached,
-but not why the rest were recomputed. We built Cachino, which captures agent
-traffic byte for byte, rebuilds the exact token IDs the model sees, and replays
-a pinned vLLM build's prefix-cache rules to predict each request's hit and
-attribute every recomputed token to its cause. The predictions matched vLLM's
-reported counts on every sequential request, on a Mac CPU and a Tesla T4, and on
-710 of 738 requests under live concurrency; a baseline that ignores residency
-had 24 times the error. Driving Qwen3 with mini-swe-agent and smolagents on a
-frozen coding task, we find that single sessions mostly recompute new content;
-that Qwen3's chat template makes every turn re-prefill the reply just
-generated, and that fixing it restores reuse but changes the model's next
-action; that sessions sharing a cache evict each other past a threshold
-predictable from the capture; that on a T4 eviction raised time to first token
-by 31% to 86%; and that capping concurrent sessions removes eviction, which
-pays off only when the sessions' working set exceeds the cache. Both mechanisms
-were known; the contribution is exact, engine-validated, per-request attribution.
+Coding agents resend their whole conversation on every turn. A serving engine
+skips the repeated part only if it matches an earlier prompt token for token
+and its KV is still cached. vLLM reports how many prompt tokens were cached,
+but one count covers two separate questions. The first is what changed in the
+token IDs, and the second is what was still in memory when the request
+arrived. We built Cachino to answer both. It captures agent traffic byte for
+byte, rebuilds the exact token IDs the model sees, and replays a pinned vLLM
+build's prefix-cache rules, allocation and free queue included. From that it
+predicts each request's hit and attributes every recomputed token to new
+content, a re-rendered reply, block rounding or eviction. The predictions
+matched vLLM's reported counts on every sequential request, on a Mac CPU and a
+Tesla T4, and on 710 of 738 requests under live concurrency. A baseline that
+answers only the first question, treating any matching prefix as cached, had
+24 times the error.
+
+We drove Qwen3 with mini-swe-agent and smolagents on a frozen coding task.
+Single sessions mostly recompute new content (64% to 91%). Two smaller losses
+come from the tokens themselves. Qwen3's chat template drops a 4-token cue
+from history, so each turn re-prefills the reply just generated. smolagents
+rewrites each tool call as different text. A third loss comes from residency.
+Sessions sharing a cache evict each other past a threshold that the capture
+predicts to the block, and on a T4 that eviction raised time to first token by
+31% and 86% on one trace. Capping concurrent sessions removes the eviction,
+but it pays off only when the sessions' working set exceeds the cache. These
+mechanisms were known before this study. The contribution is exact,
+engine-validated, per-request attribution.
 
 ## 1. Introduction
 
-When an agent turn's prefill is slow, how much of the redone work came from the
-prompt changing, from the cache's block granularity, or from the cache evicting
-what the agent needed? A server reports only one number per request, the cached
-tokens. We split that number into its causes, and check every prediction
-against the engine.
+Say a 6,000-token agent prompt comes back with 4,000 tokens cached. The other
+2,000 could be new context, a prompt that rendered differently from the last
+one, a match that ended partway through a block, or KV that was evicted before
+the turn arrived. The server reports only the 4,000. We split that number into
+its causes and check every prediction against the engine.
+
+The causes fall into two groups. New content, rendering changes and block
+rounding are properties of the token sequence, so the exact prompt IDs can
+explain them. Eviction is a property of the cache's history, and the tokens
+cannot reveal it: the prompt can match to the last ID and still miss. Section
+4 shows how to explain one count with both.
 
 **Background.** vLLM's prefix cache stores KV in fixed-size blocks (32 tokens
 here), each identified by a hash chained over every token before it, so a block
@@ -388,7 +403,30 @@ event. Capture adds about 15 ms per request on macOS, because each event and
 body is synced to disk so that a crash leaves a complete record; timing runs
 therefore use capture off ([overhead](records/proxy-overhead-20261107.md)).
 
-## 4. Related work
+## 4. Explaining one cached-token count
+
+The results suggest an order for explaining any single request's shortfall.
+Each step uses a different piece of evidence.
+
+| Step | Question | Evidence | Result here |
+| --- | --- | --- | --- |
+| 1 | Do the engine's prompt IDs equal the local render? | `return_token_ids` on replay | Yes on every replayed request. Without this step, the later steps compare the wrong sequence |
+| 2 | Where does the prompt first differ from every earlier prompt and reply? | Exact token IDs | This bounds the possible reuse. Content after the bound is new or re-rendered (3.2 to 3.4) |
+| 3 | How many full blocks does that bound leave? | Block size, final prompt position | Up to one block lost to rounding per request (3.2) |
+| 4 | Were those blocks still resident? | A model of allocation and the free queue over everything served in between | Necessary under shared caches. The baseline without it misses exactly the evicted reuse (3.1, 3.5) |
+
+Steps 1 to 3 need only the capture and the pinned tokenizer and template. Step
+4 also needs the order and overlap of every request the engine served. Proxy
+timestamps give that order, but not the engine's internal allocation times.
+That is the likely source of the 28 overlap misses in 3.1, though this remains
+a hypothesis until engine-side allocation events are recorded.
+
+What carries over beyond this setup: reuse ends at the first changed token,
+because KV at each position depends on every earlier token. The block size,
+eviction order and exposed metrics belong to the engine and the commit, and
+the threshold of 487 blocks belongs to one replay.
+
+## 5. Related work
 
 | Result | Closest work | Overlap |
 | --- | --- | --- |
@@ -403,7 +441,7 @@ reported counts, and a per-request split of each loss into its causes from a
 raw capture. Search records: [first check](records/related-work-check-20261101.md),
 [follow-up](records/related-work-check-20261107.md).
 
-## 5. Limitations
+## 6. Limitations
 
 - One task, two harnesses (the second for one session) and small models (0.6B
   to 1.7B). The shares describe this setup, not production traffic.
@@ -416,7 +454,7 @@ raw capture. Search records: [first check](records/related-work-check-20261101.m
 - vLLM's native simulator could not run on the Mac (it needs `triton-cpu` on
   x86_64 Linux), so the predictor was not compared with it.
 
-## 6. Future work
+## 7. Future work
 
 Models large enough to solve the task, so that a template change can be
 judged by success as well as reuse; an admission limit that predicts each
@@ -424,7 +462,7 @@ session's growth, so it holds sessions before they start instead of pausing
 them; larger models on faster GPUs;
 and a comparison with vLLM's native simulator once it is merged.
 
-## 7. Reproducing
+## 8. Reproducing
 
 Commands are in [reproduce](reproduce.md). Each [record](records/) names its run
 directory, spec hash and code commit; raw captures stay private, and
