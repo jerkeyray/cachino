@@ -2,7 +2,7 @@
 
 | Document | Read it for |
 | --- | --- |
-| [Report](report.md) | The study: question, method, results with figures, related work, limitations |
+| [Report](report.md) | The study: question, method, results with figures, how to explain one cached-token count, related work, limitations |
 | [How to read the results](reading-results.md) | Units, protocols, evidence levels and comparison limits, before quoting a number |
 | [Result card: 487 vs 488 blocks](result-card-487-488.md) | The headline result: claim, conditions, evidence, scope |
 | [What is new here](contribution.md) | Prior work subtracted, and the contribution that remains |

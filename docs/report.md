@@ -456,11 +456,13 @@ raw capture. Search records: [first check](records/related-work-check-20261101.m
 
 ## 7. Future work
 
-Models large enough to solve the task, so that a template change can be
-judged by success as well as reuse; an admission limit that predicts each
-session's growth, so it holds sessions before they start instead of pausing
-them; larger models on faster GPUs;
-and a comparison with vLLM's native simulator once it is merged.
+Recording vLLM's KV cache events (`BlockStored` and `BlockRemoved`, published
+at `2173d712`) during an overlapping replay, to test whether decode-time
+allocation explains the 28 overlap misses (4); models large enough to solve the
+task, so that a template change can be judged by success as well as reuse; an
+admission limit that predicts each session's growth, so it holds sessions
+before they start instead of pausing them; larger models on faster GPUs; and a
+comparison with vLLM's native simulator once it is merged.
 
 ## 8. Reproducing
 
