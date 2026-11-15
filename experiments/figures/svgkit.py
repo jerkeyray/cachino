@@ -39,15 +39,15 @@ text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,san
 </style>"""
 
 
-def svg(width, height, title, subtitle, body, desc=None):
-    """Wrap a figure body with the theme and a title block, on a transparent background."""
-    head = '<text x="24" y="30" class="t ink">%s</text>' % escape(title)
+def svg(width, height, title, subtitle, body, desc=None, *, accessible_title=None):
+    """Wrap a themed figure; pass an accessible title when the body draws its own."""
+    head = '<text x="24" y="30" class="t ink">%s</text>' % escape(title) if title else ""
     if subtitle:
         head += '<text x="24" y="49" class="st ink2">%s</text>' % escape(subtitle)
     return ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" role="img" aria-labelledby="title desc">'
             '<title id="title">%s</title><desc id="desc">%s</desc>%s'
             '%s%s</svg>\n'
-            % (width, height, escape(title), escape(desc or subtitle or title), STYLE, head, body))
+            % (width, height, escape(accessible_title or title), escape(desc or subtitle or title), STYLE, head, body))
 
 
 def text(x, y, s, cls="lab ink", anchor="start", extra=""):

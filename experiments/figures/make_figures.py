@@ -84,28 +84,53 @@ def fig_curve(data):
     gpu = {s["num_blocks"]: s["eviction_tokens"] for s in json.loads((A / "gpu-result-kaggle-20261108/summary.json").read_text())["sizes"]}
     data["reuse_curve"] = {"predicted": [(p["num_blocks"], p["eviction"]) for p in points], "predicted_487_488": exact,
                            "engine_cpu": sorted(cpu.items()), "engine_gpu": sorted(gpu.items())}
-    threshold = next(p["num_blocks"] for p in points if p["eviction"] == 0)
-    f = Frame(320, 700, 0, 25000)
-    body = [f.yaxis(range(0, 25001, 5000), fmt=kilo, title="Tokens lost to eviction"),
-            f.xaxis(range(320, 701, 40), fmt=str, title="Cache size (blocks of 32 tokens)")]
+    return draw_eviction_curve(data["reuse_curve"])
+
+
+def draw_eviction_curve(series):
+    """Plot the broad sweep and label the adjacent threshold probes separately."""
+    points = series["predicted"]
+    exact = series["predicted_487_488"]
+    threshold = next(b for b, evicted in points if evicted == 0)
+    f = Frame(320, 700, 0, 25000, left=55, right=532, top=163, bottom=344)
+    body = [
+        text(24, 32, "Where eviction stops", "ink b", extra=' font-size="22"'),
+        text(24, 58, "One captured trace · 30 requests · sequential replay", "ink2",
+             extra=' font-size="15"'),
+    ]
+    for x, blocks in [(24, threshold - 1), (283, threshold)]:
+        loss = exact[blocks]
+        outcome = f"{loss:,} tokens lost" if loss else "no eviction"
+        body.append(text(x, 91, f"{blocks} blocks: {outcome}", "ink b", extra=' font-size="16"'))
+    body.append(line(24, 107, 536, 107))
+    body.append(text(f.left, 141, "Tokens lost to eviction", "ink2", extra=' font-size="14"'))
+    body.extend(line(f.left, f.y(v), f.right, f.y(v)) for v in range(0, 25001, 5000))
+    body.extend(text(f.left - 8, f.y(v) + 4, kilo(v), "ink2", "end", ' font-size="13"')
+                for v in range(0, 25001, 5000))
+    body.append(line(f.left, f.bottom, f.right, f.bottom, "axis"))
+    for v in [320, 400, 488, 600, 700]:
+        body.append(text(f.x(v), 365, v, "ink b" if v == threshold else "ink2", "middle",
+                         ' font-size="14"'))
+    body.append(text(294, 388, "Cache capacity (32-token blocks)", "ink2", "middle", ' font-size="14"'))
     body.append('<path d="M%s L%.1f %.1f L%.1f %.1f Z" class="w1"/>' % (
-        " L".join("%.1f %.1f" % (f.x(b), f.y(e)) for b, e in data["reuse_curve"]["predicted"]),
+        " L".join("%.1f %.1f" % (f.x(b), f.y(e)) for b, e in points),
         f.x(700), f.y(0), f.x(320), f.y(0)))
     body.append('<polyline fill="none" class="l1" stroke-width="2" stroke-linejoin="round" points="%s"/>' % " ".join(
-        "%.1f,%.1f" % (f.x(b), f.y(e)) for b, e in data["reuse_curve"]["predicted"]))
-    tx = f.x(488)
-    body.append(line(tx, f.top, tx, f.bottom, "lm", ' stroke-width="1"'))
-    body.append(text(tx + 8, f.top + 14, "488 blocks: no eviction from here up", "lab ink"))
-    body.append(text(tx + 8, f.top + 30, "487 blocks: 32 tokens lost (predicted and on the engine)", "small ink2"))
-    # CPU and T4 measured the same values at shared sizes; the larger CPU dot stays visible around the diamond.
-    body += [dot(f.x(b), f.y(e), "f2", 7) for b, e in sorted(cpu.items()) if 320 <= b <= 700]
-    body += [diamond(f.x(b), f.y(e), 5, "f3 ring") for b, e in sorted(gpu.items())]
-    body.append(legend(24, 76, [("line", "l1", "Predicted from the capture"), ("dot", "f2", "vLLM, Mac CPU"),
-                                ("diamond", "f3", "vLLM, Tesla T4")]))
-    return svg(W, H, "Eviction against cache size",
-               "One captured three-session trace (30 requests) replayed at each size; the engine matched every prediction.",
-               "".join(body), desc="Line of predicted tokens lost to eviction falling to zero at %d blocks, with CPU and "
-                                   "T4 engine measurements on the line." % threshold)
+        "%.1f,%.1f" % (f.x(b), f.y(e)) for b, e in points))
+    body.append(line(f.x(threshold), f.top, f.x(threshold), f.bottom, "lm",
+                     ' stroke-width="1.25" stroke-dasharray="4 4"'))
+    # The adjacent 487/488 probes share a marker footprint at this scale; the
+    # callouts above the plot give the exact values without shifting the dots.
+    body += [dot(f.x(b), f.y(e), "f2", 7) for b, e in series["engine_cpu"] if 320 <= b <= 700]
+    body += [diamond(f.x(b), f.y(e), 5, "f3 ring") for b, e in series["engine_gpu"]]
+    for x, kind, name in [(88, "line", "Prediction"), (247, "cpu", "vLLM CPU"), (403, "t4", "vLLM T4")]:
+        mark = (line(x - 8, 416, x + 8, 416, "l1", ' stroke-width="2"') if kind == "line"
+                else dot(x, 416, "f2", 7) if kind == "cpu" else diamond(x, 416, 5, "f3 ring"))
+        body.extend([mark, text(x + 14, 421, name, "ink2", extra=' font-size="14"')])
+    return svg(560, 442, "", "", "".join(body), accessible_title="Where eviction stops",
+               desc=f"For this trace, the prediction falls to zero at {threshold} blocks. "
+                    f"The CPU engine confirmed {exact[threshold - 1]} tokens lost at "
+                    f"{threshold - 1} blocks and zero at {threshold}; the T4 confirmed zero at {threshold}.")
 
 
 def split_totals(path):

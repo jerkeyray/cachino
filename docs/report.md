@@ -59,7 +59,7 @@ the final prompt token. Freed blocks keep their hashes until another request
 takes them, so whether a matching prefix is still there depends on everything
 else the engine has served since.
 
-![Three ways an agent turn loses prefix reuse](figures/reuse-loss.svg)
+![Illustrative prompt blocks: 8 reused after an append, 5 after a token change, 3 after eviction](figures/reuse-loss.svg)
 
 *Figure 1. The causes this study separates. A schematic, not data: block counts
 are illustrative.*
@@ -80,9 +80,10 @@ are illustrative.*
 
 ## 2. Method
 
-![How Cachino measures prefix reuse](figures/pipeline.svg)
+![Live traffic becomes a trace; offline analysis renders, predicts, attributes and verifies reuse](figures/pipeline.svg)
 
-*Figure 2. Online, the proxy forwards and records traffic; offline, each request is rendered, predicted, attributed and checked against the engine.*
+*Figure 2. The trace connects live traffic to offline analysis. A separate
+engine replay checks the rendered token IDs and predicted hits.*
 
 1. **Capture.** The Go proxy forwards requests unchanged and stores request and
    response bytes with lifecycle events ([trace format](records/trace-format.md)).
@@ -245,7 +246,7 @@ Session count did not predict which runs evicted; the threshold computed from
 each capture did, for all 9 runs ([concurrent](records/concurrent-results-20261107.md),
 [repetitions](records/repetitions-20261108.md)).
 
-![Eviction against cache size](figures/eviction-curve.svg)
+![For this trace, 487 cache blocks lost 32 tokens to eviction; 488 blocks lost none](figures/eviction-curve.svg)
 
 *Figure 4. Predicted eviction for one captured trace at every cache size, with engine measurements on the CPU and the T4.*
 The 487 and 488 block pair has its own [result card](result-card-487-488.md).

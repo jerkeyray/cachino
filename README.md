@@ -30,7 +30,7 @@ The engine reports the result of both as the same field.
 > 8 November 2026. Read [how to read the results](docs/reading-results.md)
 > before quoting one.
 
-![Three ways an agent turn loses prefix reuse](docs/figures/reuse-loss.svg)
+![Illustrative prompt blocks: 8 reused after an append, 5 after a token change, 3 after eviction](docs/figures/reuse-loss.svg)
 
 ## Explaining an uncached count
 
@@ -82,7 +82,7 @@ and the fourth needs a model of what the cache held.
 | 6 | Replay: -16.5% recomputation. Live: five seeds, cap off, cap 2 and token budget | Live timing on a Mac CPU compares conditions only. Sampled replies differ between arms | [3.7](docs/report.md#37-scheduling-to-avoid-eviction), [3.8](docs/report.md#38-a-live-concurrency-limit) |
 | 7 | Engine prompt IDs equalled the local render on every replayed request | Under overlap, misses reach 26 blocks in the most evicting runs. The likely cause is decode-block timing, which is a hypothesis. One vLLM commit | [3.1](docs/report.md#31-the-predictions-are-exact) |
 
-![Eviction against cache size](docs/figures/eviction-curve.svg)
+![For this trace, 487 cache blocks lost 32 tokens to eviction; 488 blocks lost none](docs/figures/eviction-curve.svg)
 
 The mechanisms themselves were known before this study: the Qwen3 template
 boundary was reported upstream, and CacheWise and Continuum address
@@ -102,7 +102,7 @@ engine-validated attribution from a raw capture ([what is new here](docs/contrib
 
 ## How it works
 
-![How Cachino measures prefix reuse](docs/figures/pipeline.svg)
+![Live traffic becomes a trace; offline analysis renders, predicts, attributes and verifies reuse](docs/figures/pipeline.svg)
 
 | Stage | Code | What it guarantees |
 | --- | --- | --- |
