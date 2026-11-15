@@ -39,15 +39,24 @@ text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,san
 </style>"""
 
 
+# Figures declare an intrinsic size. Without one, GitHub stretches an SVG to
+# the full column (about 840px), blowing 14px labels up to 21px. At 0.9 of the
+# drawing units, a 560-unit figure shows at 504px and its labels at 12 to 13px,
+# close to the page's own text; narrower screens still shrink it to fit.
+DISPLAY_SCALE = 0.9
+
+
 def svg(width, height, title, subtitle, body, desc=None, *, accessible_title=None):
     """Wrap a themed figure; pass an accessible title when the body draws its own."""
     head = '<text x="24" y="30" class="t ink">%s</text>' % escape(title) if title else ""
     if subtitle:
         head += '<text x="24" y="49" class="st ink2">%s</text>' % escape(subtitle)
-    return ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" role="img" aria-labelledby="title desc">'
+    return ('<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="%d" viewBox="0 0 %d %d" role="img" '
+            'aria-labelledby="title desc">'
             '<title id="title">%s</title><desc id="desc">%s</desc>%s'
             '%s%s</svg>\n'
-            % (width, height, escape(accessible_title or title), escape(desc or subtitle or title), STYLE, head, body))
+            % (round(width * DISPLAY_SCALE), round(height * DISPLAY_SCALE), width, height,
+               escape(accessible_title or title), escape(desc or subtitle or title), STYLE, head, body))
 
 
 def text(x, y, s, cls="lab ink", anchor="start", extra=""):

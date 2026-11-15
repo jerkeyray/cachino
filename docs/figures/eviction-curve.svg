@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 442" role="img" aria-labelledby="title desc"><title id="title">Where eviction stops</title><desc id="desc">For this trace, the prediction falls to zero at 488 blocks. The CPU engine confirmed 32 tokens lost at 487 blocks and zero at 488; the T4 confirmed zero at 488.</desc><style>
+<svg xmlns="http://www.w3.org/2000/svg" width="504" height="398" viewBox="0 0 560 442" role="img" aria-labelledby="title desc"><title id="title">Where eviction stops</title><desc id="desc">For this trace, the prediction falls to zero at 488 blocks. The CPU engine confirmed 32 tokens lost at 487 blocks and zero at 488; the T4 confirmed zero at 488.</desc><style>
 svg{--surface:#ffffff;--ink:#0b0b0b;--ink2:#52514e;--muted:#898781;--grid:#e1e0d9;--axis:#c3c2b7;
 --panel:#f3f2ee;--s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s1wash:#2a78d61f;--s2wash:#eb68341f;--on:#ffffff}
 @media (prefers-color-scheme: dark){svg{--surface:#0d1117;--ink:#f0efec;--ink2:#c3c2b7;--muted:#898781;
