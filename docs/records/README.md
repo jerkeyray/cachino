@@ -23,5 +23,11 @@ and `traces/`.
 | [repetitions-20261108](repetitions-20261108.md) | Seeded repetitions and threshold location |
 | [control-template-20261108](control-template-20261108.md) | Qwen2.5 control template |
 | [baseline-20261108](baseline-20261108.md) | Naive prefix baseline against the cache predictors |
+| [exactness-20261108](exactness-20261108.md) | Prediction exactness across every run, and decode-block timing |
+| [smolagents-20261108](smolagents-20261108.md) | Second harness: tool-call serialization |
+| [scheduling-replay-20261108](scheduling-replay-20261108.md) | One evicting trace replayed in five orders |
+| [session-limits-20261108](session-limits-20261108.md) | Live session cap and token budget, five seeds |
+| [sandbox-cue-20261108](sandbox-cue-20261108.md) | Cue-kept template with commands really executed |
+| [assumptions](assumptions.md) | Every modeling and measurement choice, why it matters and how it was checked |
 | [direct-harness-observations](direct-harness-observations.md) | Harness adapter wire check |
 | [prefill-measurement-contract](prefill-measurement-contract.md), [vllm-source-paths](vllm-source-paths.md), [mini-swe-agent-source-paths](mini-swe-agent-source-paths.md), [trace-format](trace-format.md) | Measurement contract and source references |

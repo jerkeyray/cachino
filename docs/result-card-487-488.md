@@ -1,6 +1,6 @@
 # Result card: 487 versus 488 blocks
 
-[← Documentation](README.md) · [Report 3.5](report.md#35-shared-caches-and-the-eviction-threshold) · [How to read the results](reading-results.md)
+[← Documentation](README.md) · [Report 3.5](report.md#35-shared-caches-and-the-eviction-threshold) · [Reading the numbers](report.md#2-method)
 
 ## Claim
 

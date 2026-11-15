@@ -1,6 +1,6 @@
 # Assumptions
 
-[← Documentation](README.md) · [How to read the results](reading-results.md)
+[← Run records](README.md) · [Report](../report.md)
 
 Every place where the method had to choose because the engine, the harness or
 the data did not settle the question. Each entry says what the choice was, why
@@ -13,7 +13,7 @@ result, the entry says so.
 Why it matters: every hit prediction depends on it, and the rules change between
 versions. Check: calibration and capped-cache probes (17 of 17, 27 of 27), then
 every sequential request on CPU and T4. Source lines are in the
-[eviction plan](records/e4-eviction-plan.md). Other vLLM versions are not covered.
+[eviction plan](e4-eviction-plan.md). Other vLLM versions are not covered.
 
 **2. Under overlap, a request holds its blocks from its proxy start time to its
 proxy end time.** Proxy timestamps are not engine scheduling times. Why it
@@ -24,13 +24,13 @@ reported, not corrected.
 **3. Decode blocks are taken at admission.** The engine allocates them as it
 decodes, between admission and completion. Why it matters: blocks held by a
 reply can force eviction. Check: a timed overlap replay scored three variants,
-at admission 93 of 98 exact, at completion 92, ignoring decode 88 (3.1). The
+at admission 93 of 98 exact, at completion 92, ignoring decode 88 ([report 3.1](../report.md#31-the-predictions-are-exact)). The
 residual is attributed to decode-block timing as a hypothesis; confirming it
 needs engine-side allocation events.
 
 **4. A request whose completion count is missing is modeled as generating one
 token.** Why it matters: it would understate the blocks the reply holds. Check:
-no request in the [released tables](../results/README.md) is missing its
+no request in the [released tables](../../results/README.md) is missing its
 completion count, so none of their results depends on this default.
 
 ## Tokens
@@ -39,7 +39,7 @@ completion count, so none of their results depends on this default.
 template.** Why it matters: every prefix comparison uses these IDs. Check: the
 engine's `prompt_token_ids` equalled the local render on every replayed request,
 and the engine's prompt length equalled the local one on every live request in
-[`results/`](../results/README.md). Equal counts alone were never taken as
+[`results/`](../../results/README.md). Equal counts alone were never taken as
 equal tokens.
 
 **6. A reply's size in history is its `completion_tokens`.** This holds only if

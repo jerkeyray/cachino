@@ -24,19 +24,17 @@ from concurrent_attribution import load_requests  # noqa: E402
 from matrix_summary import run_row  # noqa: E402
 from reconstruct import _load_tokenizer  # noqa: E402
 from reuse_curve import curve  # noqa: E402
-from svgkit import column, compact, diamond, hbar, legend, line, svg, text  # noqa: E402
+from svgkit import column, diamond, hbar, line, svg, text  # noqa: E402
 from tokenizer_assets import load_pin  # noqa: E402
 
 A = ROOT / "artifacts"
 OUT = ROOT / "docs/figures"
-W, H = 760, 420
-L, R, T, B = 78, W - 36, 120, H - 58  # plot area
 
 
 class Frame:
-    """Linear scales for the plot area, with hairline grid and tick labels."""
+    """Linear scales from data values to the plot area's SVG coordinates."""
 
-    def __init__(self, xmin, xmax, ymin, ymax, left=L, right=R, top=T, bottom=B):
+    def __init__(self, xmin, xmax, ymin, ymax, left, right, top, bottom):
         self.xmin, self.xmax, self.ymin, self.ymax = xmin, xmax, ymin, ymax
         self.left, self.right, self.top, self.bottom = left, right, top, bottom
 
@@ -46,22 +44,6 @@ class Frame:
     def y(self, v):
         return self.bottom - (v - self.ymin) / (self.ymax - self.ymin) * (self.bottom - self.top)
 
-    def yaxis(self, ticks, fmt=compact, title=None):
-        out = [line(self.left, self.y(v), self.right, self.y(v)) for v in ticks]
-        out += [text(self.left - 8, self.y(v) + 4, fmt(v), "tick muted", "end") for v in ticks]
-        if title:
-            out.append(text(self.left, self.top - 14, title, "lab ink2"))
-        return "".join(out)
-
-    def xaxis(self, ticks, fmt=compact, title=None, grid=False):
-        out = [line(self.left, self.bottom, self.right, self.bottom, "axis")]
-        if grid:
-            out += [line(self.x(v), self.top, self.x(v), self.bottom) for v in ticks]
-        out += [text(self.x(v), self.bottom + 17, fmt(v), "tick muted", "middle") for v in ticks]
-        if title:
-            out.append(text((self.left + self.right) / 2, self.bottom + 40, title, "lab ink2", "middle"))
-        return "".join(out)
-
 
 def kilo(v):
     """One tick style per axis: compact thousands for axes that reach 10,000."""
@@ -70,6 +52,36 @@ def kilo(v):
 
 def dot(x, y, cls, r=4.5):
     return '<circle cx="%.1f" cy="%.1f" r="%.1f" class="%s ring"/>' % (x, y, r, cls)
+
+
+# Every data figure shares the eviction curve's layout: 560 units wide, a 22px
+# title, a 15px subtitle and 13 to 14px labels, so all figures render at the
+# same type size when a page scales them to its column width.
+FW = 560
+
+
+def t(x, y, s, size=14, cls="ink2", anchor="start"):
+    """Text at an explicit size; the svgkit classes are the older, smaller scale."""
+    return text(x, y, s, cls, anchor, ' font-size="%g"' % size)
+
+
+def header(title, subtitle):
+    return t(24, 32, title, 22, "ink b") + t(24, 58, subtitle, 15)
+
+
+def key(x, y, items):
+    """One-row legend at 14px; items are (mark, slot, label) with mark 'sq', 'dot' or 'diamond'."""
+    out = []
+    for mark, slot, label in items:
+        if mark == "dot":
+            out.append(dot(x + 6, y - 5, slot, 6))
+        elif mark == "diamond":
+            out.append(diamond(x + 6, y - 5, 6, slot + " ring"))
+        else:
+            out.append('<rect x="%.1f" y="%.1f" width="12" height="12" rx="2" class="%s"/>' % (x, y - 11, slot))
+        out.append(t(x + 20, y, label))
+        x += 20 + 7.6 * len(label) + 22
+    return "".join(out)
 
 
 def fig_curve(data):
@@ -155,29 +167,33 @@ def fig_split(data):
     for name, path in sessions:
         data["recompute_split"][name], reused[name] = split_totals(path)
     data["reused_pct"] = reused
-    h = 330
-    f = Frame(0, 100, 0, 1, left=232, right=W - 150, top=112, bottom=h - 52)
-    body = [f.xaxis(range(0, 101, 25), fmt=lambda v: "%d%%" % v, title="Share of recomputed tokens", grid=True)]
+    h = 372
+    left, right = 24, FW - 24
+    body = [header("What a single session recomputes", "Recomputed tokens by cause, three sessions, no eviction"),
+            key(24, 92, [("sq", "f1", "New content"), ("sq", "f2", "Previous reply"), ("sq", "f3", "Block rounding")]),
+            line(24, 110, FW - 24, 110)]
     keys = (("new_content", "f1"), ("previous_reply", "f2"), ("block_rounding", "f3"))
     for i, (name, totals) in enumerate(data["recompute_split"].items()):
-        y = f.top + 12 + i * 52
-        body.append(text(f.left - 12, y + 16, name, "lab ink", "end"))
+        y = 142 + i * 66
+        body.append(t(left, y, name, 14, "ink"))
+        body.append(t(right, y, "%d%% of prompt reused" % reused[name], 13, "ink2", "end"))
         total = sum(totals[k] for k, _ in keys) or 1
-        x = f.left
+        x, top = left, y + 10
         for j, (k, cls) in enumerate(keys):
-            width = (f.right - f.left) * totals[k] / total
-            body.append(hbar(x, y, width - (2 if j < 2 else 0), 24, cls, round_end=j == 2))
-            if width > 42:
-                body.append(text(x + 8, y + 16.5, "%d%%" % round(100 * totals[k] / total), "small on b"))
+            width = (right - left) * totals[k] / total
+            body.append(hbar(x, top, width - (2 if j < 2 else 0), 26, cls, round_end=j == 2))
+            if width > 46:
+                body.append(t(x + 9, top + 18, "%d%%" % round(100 * totals[k] / total), 13, "on b"))
             x += width
-        body.append(text(f.right + 12, y + 11, "%d%% of prompt" % reused[name], "small ink"))
-        body.append(text(f.right + 12, y + 25, "tokens reused", "small ink2"))
-    body.append(legend(24, 80, [("sq", "f1", "New content"), ("sq", "f2", "Previous reply, prefilled again"),
-                                ("sq", "f3", "Block rounding")]))
-    return svg(W, h, "What a single session recomputes",
-               "Recomputed tokens by cause from turn 1 on, mini-swe-agent on vLLM (Mac CPU); nothing was evicted.",
-               "".join(body), desc="Three stacked bars: new content is 64 to 91 percent of recomputation, the "
-                                   "re-prefilled reply and block rounding the rest.")
+    base = 142 + 2 * 66 + 46
+    body.append(line(left, base, right, base, "axis"))
+    for v in range(0, 101, 25):
+        body.append(t(left + (right - left) * v / 100, base + 20, "%d%%" % v, 13, "ink2",
+                      "start" if v == 0 else "end" if v == 100 else "middle"))
+    body.append(t(FW / 2, base + 44, "Share of recomputed tokens", 14, "ink2", "middle"))
+    return svg(FW, h, "", "", "".join(body), accessible_title="What a single session recomputes",
+               desc="Three stacked bars: new content is 64 to 91 percent of recomputation, the "
+                    "re-prefilled reply and block rounding the rest.")
 
 
 def fig_gpu(data):
@@ -186,45 +202,55 @@ def fig_gpu(data):
              s["eviction_tokens"]) for s in sizes]
     data["gpu_ttft"] = rows
     base = next(sec for b, sec, ev in rows if ev == 0)
-    f = Frame(0, len(rows), 0, 56, bottom=H - 74)
-    body = [f.yaxis(range(0, 51, 10), fmt=lambda v: "%d s" % v, title="Total time to first token, 30 requests"),
-            line(f.left, f.bottom, f.right, f.bottom, "axis")]
+    f = Frame(0, len(rows), 0, 52, left=60, right=FW - 24, top=130, bottom=336)
+    body = [header("What eviction costs on a Tesla T4", "The same 30 requests, sent one at a time"),
+            t(f.left, 104, "Total time to first token (mean of two rounds)")]
+    body += [line(f.left, f.y(v), f.right, f.y(v)) for v in range(0, 51, 10)]
+    body += [t(f.left - 8, f.y(v) + 4, "%d s" % v, 13, "ink2", "end") for v in range(0, 51, 10)]
+    body.append(line(f.left, f.bottom, f.right, f.bottom, "axis"))
     for i, (blocks, seconds, evicted) in enumerate(rows):
         cx = f.x(i + 0.5)
-        body.append(column(cx - 12, f.bottom, f.y(seconds), 24, "f1"))
-        body.append(text(cx, f.y(seconds) - 24, "%.1f s" % seconds, "lab ink b", "middle"))
-        body.append(text(cx, f.y(seconds) - 9, ("+%d%%" % round(100 * (seconds / base - 1))) if evicted else "no eviction",
-                         "small ink2", "middle"))
-        body.append(text(cx, f.bottom + 18, "%d blocks" % blocks, "lab ink", "middle"))
-        body.append(text(cx, f.bottom + 34, "{:,} tokens evicted".format(evicted) if evicted else "0 evicted", "small ink2", "middle"))
-    return svg(W, H, "What eviction costs on a Tesla T4",
-               "The same 30 requests sent one at a time at four cache sizes; vLLM's time to first token, mean of two rounds.",
-               "".join(body), desc="Columns: total time to first token falls from 43.9 s at 384 blocks to 23.6 s once "
-                                   "nothing is evicted.")
+        body.append(column(cx - 20, f.bottom, f.y(seconds), 40, "f1" if evicted else "fm"))
+        body.append(t(cx, f.y(seconds) - 26, "%.1f s" % seconds, 15, "ink b", "middle"))
+        body.append(t(cx, f.y(seconds) - 9, ("+%d%%" % round(100 * (seconds / base - 1))) if evicted
+                      else "no eviction", 13, "ink2", "middle"))
+        body.append(t(cx, f.bottom + 22, "%d blocks" % blocks, 14, "ink", "middle"))
+        body.append(t(cx, f.bottom + 40, "{:,} evicted".format(evicted) if evicted else "0 evicted", 13, "ink2", "middle"))
+    return svg(FW, 392, "", "", "".join(body), accessible_title="What eviction costs on a Tesla T4",
+               desc="Columns: total time to first token falls from 43.9 s at 384 blocks to 23.6 s once "
+                    "nothing is evicted.")
 
 
 def fig_schedule(data):
     schedules = json.loads((A / "schedule-replay-20261108-01/result.json").read_text())["schedules"]
     data["schedules"] = {n: (e["engine"]["mean_delay"], e["engine"]["recomputed"]) for n, e in schedules.items()}
-    f = Frame(-0.3, 6.3, 21000, 27000)
-    body = [f.yaxis(range(21000, 27001, 1000), fmt=kilo, title="Recomputed tokens"),
-            f.xaxis(range(0, 7), fmt=str, title="Mean delay per request (positions later than recorded)")]
+    f = Frame(-0.3, 6.3, 21000, 27000, left=60, right=FW - 24, top=120, bottom=318)
+    body = [header("Scheduling sessions to avoid eviction", "One evicting trace, replayed on vLLM in five orders"),
+            t(f.left, 100, "Recomputed tokens")]
+    body += [line(f.left, f.y(v), f.right, f.y(v)) for v in range(21000, 27001, 1000)]
+    body += [t(f.left - 8, f.y(v) + 4, kilo(v), 13, "ink2", "end") for v in range(21000, 27001, 1000)]
+    body.append(line(f.left, f.bottom, f.right, f.bottom, "axis"))
+    body += [t(f.x(v), f.bottom + 20, v, 13, "ink2", "middle") for v in range(0, 7)]
+    body.append(t((f.left + f.right) / 2, f.bottom + 46, "Mean delay per request (positions later than recorded)",
+                  14, "ink2", "middle"))
     floor = min(r for _, r in data["schedules"].values())
-    body.append(line(f.left, f.y(floor), f.right, f.y(floor), "lm"))
-    body.append(text(f.right, f.y(floor) + 16, "{:,}: nothing evicted".format(floor), "small ink2", "end"))
-    labels = {"recorded": ("Recorded interleaving", 10, 4, "start"), "bounded-3": ("At most 3 sessions", 10, 4, "start"),
-              "bounded-2": ("At most 2", 10, -40, "start"), "greedy": ("Greedy", -10, -40, "end"),
-              "serial": ("One at a time", 0, -12, "middle")}
+    body.append(line(f.left, f.y(floor), f.right, f.y(floor), "lm", ' stroke-dasharray="4 4"'))
+    body.append(t(f.left + 8, f.y(floor) + 18, "{:,} tokens: nothing evicted".format(floor), 13))
+    # Three orders land on the same floor a fraction of a position apart, so
+    # they get stacked labels with leader lines instead of labels on the points.
+    labels = {"recorded": ("Recorded order", 12, 5, "start"), "bounded-3": ("At most 3 at once", 12, 5, "start"),
+              "greedy": ("Greedy", -14, -32, "end"), "bounded-2": ("At most 2 at once", -14, -54, "end"),
+              "serial": ("One at a time", 0, -16, "middle")}
     for name, (delay, recomputed) in data["schedules"].items():
         label, dx, dy, anchor = labels[name]
-        if abs(dy) > 20:  # close neighbors get a leader line instead of a label on the point
-            body.append(line(f.x(delay), f.y(recomputed) - 7, f.x(delay) + dx, f.y(recomputed) + dy + 4, "lm"))
-        body.append(dot(f.x(delay), f.y(recomputed), "f1", 5))
-        body.append(text(f.x(delay) + dx, f.y(recomputed) + dy, label, "lab ink", anchor))
-    return svg(W, H, "Scheduling sessions to avoid eviction",
-               "One evicting four-session trace replayed on vLLM in five orders; each session keeps its own turn order.",
-               "".join(body), desc="Two sessions at a time or a greedy order removes eviction, cutting recomputation "
-                                   "16.5 percent, for a mean delay of about four to five positions.")
+        px, py = f.x(delay), f.y(recomputed)
+        if dy < -20:
+            body.append(line(px, py - 7, px + dx + (4 if anchor == "end" else -4), py + dy - 4, "lm"))
+        body.append(dot(px, py, "f1" if recomputed > floor else "f3", 6))
+        body.append(t(px + dx, py + dy, label, 14, "ink", anchor))
+    return svg(FW, 384, "", "", "".join(body), accessible_title="Scheduling sessions to avoid eviction",
+               desc="Two sessions at a time or a greedy order removes eviction, cutting recomputation "
+                    "16.5 percent, for a mean delay of about four to five positions.")
 
 
 def fig_cap(data):
@@ -237,28 +263,30 @@ def fig_cap(data):
                      "wall_budget_s": budget["wall_clock_s"], "evicted_off": off["eviction"],
                      "evicted_cap": cap["eviction"], "evicted_budget": budget["eviction"]})
     data["session_limits"] = rows
-    h = 390
-    f = Frame(0, 1300, 0, 1, left=110, right=W - 214, top=126, bottom=h - 52)
-    body = [f.xaxis(range(0, 1301, 250), fmt=lambda v: "%d s" % v, title="Wall clock for all four sessions (Mac CPU)", grid=True)]
-    body.append(text(f.right + 14, f.top - 4, "Tokens lost to eviction", "small ink2"))
-    body.append(text(f.right + 14, f.top + 10, "off / cap / budget", "small muted"))
+    # Grouped bars rather than dots on one line: in seeds 1 to 3 the three wall
+    # clocks fall within a few percent and dots would hide each other.
+    f = Frame(0, 1300, 0, 1, left=78, right=372, top=152, bottom=388)
+    body = [header("Session limits pay off past the threshold", "Four sessions, one 438-block cache, five seeds"),
+            key(24, 92, [("sq", "f2", "No limit"), ("sq", "f1", "Cap of 2"), ("sq", "f3", "Token budget")]),
+            line(24, 110, FW - 24, 110),
+            t(398, 136, "Tokens lost to eviction", 13, "ink2"),
+            t(398, 152, "off / cap / budget", 12.5, "muted")]
+    body += [line(f.x(v), f.top, f.x(v), f.bottom) for v in range(0, 1301, 250)]
+    body.append(line(f.left, f.bottom, f.right, f.bottom, "axis"))
+    body += [t(f.x(v), f.bottom + 20, "%d s" % v if v else "0", 13, "ink2", "middle") for v in range(0, 1301, 250)]
+    body.append(t((f.left + f.right) / 2, f.bottom + 46, "Wall clock, all four sessions (Mac CPU)", 14, "ink2", "middle"))
     for i, r in enumerate(rows):
-        y = f.top + 26 + i * 42
-        xs = [f.x(r[k]) for k in ("wall_off_s", "wall_cap_s", "wall_budget_s")]
-        body.append(text(f.left - 14, y + 4, "Seed %d" % r["seed"], "lab ink", "end"))
-        body.append(line(min(xs), y, max(xs), y, "lm", ' stroke-width="2"'))
-        body.append(dot(xs[0], y, "f2", 5))
-        body.append(dot(xs[1], y, "f1", 5))
-        body.append(diamond(xs[2], y, 5.5, "f3 ring"))
+        y = f.top + 10 + i * 46
+        for j, (k, cls) in enumerate((("wall_off_s", "f2"), ("wall_cap_s", "f1"), ("wall_budget_s", "f3"))):
+            body.append(hbar(f.left, y + j * 10, f.x(r[k]) - f.left, 8, cls))
+        body.append(t(f.left - 14, y + 19, "Seed %d" % r["seed"], 14, "ink", "end"))
         lost = " / ".join("{:,}".format(r[k]) for k in ("evicted_off", "evicted_cap", "evicted_budget"))
-        body.append(text(f.right + 14, y + 4, lost, "small " + ("ink" if r["evicted_off"] else "ink2")))
-    body.append(legend(24, 80, [("dot", "f2", "No limit"), ("dot", "f1", "At most 2 active sessions"),
-                                ("diamond", "f3", "Token budget, 14,016")]))
-    return svg(W, h, "Session limits pay off only when sessions outgrow the cache",
-               "Four Qwen3-1.7B sessions through one proxy and one 438-block cache, five engine seeds.",
-               "".join(body), desc="Per seed, wall clock with no limit, a two-session cap and a token budget. The cap "
-                                   "removed eviction in every seed; the budget avoided waits but lost tokens from "
-                                   "sessions it paused in seeds 4 and 5.")
+        body.append(t(398, y + 19, lost, 13, "ink b" if r["evicted_off"] else "ink2"))
+    return svg(FW, 446, "", "", "".join(body),
+               accessible_title="Session limits pay off only when sessions outgrow the cache",
+               desc="Per seed, wall clock with no limit, a two-session cap and a token budget. The cap "
+                    "removed eviction in every seed; the budget avoided waits but lost tokens from "
+                    "sessions it paused in seeds 4 and 5.")
 
 
 def main():

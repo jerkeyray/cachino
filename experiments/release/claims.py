@@ -6,9 +6,9 @@ every recalculable claim to have at least one passing check, tagged with its
 id, and every check to belong to a listed claim. Claim text is written here by
 hand; numbers in it must also appear in a validator check.
 
-Levels follow docs/reading-results.md: "recalculable" claims are rebuilt from
-the released tables; "documented" claims rest on private captures and their
-run records, and have no released table.
+Levels: "recalculable" claims are rebuilt from the released tables;
+"documented" claims rest on private captures and their run records, and have
+no released table.
 """
 
 CLAIMS = [
