@@ -15,7 +15,8 @@ to a cause. Every prediction is checked against the count the engine reports.
 
 **[Read the report](docs/report.md)** · [Result card: 487 vs 488 blocks](docs/result-card-487-488.md) ·
 [Reproduce](docs/reproduce.md) · [Released results](results/README.md) ·
-[Try it without an engine](examples/README.md) · [Run records](docs/records/)
+[Try it without an engine](examples/README.md) · [Run records](docs/records/) ·
+[Write-up](https://www.jerkeyray.com/blog/prefix-caching)
 
 > **Scope.** One frozen task, two harnesses (mini-swe-agent and smolagents),
 > Qwen3 at 0.6B and 1.7B, vLLM at `2173d712` on a Mac CPU, timing on one

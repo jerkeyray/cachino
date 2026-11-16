@@ -26,7 +26,7 @@ threshold was located at the engine's own resolution.
 | Replay run | `cache-sweep-20261108-01`, sequential: prompts in recorded start order, one at a time, `max_tokens` 1, after a cache reset |
 | Engine | vLLM `0.33.0rc1.dev595+g2173d7121`, built from source for the Mac CPU (Apple M5); prefix caching, 32-token blocks, SHA-256 block hashes |
 | Replay model | Qwen3-0.6B at `c1899de2`, FP16; same tokenizer files and KV size per token as the captured 1.7B model |
-| Cache size | Set in whole blocks with `--kv-cache-memory-bytes`; block count read back from the engine log |
+| Cache size | Set in whole blocks with `--kv-cache-memory-bytes`; block count read back from the engine log. One block is 32 tokens × 114,688 bytes (3.5 MiB), so 488 blocks is 1,790,967,808 bytes, about 1.67 GiB |
 | Code | Repository at `d75a09a` when the run started; replay script added in `f880ee6` |
 
 ## Evidence

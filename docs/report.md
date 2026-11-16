@@ -138,6 +138,8 @@ fixed costs were a larger share
 With thinking off, Qwen3's template ends the generation prompt with an empty
 4-token `<think></think>` cue but leaves it out of history, so each turn
 diverges just before the reply it generated, and the reply is prefilled again.
+Only the newest reply is affected, so the cost stays small: an average of 16,
+19 and 77 tokens per follow-up turn in the three sessions of 3.2.
 
 - Keeping the cue in history let the engine reuse each reply: recomputation on
   turns 1 to 7 fell from 670 to 362 tokens, but the model's next action changed
